@@ -15,7 +15,7 @@ const CommonButton: React.FC<CommonButtonProps> = ({
   return (
     <button
       type={type} // Make sure type is passed to the button element
-      className={`px-4 sm:px-6 py-2 flex-shrink-0 border border-border rounded-md font-medium transition text-[#0F172A] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`px-2 sm:px-3 py-2 mx-1 flex-shrink-0 border border-border rounded-md font-medium transition text-[#0F172A] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       {...props}
     >
       {children}

@@ -91,7 +91,7 @@ const StudyMode = () => {
 
   return (
     <div>
-      <div className="w-full  flex  items-start gap-6 pb-6">
+      <div className="w-[calc(100vw-356px)]  flex  items-start gap-6 pb-6">
         <TableContent
           openModal={handleOpenSubjectModal}
           setSelectedNode={(node) => {
@@ -104,7 +104,7 @@ const StudyMode = () => {
           setInitialContent={setInitialContent}
         />
 
-        <div className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-6 overflow-auto">
           <div>
             <Tabs
               tabs={tabs}

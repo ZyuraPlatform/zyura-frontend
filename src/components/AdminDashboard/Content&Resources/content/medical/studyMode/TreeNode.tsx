@@ -111,11 +111,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   return (
     <div className="ml-[2px] font-arial ">
       <div
-        className={`flex items-center justify-between py-1.5 cursor-pointer rounded-md ${
+        className={`flex items-center justify-between py-1.5 pe-1 cursor-pointer rounded-md ${
           isActive ? "bg-gray-200" : ""
         } ${depth > 0 ? "ml-4" : ""}`}
-        onClick={handleClick}
-      >
+        onClick={handleClick} >
         <div className="flex items-center gap-1.5 cursor-pointer">
           {hasChildren ? (
             <button
@@ -147,8 +146,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
         <div className="flex items-center gap-2">
           {displayCount !== undefined && (
-            <span className="text-xs bg-gray-100 text-gray-600 rounded-md px-2 py-[1px]">
-              {displayCount}
+            <span className="text-xs bg-gray-100 text-gray-600 rounded-md px-2 py-[1px] min-w-[53px]">
+             CAT - {displayCount}
             </span>
           )}
 

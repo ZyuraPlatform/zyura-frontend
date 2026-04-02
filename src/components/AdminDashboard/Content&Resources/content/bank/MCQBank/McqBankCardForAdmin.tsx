@@ -32,7 +32,7 @@ const tableDesign = {
 };
 
 const tableHeaders = [
-  { label: "Bank", align: "text-left" },
+  { label: "Bank", align: "text-center" },
   { label: "Subject", align: "text-center hidden xl:table-cell" },
   { label: "System", align: "text-center hidden 2xl:table-cell" },
   { label: "Topic", align: "text-center hidden 2xl:table-cell" },
