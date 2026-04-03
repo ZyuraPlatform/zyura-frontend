@@ -1,5 +1,5 @@
 import { useDeleteStudyModeTreeMutation } from "@/store/features/adminDashboard/ContentResources/MCQ/mcqApi";
-import { ChevronRight, FileText, LucideBadgeInfo } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 import { useState } from "react";
 import { SelectedNode } from "./StudyMode";
 import TreeAction from "./TreeAction";
