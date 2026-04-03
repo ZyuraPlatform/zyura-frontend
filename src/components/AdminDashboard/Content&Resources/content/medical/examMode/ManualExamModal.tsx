@@ -7,7 +7,6 @@ import { useUploadSingleImageMutation } from "@/store/features/adminDashboard/Co
 import { useCreateExamManualForProfessionalMutation } from "@/store/features/adminDashboard/examMode/professionalApi/professionalApi";
 import {
   useCreateExamManualMutation,
-  useGetAllExamForStudentQuery,
 } from "@/store/features/adminDashboard/examMode/studentApi/StudentApi";
 import { useAppSelector } from "@/store/hook";
 import { RootState } from "@/store/store";
