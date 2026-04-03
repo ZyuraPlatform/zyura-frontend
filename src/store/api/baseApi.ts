@@ -25,14 +25,59 @@ const baseQueryWithToasts: typeof baseQueryAPI = async (
 ) => {
   const result = await baseQueryAPI(args, api, extraOptions);
 
+  console.log("result------>",result)
   const method =
     typeof args === "object" && "method" in args ? args.method : "GET";
 
-  // Handle 401 errors globally
-  if (result?.error && result.error.status === 401) {
+
+  // Handle explicit 401 errors globally and token-expired errors returned inside error objects
+  const errorMsgFromError =
+    (result?.error && (result.error.data as any)?.message) ||
+    (result?.error && (result.error.data as any)?.err?.message) ||
+    "";
+  const errorNameFromError = (result?.error && (result.error.data as any)?.err?.name) || "";
+
+  if (
+    (result?.error && result.error.status === 401) ||
+    (typeof errorMsgFromError === "string" && errorMsgFromError.toLowerCase().includes("jwt expired")) ||
+    errorNameFromError === "TokenExpiredError"
+  ) {
+    localStorage.clear();
     Cookies.remove("accessToken");
+    // Cookies.remove("refreshToken");
+
     api.dispatch(logout());
     toast.error("Session expired. Please login again.");
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
+  }
+
+  // Some backends return 200 with a body indicating token expiry (e.g. { success: false, message: 'jwt expired' })
+  // Detect those cases and treat them as unauthorized as well.
+  if (
+    result?.data &&
+    typeof result.data === "object"
+  ) {
+    const d: any = result.data;
+    const message = (d && (d.message || d.msg || (d.err && d.err.message))) || "";
+    const errName = d?.err?.name;
+
+    if (
+      (typeof message === "string" && message.toLowerCase().includes("jwt expired")) ||
+      errName === "TokenExpiredError"
+    ) {
+      localStorage.clear();
+      Cookies.remove("accessToken");
+      // Cookies.remove("refreshToken");
+      api.dispatch(logout());
+      toast.error("Session expired. Please login again.");
+      if (typeof window !== "undefined") {
+        if (window.location.pathname !== "/login") {
+          window.location.replace("/login");
+        }
+      }
+    }
   }
 
   if (method !== "GET") {

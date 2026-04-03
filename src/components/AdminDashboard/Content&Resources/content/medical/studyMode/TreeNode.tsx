@@ -149,13 +149,18 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
         <div className="flex items-center gap-2">
           {displayCount !== undefined && (
-            <span className="text-xs bg-gray-100 text-gray-600 rounded-md px-2 py-[1px] min-w-[53px]">
-              Qs - {displayCount}
+            <span className="text-xs bg-gray-100 text-gray-600 rounded-md px-2 py-[1px] min-w-[10px]">
+              {displayCount}
+            </span>
+          )}
+          {displayCount !== undefined && (
+            <span className="text-xs bg-gray-100 text-gray-600 rounded-md px-2 py-[1px] min-w-[10px]">
+              Q-{displayCount}
             </span>
           )}
           
 
-          <Tooltip>
+          {/* <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
@@ -169,7 +174,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                 Total Question {displayCount}
               </TooltipContent>
             )}
-          </Tooltip>
+          </Tooltip> */}
           {depth === 0 && (
             <TreeAction
               handleDelete={() => handleDelete(item._id!)}
