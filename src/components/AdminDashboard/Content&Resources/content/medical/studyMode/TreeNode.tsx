@@ -3,7 +3,7 @@ import { ChevronRight, FileText, LucideBadgeInfo } from "lucide-react";
 import { useState } from "react";
 import { SelectedNode } from "./StudyMode";
 import TreeAction from "./TreeAction";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type TOCItem = {
   _id?: string;

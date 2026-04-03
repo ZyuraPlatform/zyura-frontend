@@ -73,7 +73,7 @@ const ManualExamModal: React.FC<CreateExamModalProps> = ({ onClose }) => {
     (state: RootState) => state.staticContent,
   );
 
-  const { data: studentData } = useGetAllExamForStudentQuery({ profileType });
+  // const { data: studentData } = useGetAllExamForStudentQuery({ profileType });
 
   type Subject = "Emberyology";
 
