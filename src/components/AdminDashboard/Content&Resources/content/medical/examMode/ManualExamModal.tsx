@@ -75,12 +75,23 @@ const ManualExamModal: React.FC<CreateExamModalProps> = ({ onClose }) => {
 
   const { data: studentData } = useGetAllExamForStudentQuery({ profileType });
 
-  const subjectOptions = Array.from(
-    new Set(studentData?.data.data.map((exam) => exam.subject)),
-  ).map((subject) => ({
-    label: subject,
-    value: subject,
-  }));
+  type Subject = "Emberyology";
+
+  type SubjectOption = {
+    label: string;
+    value: Subject;
+  };
+
+  const subjectOptions: SubjectOption[] = [
+    { label: "Emberyology", value: "Emberyology" },
+  ];
+
+  // const subjectOptions = Array.from(
+  //   new Set(studentData?.data.data.map((exam) => exam.subject)),
+  // ).map((subject) => ({
+  //   label: subject,
+  //   value: subject,
+  // }));
   const FinalSchema = z
     .object({
       examName: z.string().min(1, { message: "Exam Name is required" }),
