@@ -25,7 +25,7 @@ interface SubTopic {
 interface Topic {
   _id?: string;
   topicName: string;
-  subTopics: SubTopic[];
+  subTopics: (SubTopic | string)[];
 }
 
 interface System {
@@ -46,7 +46,7 @@ const mapBackendToTOC = (data: Subject[]): TOCItem[] => {
   return sortByTitleAZ(
     data.map((subject) => ({
       _id: subject._id,
-      title: subject.subjectName,
+      title: subject.subjectName.trim(),
       count: countLeafNodes(subject),
 
       // count: subject.systems.reduce(
@@ -63,7 +63,7 @@ const mapBackendToTOC = (data: Subject[]): TOCItem[] => {
       children: sortByTitleAZ(
         subject.systems.map((sys) => ({
           _id: sys._id,
-          title: sys.name,
+          title: sys.name.trim(),
 
           // count: sys.topics.reduce(
           //   (tAcc, topic) =>
@@ -75,16 +75,18 @@ const mapBackendToTOC = (data: Subject[]): TOCItem[] => {
           children: sortByTitleAZ(
             sys.topics.map((topic) => ({
               _id: topic._id,
-              title: topic.topicName,
+              title: topic.topicName.trim(),
 
               count: countLeafNodes(topic),
 
               children: topic.subTopics
                 ? sortByTitleAZ(
                     topic.subTopics.map((sub) => ({
-                      _id: typeof sub === "object" ? sub._id : undefined,
+                      _id: typeof sub === "string" ? undefined : sub._id,
                       title:
-                        typeof sub === "string" ? sub : sub.subtopicName || "",
+                        typeof sub === "string"
+                          ? sub.trim()
+                          : (sub.subtopicName || "").trim(),
                     })),
                   )
                 : undefined,

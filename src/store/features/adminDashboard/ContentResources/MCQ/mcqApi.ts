@@ -21,6 +21,29 @@ import {
 import { PostStudyModeTree } from "./types/tree";
 import { GetStudyModeTree, GetStudyModeTreeParams } from "./types/TreeResponse";
 
+/** Avoid mismatched DB filters when hierarchy strings have accidental leading/trailing spaces. */
+const trimHierarchyQuery = (params: {
+  key: string;
+  contentFor: ContentFor;
+  profileType?: string;
+  subject: string;
+  system?: string;
+  topic?: string;
+  subtopic?: string;
+  searchTerm?: string;
+  page?: number;
+  limit?: number;
+}) => ({
+  ...params,
+  subject: params.subject.trim(),
+  system: params.system?.trim() ?? "",
+  topic: params.topic?.trim() ?? "",
+  subtopic: params.subtopic?.trim() ?? "",
+  profileType: params.profileType?.trim() || undefined,
+  searchTerm:
+    params.searchTerm !== undefined ? params.searchTerm.trim() : undefined,
+});
+
 export const mcqApi = baseAPI.injectEndpoints({
   endpoints: (build) => ({
     getMcqApi: build.query<GetAllMcqResponse, McqBankParams>({
@@ -205,7 +228,10 @@ export const mcqApi = baseAPI.injectEndpoints({
       query: (params) => ({
         url: `/study_mode_tree/all`,
         method: "GET",
-        params,
+        params: {
+          ...params,
+          profileType: params.profileType?.trim() || undefined,
+        },
       }),
       providesTags: ["StudyModeTree"],
     }),
@@ -231,7 +257,7 @@ export const mcqApi = baseAPI.injectEndpoints({
       query: (params) => ({
         url: "study_mode_tree/all-content",
         method: "GET",
-        params,
+        params: trimHierarchyQuery(params),
       }),
       providesTags: [
         "StudyModeTree",
