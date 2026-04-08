@@ -212,6 +212,8 @@ const AddMCQForm: React.FC<AddMCQFormProps> = ({ handleCancel }) => {
         }
       }
       navigate(`/admin/content-management/dashboard/${contentType}`);
+      setImagePreviews({});
+      reset();
     } catch (error) {
       console.error("API Error:", error);
     }
@@ -219,8 +221,6 @@ const AddMCQForm: React.FC<AddMCQFormProps> = ({ handleCancel }) => {
 
   const handleSavePublish = async () => {
     await handleSubmit(onSubmit)();
-    setImagePreviews({});
-    reset();
   };
 
   const navigate = useNavigate();

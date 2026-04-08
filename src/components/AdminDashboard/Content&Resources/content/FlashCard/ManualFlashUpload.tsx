@@ -12,7 +12,7 @@ import { RootState } from "@/store/store";
 import { difficultyOptions } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Upload } from "lucide-react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -74,9 +74,9 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
     },
   });
 
+  const watchedFlashCards = useWatch({ control, name: "flashCards" });
   const { fields, append, remove } = useFieldArray({
     control,
-
     name: "flashCards",
   });
 
@@ -128,11 +128,9 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
         if (formData) {
           const formattedPayload = { ...formData, flashCards: data.flashCards };
           await manualUploadFlashCard(formattedPayload);
-
-          reset();
         }
       }
-
+      reset();
       navigate(`/admin/content-management/dashboard/${contentType}`);
     } catch (error) {
       console.error("API Error:", error);
@@ -140,7 +138,13 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-6"
+    >
       {fields.map((field, index) => (
         <CommonBorderWrapper key={field.id} className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -174,7 +178,7 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
               />
 
               {/* Preview */}
-              {control._formValues.flashCards[index].image && (
+              {/* {control._formValues.flashCards[index].image && (
                 <div className="mt-3">
                   <img
                     src={control._formValues.flashCards[index].image}
@@ -182,6 +186,25 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
                     className="w-40 h-40 object-cover rounded-md border"
                   />
 
+                  <CommonButton
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="text-red-500 mt-3"
+                  >
+                    Remove Image
+                  </CommonButton>
+                </div>
+              )} */}
+
+              {/* Preview */}
+              {/* replace control._formValues with: watchedFlashCards */}
+              {watchedFlashCards[index]?.image && (
+                <div className="mt-3">
+                  <img
+                    src={watchedFlashCards[index].image}
+                    alt="preview"
+                    className="w-40 h-40 object-cover rounded-md border"
+                  />
                   <CommonButton
                     type="button"
                     onClick={() => handleRemoveImage(index)}
@@ -272,7 +295,7 @@ const ManualFlashUpload: React.FC<FlashCardsFormProps> = ({ handleCancel }) => {
         </CommonButton>
         <ActionButtons
           importLabel="Save & Publish Flashcards"
-          onSavePublish={handleSubmit(onSubmit)}
+          onSavePublish={() => handleSubmit(onSubmit)()}
           onCancel={handleCancel}
           isLoading={isLoading || addMoreLoading}
         />
