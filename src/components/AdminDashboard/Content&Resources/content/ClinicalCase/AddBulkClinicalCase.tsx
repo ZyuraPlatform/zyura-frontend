@@ -9,6 +9,7 @@ import ActionButtons from "../ActionButtons";
 import RequiredColumnsList from "../medical/studyMode/RequiredColumsList";
 import UploadDropzone from "../medical/studyMode/UpdateDropZone";
 import UploadPreview from "../medical/studyMode/UploadPreview";
+import { FiDownload } from "react-icons/fi";
 
 /** Column hints aligned with backend `row_to_clinical_case` (spreadsheet headers). */
 export const clinicalCaseBulkColumns = [
@@ -18,15 +19,22 @@ export const clinicalCaseBulkColumns = [
       "Override per row only; otherwise uses step 1 “Clinical Case Title” in `data`",
   },
   { label: "patientPresentation", description: "Patient presentation" },
-  { label: "historyOfPresentIllness", description: "History of present illness" },
-  { label: "physicalExamination", description: "Physical examination findings" },
+  {
+    label: "historyOfPresentIllness",
+    description: "History of present illness",
+  },
+  {
+    label: "physicalExamination",
+    description: "Physical examination findings",
+  },
   { label: "imaging", description: "Imaging summary" },
   {
     label: "difficultyLevel",
     description: "Basic, Intermediate, or Advance",
   },
   {
-    label: "subject, system, topic, contentFor, profileType, title (+ optional subtopic)",
+    label:
+      "subject, system, topic, contentFor, profileType, title (+ optional subtopic)",
     description:
       "From step 1 only — multipart `data` JSON (`title` = Clinical Case Title for every row unless a row has caseTitle column)",
   },
@@ -37,7 +45,10 @@ export const clinicalCaseBulkColumns = [
     description: "Four diagnosis option texts",
   },
   { label: "diagnosisCorrectOption", description: "A, B, C, or D" },
-  { label: "diagnosisExplanation", description: "Explanation for correct diagnosis" },
+  {
+    label: "diagnosisExplanation",
+    description: "Explanation for correct diagnosis",
+  },
   {
     label: "diagnosisOptionX_supportingEvidence / _refutingEvidence",
     description: "Optional; separate items with | ; or newline",
@@ -55,7 +66,9 @@ export const clinicalCaseBulkColumns = [
 const AddBulkClinicalCase = () => {
   const [detectedCount, setDetectedCount] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { formData, contentType } = useSelector((state: RootState) => state.staticContent);
+  const { formData, contentType } = useSelector(
+    (state: RootState) => state.staticContent,
+  );
   const [uploadBulkClinicalCases, { isLoading }] =
     useUploadBulkClinicalCasesMutation();
   const navigate = useNavigate();
@@ -131,6 +144,18 @@ const AddBulkClinicalCase = () => {
       <CommonBorderWrapper>
         <div className="pt-6">
           <div className="mx-auto">
+            <div className="flex justify-end mb-6">
+              <a
+                className="px-2 sm:px-3 py-2 mx-1 flex items-center gap-2 border border-border rounded-md font-medium transition text-[#0F172A] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 !text-[#FFFFFF] bg-blue-600 hover:bg-blue-700"
+                href="https://drive.google.com/file/d/10on5WpycZaHE1VU9IlvaOg_uShVwKwvH/view?usp=sharing"
+                target="_blank"
+                download
+              >
+               <FiDownload />
+               Sample CSV
+
+              </a>
+            </div>
             <div className="shadow-sm p-16 mb-6 rounded border border-slate-300 bg-white">
               <UploadDropzone
                 label="Upload clinical case file"
@@ -141,10 +166,14 @@ const AddBulkClinicalCase = () => {
             </div>
 
             <RequiredColumnsList columns={clinicalCaseBulkColumns} />
-            <UploadPreview detectedCount={detectedCount} label="Upload Preview" />
+            <UploadPreview
+              detectedCount={detectedCount}
+              label="Upload Preview"
+            />
           </div>
         </div>
       </CommonBorderWrapper>
+
       <div className="mb-6">
         <ActionButtons
           onSavePublish={handleImport}
