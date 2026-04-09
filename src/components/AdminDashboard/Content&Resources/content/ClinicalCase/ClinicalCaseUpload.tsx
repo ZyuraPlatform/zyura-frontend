@@ -2,6 +2,7 @@ import CommonButton from "@/common/button/CommonButton";
 import CommonSelect from "@/common/custom/CommonSelect";
 import CommonSpace from "@/common/space/CommonSpace";
 import DashboardTopSection from "@/components/AdminDashboard/reuseable/DashboardTopSection";
+import ToggleButtonGroup from "@/components/AdminDashboard/reuseable/ToggleButtonGroup";
 import { useCreateClinicalCaseMutation } from "@/store/features/adminDashboard/ContentResources/ClinicalCase/clinicalCaseApi";
 import { useAppSelector } from "@/store/hook";
 import { RootState } from "@/store/store";
@@ -15,18 +16,16 @@ import {
   useForm,
 } from "react-hook-form";
 import { RiDeleteBinLine } from "react-icons/ri";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { z } from "zod";
 import ActionButtons from "../ActionButtons";
 import { steps } from "../medical/createContent/CreateContent";
 import StepIndicator from "../medical/StepIndicator";
+import AddBulkClinicalCase from "./AddBulkClinicalCase";
 
 const caseLists = [
-  {
-    title: "Case Title",
-    field: "caseTitle",
-    description: "Case: Acute Abdominal Pain in a Young Female",
-  },
   {
     title: "Patient Presentation",
     field: "patientPresentation",
@@ -84,7 +83,6 @@ const McqSchema = z.object({
 });
 
 const ClinicalCaseSchema = z.object({
-  caseTitle: z.string().min(1, "Case Title is required"),
   patientPresentation: z.string().min(1, "Patient Presentation is required"),
   historyOfPresentIllness: z
     .string()
@@ -138,9 +136,7 @@ const defaultDiagnosisOptions = [
   },
 ];
 
-const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({
-  breadcrumb,
-}) => {
+const ClinicalCaseManualForm: React.FC = () => {
   const {
     register,
     handleSubmit,
@@ -149,7 +145,6 @@ const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({
   } = useForm<ClinicalCaseForm>({
     resolver: zodResolver(ClinicalCaseSchema) as Resolver<ClinicalCaseForm>,
     defaultValues: {
-      caseTitle: "",
       patientPresentation: "",
       historyOfPresentIllness: "",
       physicalExamination: "",
@@ -195,14 +190,20 @@ const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({
     (state: RootState) => state.staticContent,
   );
   const onSubmit: SubmitHandler<ClinicalCaseForm> = async (data) => {
-    if (formData) {
-      const formattedPayload = {
-        ...formData,
-        ...data,
-      };
-      await createClinicalCase(formattedPayload).unwrap();
-      navigate(`/admin/content-management/dashboard/${contentType}`);
+    if (!formData) return;
+    const caseTitle = formData.title?.trim();
+    if (!caseTitle) {
+      toast.error("Case title is required — go back to step 1 and fill “Clinical Case Title”.");
+      return;
     }
+    const { title: _stepTitle, type: _modeType, ...hierarchy } = formData;
+    const formattedPayload = {
+      ...hierarchy,
+      ...data,
+      caseTitle,
+    };
+    await createClinicalCase(formattedPayload).unwrap();
+    navigate(`/admin/content-management/dashboard/${contentType}`);
   };
 
   const handleSavePublish = () => {
@@ -215,15 +216,12 @@ const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <DashboardTopSection
-        title="Add Clinical Case Content"
-        description={breadcrumb}
-        descriptionClassName="!text-[#717182]"
-      />
-      <CommonSpace>
-        <StepIndicator steps={steps} activeStep={activeStep} />
-      </CommonSpace>
-
+      {formData?.title?.trim() ? (
+        <p className="text-sm text-[#475569] rounded-md border border-[#CBD5E1] bg-[#F8FAFC] px-3 py-2">
+          <span className="font-medium text-black">Case title (from step 1): </span>
+          {formData.title}
+        </p>
+      ) : null}
       {/* Case Sections */}
       {caseLists.map((item, idx) => (
         <div key={idx}>
@@ -486,6 +484,40 @@ const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({
         </div>
       </div>
     </form>
+  );
+};
+
+const ClinicalCaseUpload: React.FC<{ breadcrumb: string }> = ({ breadcrumb }) => {
+  const [mode, setMode] = useState<"manual" | "bulk">("manual");
+  const { uploadIntoBank } = useAppSelector((state: RootState) => state.staticContent);
+
+  return (
+    <div>
+      {!uploadIntoBank && (
+        <DashboardTopSection
+          title="Add Clinical Case Content"
+          description={breadcrumb}
+          descriptionClassName="!text-[#717182]"
+        />
+      )}
+
+      <CommonSpace>
+        <StepIndicator steps={steps} activeStep={activeStep} />
+      </CommonSpace>
+
+      <div className="py-10">
+        <ToggleButtonGroup
+          options={[
+            { label: "Manual Upload", value: "manual" },
+            { label: "Bulk Upload", value: "bulk" },
+          ]}
+          active={mode}
+          onChange={setMode}
+        />
+      </div>
+
+      {mode === "manual" ? <ClinicalCaseManualForm /> : <AddBulkClinicalCase />}
+    </div>
   );
 };
 
