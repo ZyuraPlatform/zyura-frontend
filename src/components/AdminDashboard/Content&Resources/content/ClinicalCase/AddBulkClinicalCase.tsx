@@ -91,7 +91,7 @@ const AddBulkClinicalCase = () => {
       !taxonomy.topic?.trim() ||
       !taxonomy.contentFor ||
       !taxonomy.profileType?.trim() ||
-      !formData.title?.trim()
+      !formData?.title?.trim()
     ) {
       toast.error(
         "Complete step 1: Clinical Case Title, subject, system, topic, audience, and profile type (sent as `data`, not in the CSV).",
