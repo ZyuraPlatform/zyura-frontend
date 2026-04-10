@@ -16,9 +16,9 @@ jobs:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.EC2_BACKEND_HOST }}
+          host: ${{ secrets.EC2_FRONTEND_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_BACKEND_SSH_KEY }}
+          key: ${{ secrets.EC2_FRONTEND_SSH_KEY }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
