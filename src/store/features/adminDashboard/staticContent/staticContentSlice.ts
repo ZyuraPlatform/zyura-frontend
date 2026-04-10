@@ -79,7 +79,13 @@ const staticContentSlice = createSlice({
       state.bankId = action.payload;
     },
     setUniversalSelectNode: (state, action: PayloadAction<SelectedNode>) => {
-      state.universalSelectNode = action.payload;
+      const n = action.payload;
+      state.universalSelectNode = {
+        subject: n.subject.trim(),
+        system: n.system.trim(),
+        topic: n.topic.trim(),
+        subtopic: n.subtopic.trim(),
+      };
     },
   },
 });

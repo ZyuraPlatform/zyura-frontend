@@ -62,7 +62,7 @@ const StudyMode = () => {
     ? {
         key: contentType,
         contentFor,
-        profileType,
+        profileType: profileType.trim() || undefined,
         subject: selectedNode.subject.trim(),
         system: selectedNode.system.trim(),
         topic: selectedNode.topic.trim(),

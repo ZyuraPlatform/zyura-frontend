@@ -74,7 +74,14 @@ export const mcqBankAPI = baseAPI.injectEndpoints({
       query: ({ subject, system, topic, subtopic, page = 1, limit = 10 }) => ({
         url: "/study_mode_tree/all-content",
         method: "GET",
-        params: { subject, system, topic, subtopic, page, limit },
+        params: {
+          subject: subject.trim(),
+          system: system?.trim(),
+          topic: topic?.trim(),
+          subtopic: subtopic?.trim(),
+          page,
+          limit,
+        },
       }),
     }),
 

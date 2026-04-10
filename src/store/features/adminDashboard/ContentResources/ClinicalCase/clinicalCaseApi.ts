@@ -38,6 +38,29 @@ export const clinicalCaseApi = baseAPI.injectEndpoints({
         body: data,
       }),
     }),
+
+    uploadBulkClinicalCases: build.mutation<
+      {
+        insertedCount: number;
+        skippedCount: number;
+        errors: { row: number; message: string }[];
+      },
+      FormData
+    >({
+      query: (formData) => ({
+        url: "/clinical-case/upload-bulk",
+        method: "POST",
+        body: formData,
+      }),
+      transformResponse: (response: {
+        data: {
+          insertedCount: number;
+          skippedCount: number;
+          errors: { row: number; message: string }[];
+        };
+      }) => response.data,
+      invalidatesTags: ["ClinicalCase"],
+    }),
   }),
 });
 
@@ -46,4 +69,5 @@ export const {
   useGetClinicalCaseQuery,
   useDeleteClinicalCaseMutation,
   useUpdateClinicalCaseMutation,
+  useUploadBulkClinicalCasesMutation,
 } = clinicalCaseApi;

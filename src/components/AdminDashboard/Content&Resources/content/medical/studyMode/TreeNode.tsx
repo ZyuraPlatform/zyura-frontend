@@ -36,26 +36,28 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
   const hasChildren = item.children && item.children.length > 0;
 
+  const t = (s: string) => s.trim();
+
   const isActive = (() => {
     if (!selectedNode) return false;
     switch (depth) {
       case 0:
         return (
-          selectedNode.subject === item.title &&
-          !selectedNode.system &&
-          !selectedNode.topic &&
-          !selectedNode.subtopic
+          t(selectedNode.subject) === t(item.title) &&
+          !t(selectedNode.system) &&
+          !t(selectedNode.topic) &&
+          !t(selectedNode.subtopic)
         );
       case 1:
         return (
-          selectedNode.system === item.title &&
-          !selectedNode.topic &&
-          !selectedNode.subtopic
+          t(selectedNode.system) === t(item.title) &&
+          !t(selectedNode.topic) &&
+          !t(selectedNode.subtopic)
         );
       case 2:
-        return selectedNode.topic === item.title && !selectedNode.subtopic;
+        return t(selectedNode.topic) === t(item.title) && !t(selectedNode.subtopic);
       case 3:
-        return selectedNode.subtopic === item.title;
+        return t(selectedNode.subtopic) === t(item.title);
       default:
         return false;
     }
@@ -66,27 +68,27 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     // Update selected node
 
     if (depth === 0)
-      onSelect({ subject: item.title, system: "", topic: "", subtopic: "" });
+      onSelect({ subject: t(item.title), system: "", topic: "", subtopic: "" });
     if (depth === 1)
       onSelect({
-        subject: parentNames.subject || "",
-        system: item.title,
+        subject: t(parentNames.subject || ""),
+        system: t(item.title),
         topic: "",
         subtopic: "",
       });
     if (depth === 2)
       onSelect({
-        subject: parentNames.subject || "",
-        system: parentNames.system || "",
-        topic: item.title,
+        subject: t(parentNames.subject || ""),
+        system: t(parentNames.system || ""),
+        topic: t(item.title),
         subtopic: "",
       });
     if (depth === 3)
       onSelect({
-        subject: parentNames.subject || "",
-        system: parentNames.system || "",
-        topic: parentNames.topic || "",
-        subtopic: item.title,
+        subject: t(parentNames.subject || ""),
+        system: t(parentNames.system || ""),
+        topic: t(parentNames.topic || ""),
+        subtopic: t(item.title),
       });
   };
 
@@ -195,9 +197,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               onSelect={onSelect}
               selectedNode={selectedNode}
               parentNames={{
-                subject: depth === 0 ? item.title : parentNames.subject || "",
-                system: depth === 1 ? item.title : parentNames.system,
-                topic: depth === 2 ? item.title : parentNames.topic,
+                subject: depth === 0 ? t(item.title) : parentNames.subject || "",
+                system: depth === 1 ? t(item.title) : parentNames.system,
+                topic: depth === 2 ? t(item.title) : parentNames.topic,
               }}
               initialContent={initialContent}
               setInitialContent={setInitialContent}
