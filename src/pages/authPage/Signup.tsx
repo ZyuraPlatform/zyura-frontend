@@ -7,7 +7,7 @@ import signupImage from "../../assets/signUp/signUpImage.png";
 // import logo from "../../assets/signUp/logo.png";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useRegisterUserMutation, useSignInWithGoogleMutation, useLazyGetMeQuery } from "@/store/features/auth/auth.api";
+import { useRegisterUserMutation, useSignInWithGoogleMutation, useLazyGetMeQuery, useGetAllStudentTypeQuery } from "@/store/features/auth/auth.api";
 import { toast } from "sonner";
 import { auth, googleProvider } from "@/config/firebase.config";
 import { signInWithPopup } from "firebase/auth";
@@ -21,6 +21,11 @@ const signupSchema = z.object({
     .string()
     .nonempty("Password is required")
     .min(6, "Password must be at least 6 characters"),
+  phone: z
+  .string()
+  .nonempty("Phone number is required")
+  .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+  studentType: z.string().nonempty("Profile type is required"),
 });
 
 type SignupFormInputs = z.infer<typeof signupSchema>;
@@ -29,6 +34,7 @@ const Signup = () => {
   const [registerUser, { isLoading }] = useRegisterUserMutation();
   const [signInWithGoogle, { isLoading: isSocialLoading }] = useSignInWithGoogleMutation();
   const [getMeTrigger] = useLazyGetMeQuery();
+  const { data: studentTypeData, isLoading: isStudentTypeLoading } = useGetAllStudentTypeQuery({});
   const dispatch = useAppDispatch();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -77,16 +83,20 @@ const Signup = () => {
       const result = await registerUser({
         email: data.email,
         password: data.password,
+        phone: data.phone,
+        studentType: data.studentType,
       }).unwrap();
 
       // Success toast
       if (result.success) {
         // toast.success(result.message);
 
-        // Save email to localStorage
-        localStorage.setItem("setVerificationEmail", data.email);
+        // OTP verification flow is temporarily disabled.
+        // localStorage.setItem("setVerificationEmail", data.email);
 
-        navigate("/verification-otp");
+        // navigate("/verification-otp");
+        toast.success("Account created successfully");
+        navigate("/login");
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -151,7 +161,7 @@ const Signup = () => {
             Create an account
           </h2>
           <p className="text-sm font-normal text-[#71717A] leading-5 mb-6 mt-2">
-            Enter your email below to create your account
+            Enter your details below to create your student account
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
@@ -165,6 +175,38 @@ const Signup = () => {
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Profile Type */}
+            <div>
+              <select
+                {...register("studentType")}
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                disabled={isStudentTypeLoading}
+              >
+                <option value="">Select your profile type</option>
+                {studentTypeData?.data?.map((type: any) => (
+                  <option key={type._id} value={type.typeName}>
+                    {type.typeName}
+                  </option>
+                ))}
+              </select>
+              {errors.studentType && (
+                <p className="text-red-500 text-sm">{errors.studentType.message}</p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <input
+                type="tel"
+                placeholder="Phone number"
+                {...register("phone")}
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm">{errors.phone.message}</p>
               )}
             </div>
 

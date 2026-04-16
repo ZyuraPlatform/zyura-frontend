@@ -27,6 +27,7 @@ export type TUser = {
     studentType?: string;
     country: string;
     university?: string;
+    phone: string;
     preparingFor?: {
       examName: string;
       description: string;

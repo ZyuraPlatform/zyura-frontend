@@ -2,6 +2,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -9,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -18,49 +19,78 @@ import {
   useUpdateProfileMutation,
 } from "@/store/features/auth/auth.api";
 import { useAppDispatch } from "@/hooks/useRedux";
-import { setUser } from "@/store/features/auth/auth.slice";
-import Cookies from "js-cookie";
+import { setUser, selectToken } from "@/store/features/auth/auth.slice";
+import { useSelector } from "react-redux";
 import { examOptions } from "@/pages/authPage/constants";
 
 export default function EditStudentProfileModal({ open, setOpen, user }: any) {
   const dispatch = useAppDispatch();
+  const accessToken = useSelector(selectToken);
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const [getMe] = useLazyGetMeQuery();
-  // const { data } = useGetMeQuery(undefined);
-  console.log(user);
 
-  const [firstName, setFirstName] = useState(user.profile?.firstName);
-  const [lastName, setLastName] = useState(user.profile?.lastName);
-  const [university, setUniversity] = useState(user.profile?.university);
-  const [country, setCountry] = useState(user.profile?.country);
-  const [yearOfStudy, setYearOfStudy] = useState(user.profile?.year_of_study);
-  const [studentType, setStudentType] = useState(user.profile?.studentType);
-  const [preparingFor, setPreparingFor] = useState(user.profile?.preparingFor);
-  const [bio, setBio] = useState(user.profile?.bio);
+  const [firstName, setFirstName] = useState(user.profile?.firstName || "");
+  const [phone, setPhone] = useState(user.profile?.phone || "");
+  const [lastName, setLastName] = useState(user.profile?.lastName || "");
+  const [university, setUniversity] = useState(user.profile?.university || "");
+  const [country, setCountry] = useState(user.profile?.country || "");
+  const [yearOfStudy, setYearOfStudy] = useState(user.profile?.year_of_study || "");
+  const [studentType, setStudentType] = useState(user.profile?.studentType || "");
+  const [preparingFor, setPreparingFor] = useState<any>(
+    user.profile?.preparingFor || ""
+  );
+  const [bio, setBio] = useState(user.profile?.bio || "");
 
   // Professional fields
-  const [institution, setInstitution] = useState(user.profile?.institution);
-  const [experience, setExperience] = useState(user.profile?.experience);
-  const [postGraduate, setPostGraduate] = useState(user.profile?.post_graduate);
-  const [professionName, setProfessionName] = useState(
-    user.profile?.professionName
+  const [institution, setInstitution] = useState(
+    user.profile?.institution || ""
   );
+  const [experience, setExperience] = useState(
+    user.profile?.experience || ""
+  );
+  const [postGraduate, setPostGraduate] = useState(
+    user.profile?.post_graduate || ""
+  );
+  const [professionName, setProfessionName] = useState(
+    user.profile?.professionName || ""
+  );
+
+  useEffect(() => {
+    if (!open || !user) return;
+
+    setFirstName(user.profile?.firstName || "");
+    setLastName(user.profile?.lastName || "");
+    setUniversity(user.profile?.university || "");
+    setCountry(user.profile?.country || "");
+    setYearOfStudy(user.profile?.year_of_study || "");
+    setStudentType(user.profile?.studentType || "");
+    setPreparingFor(user.profile?.preparingFor || "");
+    setBio(user.profile?.bio || "");
+    setInstitution(user.profile?.institution || "");
+    setExperience(user.profile?.experience || "");
+    setPostGraduate(user.profile?.post_graduate || "");
+    setProfessionName(user.profile?.professionName || "");
+  }, [open, user]);
 
   const handleSubmit = async () => {
     try {
       // Construct data object
       const profileData: any = {
         firstName,
+        phone,
         lastName,
         country,
         bio,
-        preference: {
-          subject: user?.profile?.preference?.subject,
-          systemPreference: user?.profile?.preference?.systemPreference,
-          topic: user?.profile?.preference?.topic,
-          subTopic: user?.profile?.preference?.subTopic,
-        },
       };
+
+      if (user?.profile?.preference) {
+        profileData.preference = {
+          subject: user.profile.preference.subject,
+          systemPreference: user.profile.preference.systemPreference,
+          topic: user.profile.preference.topic,
+          subTopic: user.profile.preference.subTopic,
+        };
+      }
 
       if (user.account?.role === "STUDENT") {
         profileData.university = university;
@@ -126,18 +156,14 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
       const res = await updateProfile(formDataToSend).unwrap();
 
       if (res.success) {
-        const meRes = await getMe(undefined).unwrap();
+        const meRes = await getMe(undefined, false).unwrap();
 
-        console.log(meRes.data);
         dispatch(
           setUser({
-            accessToken: Cookies.get("accessToken"),
+            accessToken: accessToken || "",
             user: meRes?.data,
           })
         );
-
-        toast.success("Profile updated successfully!");
-        console.log("Response:", res);
       }
 
       setOpen(false);
@@ -154,6 +180,9 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
           <DialogTitle className="flex items-center gap-2">
             <UserRound /> Profile Information
           </DialogTitle>
+          <DialogDescription>
+            Update your profile information below
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
@@ -181,6 +210,14 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder="Bangladesh"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Mobile No</Label>
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+8801XXXXXXXXX"
             />
           </div>
 

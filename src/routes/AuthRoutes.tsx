@@ -5,7 +5,7 @@ import MultiStepRegisterForm from "@/pages/authPage/MultiStepRegisterForm";
 import ResetPassword from "@/pages/authPage/ResetPassword";
 import SetPassword from "@/pages/authPage/SetPassword";
 import Signup from "@/pages/authPage/Signup";
-import VerificationOTP from "@/pages/authPage/VerificationOTP";
+// import VerificationOTP from "@/pages/authPage/VerificationOTP";
 
 const authRoutes = [
   {
@@ -16,10 +16,10 @@ const authRoutes = [
     path: "/signup",
     element: <Signup />,
   },
-  {
-    path: "/verification-otp",
-    element: <VerificationOTP />,
-  },
+  // {
+  //   path: "/verification-otp",
+  //   element: <VerificationOTP />,
+  // },
   {
     path: "/set-password",
     element: <SetPassword />,

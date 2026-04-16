@@ -74,7 +74,8 @@ export default function EditStudentProfile() {
   };
 
   const user = useSelector(selectUser);
-  // console.log(user);
+  console.log("user",user);
+  console.log("user",typeof user?.profile?.phone);
 
   return (
     <div className="my-8 md:my-10">
@@ -213,7 +214,7 @@ export default function EditStudentProfile() {
                   value: `${user?.profile?.firstName} ${user?.profile?.lastName}`,
                 },
                 { label: "Email", value: user?.account?.email },
-                { label: "Phone", value: "+20 214521" },
+                { label: "Phone", value: user?.profile?.phone },
                 { label: "Country", value: user?.profile?.country },
 
                 // STUDENT-specific fields
