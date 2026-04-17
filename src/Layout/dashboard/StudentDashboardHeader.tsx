@@ -90,7 +90,7 @@ const StudentDashboardHeader: React.FC<StudentDashboardHeaderProps> = ({
                       className="w-9 h-9 rounded-full object-cover"
                     />
                   ) : (
-                    user?.profile?.firstName.slice(0, 2)
+                    user?.profile?.firstName?.slice(0, 2)
                   )}
                 </span>
               </div>
