@@ -8,7 +8,7 @@ import {
 import { useAppSelector } from "@/store/hook";
 import { RootState } from "@/store/store";
 import { useDispatch } from "react-redux";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import ExamMode from "./medical/examMode/ExamMode";
 import StudyMode from "./medical/studyMode/StudyMode";
 export const tabs = [
@@ -16,7 +16,6 @@ export const tabs = [
   { label: "Exam Mode", value: "exam" },
 ];
 const ParentComponent = () => {
-  const navigate = useNavigate();
 
   const { pathname } = useLocation();
   const { profileType, type } = useAppSelector(
@@ -34,13 +33,7 @@ const ParentComponent = () => {
           <div>
             <DashboardTopSection
               title={`${profileType ?? ""} Content Inventory`}
-              description={`Manage and organize content for ${
-                profileType ?? ""
-              }`}
-              buttonText={`Add Content`}
-              action={() => {
-                navigate("create-content");
-              }}
+              description={`Manage and organize content for ${profileType ?? ""}`}
             />
           </div>
           <CommonSpace>

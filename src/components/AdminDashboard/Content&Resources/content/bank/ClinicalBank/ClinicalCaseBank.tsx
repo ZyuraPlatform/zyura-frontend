@@ -12,9 +12,28 @@ interface Props {
   mcqBank: ClinicalCaseTreeResponse;
   bankId: string;
   setBankId: (id: string) => void;
+  searchTerm: string;
 }
-const ClinicalCaseBank: React.FC<Props> = ({ mcqBank, bankId, setBankId }) => {
+
+const ClinicalCaseBank: React.FC<Props> = ({
+  mcqBank,
+  bankId,
+  setBankId,
+  searchTerm,
+}) => {
   const ClinicalBank = mcqBank.data ?? [];
+
+  const filteredBank = ClinicalBank.filter((item) => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return true;
+    return (
+      item.caseTitle?.toLowerCase().includes(q) ||
+      item.patientPresentation?.toLowerCase().includes(q) ||
+      item.historyOfPresentIllness?.toLowerCase().includes(q) ||
+      item.physicalExamination?.toLowerCase().includes(q) ||
+      item.imaging?.toLowerCase().includes(q)
+    );
+  });
 
   const { data: singleClinicalCase } = useGetClinicalCaseQuery(bankId, {
     skip: bankId === "",
@@ -26,16 +45,16 @@ const ClinicalCaseBank: React.FC<Props> = ({ mcqBank, bankId, setBankId }) => {
   const handleDelete = async (id: string) => {
     await deleteClinicalCase(id)
       .unwrap()
-
       .catch((error) =>
         console.error("Failed to delete Clinical Case:", error),
       );
   };
+
   return (
     <div>
       {bankId === "" ? (
         <div className="grid grid-cols-1 gap-6 p-4  2xl:grid-cols-3">
-          {ClinicalBank.map((item) => (
+          {filteredBank.map((item) => (
             <div
               key={item._id}
               className="border border-border rounded-lg shadow-md p-4 bg-white  transition-shadow duration-200"

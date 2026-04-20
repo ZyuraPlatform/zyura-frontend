@@ -19,12 +19,15 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       const { user, accessToken } = action.payload || {};
 
-      if (!user || !accessToken) {
+      if (!user) {
         console.error("Invalid payload received:", action.payload);
         return;
       }
 
-      state.accessToken = accessToken;
+      if (accessToken) {
+        state.accessToken = accessToken;
+      }
+
       state.user = user;
     },
     logout: (state) => {

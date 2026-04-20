@@ -20,6 +20,9 @@ export const generateZodSchema = (fields: FieldConfig[]) => {
       case "email":
         validator = z.string().email("Invalid email");
         break;
+      case "password":
+        validator = z.string().min(6, "Password must be at least 6 characters");
+        break;
       case "text":
       case "select":
         validator = z.string();
@@ -39,10 +42,7 @@ export const generateZodSchema = (fields: FieldConfig[]) => {
 
     if (field.minLength) {
       if (validator instanceof z.ZodString) {
-        validator = validator.min(
-          field.minLength,
-          `${field.name} is too short`
-        );
+        validator = validator.min(field.minLength, `${field.name} is too short`);
       }
     }
 

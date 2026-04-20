@@ -12,9 +12,21 @@ interface Props {
   mcqBank: OsceTreeResponse;
   bankId: string;
   setBankId: (id: string) => void;
+  searchTerm: string;
 }
-const OSCEBank: React.FC<Props> = ({ mcqBank, bankId, setBankId }) => {
+
+const OSCEBank: React.FC<Props> = ({ mcqBank, bankId, setBankId, searchTerm }) => {
   const osceBank = mcqBank.data ?? [];
+
+  const filteredBank = osceBank.filter((content) => {
+    const q = searchTerm.toLowerCase();
+    if (!q) return true;
+    return (
+      content.name?.toLowerCase().includes(q) ||
+      content.description?.toLowerCase().includes(q) ||
+      content.scenario?.toLowerCase().includes(q)
+    );
+  });
 
   const { data: singleOsce } = useSingleOsceQuery(bankId, {
     skip: bankId === "",
@@ -30,17 +42,20 @@ const OSCEBank: React.FC<Props> = ({ mcqBank, bankId, setBankId }) => {
     await id;
     deleteOsce(id)
       .unwrap()
-
       .catch((error) =>
         console.error("Failed to delete Clinical Case:", error),
       );
   };
+
   return (
     <div>
       {bankId === "" ? (
         <div className="grid grid-cols-1 gap-6 p-4  2xl:grid-cols-3">
-          {osceBank.map((content) => (
-            <div className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+          {filteredBank.map((content) => (
+            <div
+              key={content._id}
+              className="bg-white shadow-md rounded-lg p-6 border border-gray-200"
+            >
               {/* Header */}
               <h2 className="text-xl font-bold mb-2">{content.name}</h2>
               <p className="text-gray-600 mb-2">{content.description}</p>
@@ -54,7 +69,6 @@ const OSCEBank: React.FC<Props> = ({ mcqBank, bankId, setBankId }) => {
                   action={() => handleDelete(content._id)}
                   isLoading={isDeleting}
                 />
-
                 <CommonButton
                   onClick={() => setBankId(content._id)}
                   className=" bg-blue-500 !text-white"

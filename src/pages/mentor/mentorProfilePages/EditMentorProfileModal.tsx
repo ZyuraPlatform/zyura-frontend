@@ -19,8 +19,8 @@ import {
 } from "@/store/features/auth/auth.api";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/hooks/useRedux";
-import { setUser } from "@/store/features/auth/auth.slice";
-import Cookies from "js-cookie";
+import { setUser, selectToken } from "@/store/features/auth/auth.slice";
+import { useSelector } from "react-redux";
 
 interface EditMentorProfileModalProps {
   open: boolean;
@@ -36,6 +36,7 @@ export default function EditMentorProfileModal({
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const [getMe] = useLazyGetMeQuery();
   const dispatch = useAppDispatch();
+  const token = useSelector(selectToken);
 
   const {
     register,
@@ -94,11 +95,11 @@ export default function EditMentorProfileModal({
         toast.success("Profile updated successfully");
 
         // Refresh user data in store
-        const meRes = await getMe(undefined).unwrap();
+        const meRes = await getMe(undefined, false).unwrap();
         dispatch(
           setUser({
-            accessToken: Cookies.get("accessToken"),
             user: meRes?.data,
+            accessToken: token,
           })
         );
 

@@ -16,16 +16,15 @@ import { useAppDispatch } from "@/store/hook";
 import { setUser } from "@/store/features/auth/auth.slice";
 
 const signupSchema = z.object({
+  firstName: z.string().nonempty("First name is required"),   // ✅ kept
+  lastName: z.string().nonempty("Last name is required"),     // ✅ kept
   email: z.string().nonempty("Email is required").email("Invalid email format"),
   password: z
     .string()
     .nonempty("Password is required")
     .min(6, "Password must be at least 6 characters"),
-  phone: z
-  .string()
-  .nonempty("Phone number is required")
-  .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
   studentType: z.string().nonempty("Profile type is required"),
+  // ❌ removed phone (was never in schema before, caused the bug)
 });
 
 type SignupFormInputs = z.infer<typeof signupSchema>;
@@ -74,31 +73,20 @@ const Signup = () => {
 
   // Email signup
   const onSubmit = async (data: SignupFormInputs) => {
-    // const formData = new FormData();
-    // formData.append("email", data.email);
-    // formData.append("password", data.password);
-
     try {
-      // unwrap() will return the resolved data or throw an error
       const result = await registerUser({
+        firstName: data.firstName,   // ✅ added
+        lastName: data.lastName,     // ✅ added
         email: data.email,
         password: data.password,
-        phone: data.phone,
         studentType: data.studentType,
+        // ❌ removed data.phone (not in schema)
       }).unwrap();
 
-      // Success toast
       if (result.success) {
-        // toast.success(result.message);
-
-        // OTP verification flow is temporarily disabled.
-        // localStorage.setItem("setVerificationEmail", data.email);
-
-        // navigate("/verification-otp");
         toast.success("Account created successfully");
         navigate("/login");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const errorMessage =
         err?.data?.message || err?.message || "Something went wrong";
@@ -147,8 +135,8 @@ const Signup = () => {
         </div>
         <div className="absolute bottom-6 left-6 bg-white/80 p-4 rounded-lg text-sm max-w-sm">
           <p className="italic text-gray-700">
-            “This library has saved me countless hours of work and helped me
-            deliver stunning designs to my clients faster than ever before.”
+            "This library has saved me countless hours of work and helped me
+            deliver stunning designs to my clients faster than ever before."
           </p>
           <p className="mt-2 font-semibold text-gray-900">Sofia Davis</p>
         </div>
@@ -165,6 +153,33 @@ const Signup = () => {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+
+            {/* ✅ First Name + Last Name — added side by side */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="First name"
+                  {...register("firstName")}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-sm">{errors.firstName.message}</p>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  {...register("lastName")}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-sm">{errors.lastName.message}</p>
+                )}
+              </div>
+            </div>
+
             {/* Email */}
             <div>
               <input
@@ -197,18 +212,7 @@ const Signup = () => {
               )}
             </div>
 
-            {/* Phone */}
-            <div>
-              <input
-                type="tel"
-                placeholder="Phone number"
-                {...register("phone")}
-                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-sm">{errors.phone.message}</p>
-              )}
-            </div>
+            {/* ❌ Phone field removed — was never in schema, caused TS errors */}
 
             {/* Password */}
             <div className="relative">
