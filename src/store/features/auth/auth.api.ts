@@ -19,6 +19,13 @@ export const userAPI = baseAPI.injectEndpoints({
       invalidatesTags: [],
     }),
 
+    checkEmail: build.query({
+      query: (email: string) => ({
+        url: `/auth/check-email?email=${encodeURIComponent(email)}`,
+        method: "GET",
+      }),
+    }),
+
     verifyOTP: build.mutation({
       query: (data) => ({
         url: "/auth/verified-account",
@@ -30,6 +37,22 @@ export const userAPI = baseAPI.injectEndpoints({
     resendOTP: build.mutation({
       query: (data) => ({
         url: "/auth/new-verification-otp",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    verifyEmail: build.mutation({
+      query: (data: { token: string }) => ({
+        url: "/auth/verify-email",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    resendVerificationEmail: build.mutation({
+      query: (data: { email: string }) => ({
+        url: "/auth/resend-verification-email",
         method: "POST",
         body: data,
       }),
@@ -96,6 +119,13 @@ export const userAPI = baseAPI.injectEndpoints({
       }),
     }),
 
+    getAllProfileTypesCombined: build.query({
+      query: () => ({
+        url: "/profile_type_const/all-combined?limit=10000",
+        method: "GET",
+      }),
+    }),
+
 
     signInWithGoogle: build.mutation({
       query: (data: { email: string; name: string; photo: string }) => ({
@@ -112,15 +142,19 @@ export const userAPI = baseAPI.injectEndpoints({
 export const {
   useLoginMutation,
   useRegisterUserMutation,
+  useLazyCheckEmailQuery,
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useVerifyOTPMutation,
+  useVerifyEmailMutation,
   useLazyGetMeQuery,
   useGetMeQuery,
   useResendOTPMutation,
+  useResendVerificationEmailMutation,
   useUpdateInitialProfileMutation,
   useUpdateProfileMutation,
   useGetAllStudentTypeQuery,
   useGetAllProfessionalTypeQuery,
+  useGetAllProfileTypesCombinedQuery,
   useSignInWithGoogleMutation,
 } = userAPI;

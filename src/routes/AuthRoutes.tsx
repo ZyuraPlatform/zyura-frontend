@@ -5,6 +5,8 @@ import MultiStepRegisterForm from "@/pages/authPage/MultiStepRegisterForm";
 import ResetPassword from "@/pages/authPage/ResetPassword";
 import SetPassword from "@/pages/authPage/SetPassword";
 import Signup from "@/pages/authPage/Signup";
+import EmailVerificationPending from "@/pages/authPage/EmailVerificationPending";
+import VerifyEmail from "@/pages/authPage/VerifyEmail";
 // import VerificationOTP from "@/pages/authPage/VerificationOTP";
 
 const authRoutes = [
@@ -15,6 +17,14 @@ const authRoutes = [
   {
     path: "/signup",
     element: <Signup />,
+  },
+  {
+    path: "/verify-email-pending",
+    element: <EmailVerificationPending />,
+  },
+  {
+    path: "/verify-email",
+    element: <VerifyEmail />,
   },
   // {
   //   path: "/verification-otp",
