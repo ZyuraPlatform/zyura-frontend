@@ -22,6 +22,7 @@ import { useAppDispatch } from "@/store/hook";
 import { setUser } from "@/store/features/auth/auth.slice";
 import { countryDialCodes } from "@/lib/phone/countryDialCodes";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import CountryDialCodeSelect from "@/components/phone/CountryDialCodeSelect";
 
 const signupSchema = z.object({
   firstName: z.string().nonempty("First name is required"),   // ✅ kept
@@ -77,6 +78,7 @@ const Signup = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { isSubmitting, errors },
   } = useForm<SignupFormInputs>({
     resolver: zodResolver(signupSchema),
@@ -295,16 +297,12 @@ const Signup = () => {
             {/* Phone */}
             <div className="flex gap-2">
               <div className="w-36">
-                <select
-                  {...register("countryCode")}
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  {countryDialCodes.map((c) => (
-                    <option key={c.iso2} value={c.dialCode}>
-                      {c.dialCode} {c.name}
-                    </option>
-                  ))}
-                </select>
+                <CountryDialCodeSelect
+                  valueDialCode={watch("countryCode")}
+                  onChange={(v) =>
+                    setValue("countryCode", v.dialCode, { shouldValidate: true })
+                  }
+                />
                 {errors.countryCode && (
                   <p className="text-red-500 text-sm">{errors.countryCode.message}</p>
                 )}
