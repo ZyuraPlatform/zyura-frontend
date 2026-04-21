@@ -108,7 +108,17 @@ const SingleNote: React.FC<ClinicalCaseData> = ({ data, setBankId }) => {
 
     try {
       const formdata = new FormData();
-      formdata.append("data", JSON.stringify(formData));
+      const keepFileIds = uploadedFiles
+        .filter((f) => Boolean(f.url) && !f.file.size)
+        .map((f) => f.id);
+
+      formdata.append(
+        "data",
+        JSON.stringify({
+          ...formData,
+          keepFileIds,
+        }),
+      );
 
       uploadedFiles.forEach((f) => {
         if (f.file.size) formdata.append("files", f.file); // append only new files

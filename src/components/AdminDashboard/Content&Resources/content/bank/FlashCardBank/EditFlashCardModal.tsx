@@ -23,8 +23,9 @@ export type EditFlashCardInput = z.infer<typeof editFlashCardSchema>;
 import ButtonWithLoading from "@/common/button/ButtonWithLoading";
 import CommonButton from "@/common/button/CommonButton";
 import CommonSelect from "@/common/custom/CommonSelect";
+import { useUploadSingleImageMutation } from "@/store/features/adminDashboard/ContentResources/MCQ/mcqApi";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 interface EditFlashCardModalProps {
@@ -47,6 +48,8 @@ const EditFlashCardModal: React.FC<EditFlashCardModalProps> = ({
     handleSubmit,
     reset,
     control,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<EditFlashCardInput>({
     resolver: zodResolver(editFlashCardSchema),
@@ -59,6 +62,18 @@ const EditFlashCardModal: React.FC<EditFlashCardModalProps> = ({
 
   if (!isOpen) return null;
 
+  const [uploadSingleImage, { isLoading: isUploadingImage }] =
+    useUploadSingleImageMutation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageValue = watch("image");
+  const [imagePreview, setImagePreview] = useState<string>(initialData.image ?? "");
+
+  useEffect(() => {
+    setImagePreview(initialData.image ?? "");
+  }, [initialData.image]);
+
+  const canRemoveImage = useMemo(() => Boolean(imageValue || imagePreview), [imagePreview, imageValue]);
+
   const inputClass = {
     label: "block text-sm font-normal text-black font-inter mb-2",
     input:
@@ -70,6 +85,27 @@ const EditFlashCardModal: React.FC<EditFlashCardModalProps> = ({
     onClose();
   };
 
+  const handleUploadImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const result = await uploadSingleImage(formData).unwrap();
+      const fileUrl = result.data.fileUrl;
+      setValue("image", fileUrl, { shouldDirty: true, shouldValidate: true });
+      setImagePreview(fileUrl);
+    } catch (error) {
+      console.error("Image upload error:", error);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setValue("image", "", { shouldDirty: true, shouldValidate: true });
+    setImagePreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <form
@@ -79,6 +115,46 @@ const EditFlashCardModal: React.FC<EditFlashCardModalProps> = ({
         <h2 className="text-xl font-semibold mb-4">Edit Flash Card</h2>
 
         <div className="space-y-3">
+          <div>
+            <label className={inputClass.label}>Image</label>
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className={`cursor-pointer ${inputClass.input}`}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleUploadImage(e.target.files[0]);
+                  }
+                }}
+                disabled={isUploadingImage || isLoading}
+              />
+              {canRemoveImage && (
+                <CommonButton
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={isUploadingImage || isLoading}
+                  className="!text-red-500"
+                >
+                  Remove
+                </CommonButton>
+              )}
+            </div>
+            {isUploadingImage && (
+              <p className="text-blue-500 text-sm mt-1">Uploading image...</p>
+            )}
+            {(imagePreview || imageValue) && (
+              <div className="mt-2">
+                <img
+                  src={imageValue || imagePreview}
+                  alt="Preview"
+                  className="max-h-40 object-contain border rounded"
+                />
+              </div>
+            )}
+          </div>
+
           <div>
             <label className={inputClass.label}>Front Text</label>
             <input
