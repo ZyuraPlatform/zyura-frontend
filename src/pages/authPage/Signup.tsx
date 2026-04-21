@@ -283,7 +283,7 @@ const Signup = () => {
                 <option value="">Select your profile type</option>
                 {profileTypesData?.data?.map((type: any) => (
                   <option key={type._id} value={type._id}>
-                    {type.typeName}
+                    {type.typeName} {type.category ? `(${type.category})` : ""}
                   </option>
                 ))}
               </select>
