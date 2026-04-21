@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import signupImage from "../../assets/signUp/signUpImage.png";
+// Left-side illustration uses a public video asset.
 // import logo from "../../assets/signUp/logo.png";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -198,10 +198,13 @@ const Signup = () => {
     <div className="flex h-screen">
       {/* Left Side */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src="/videos/auth-illustration.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <Link to="/">

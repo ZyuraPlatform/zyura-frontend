@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import signupImage from "../../assets/signUp/signUpImage.png";
+import authHeroVideo from "../../assets/auth/authHero.mp4";
 import logo from "../../assets/signUp/logo.png";
 import { toast } from "sonner";
 import { useForgotPasswordMutation } from "@/store/features/auth/auth.api";
@@ -44,10 +44,13 @@ const ForgotPassword = () => {
     <div className="flex h-screen">
       {/* Left Side */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src={authHeroVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <img src={logo} alt="Logo" />
