@@ -79,6 +79,7 @@ const McqTableForExam: React.FC<McqTableProps> = ({
   const data = isStudent ? studentData : professionalData;
   const isLoading = isStudent ? studentLoading : professionalLoading;
   const mcqs = data?.data.data.mcqs ?? [];
+  const pageLimit = data?.data.meta?.limit ?? 10;
 
   // delete single mcq
   const [deleteSingleExamMcq] = useDeleteSingleExamMcqMutation();
@@ -237,7 +238,7 @@ const McqTableForExam: React.FC<McqTableProps> = ({
                     <TableCell
                       className={`${tableDesign.cell} hidden xl:table-cell`}
                     >
-                      FAN{String(index + 1).padStart(4, "0")}
+                      FAN{String((page - 1) * pageLimit + (index + 1)).padStart(4, "0")}
                     </TableCell>
 
                     <TableCell

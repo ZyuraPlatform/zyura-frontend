@@ -6,26 +6,57 @@ import { FcGoogle } from "react-icons/fc";
 import signupImage from "../../assets/signUp/signUpImage.png";
 // import logo from "../../assets/signUp/logo.png";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import { useRegisterUserMutation, useSignInWithGoogleMutation, useLazyGetMeQuery, useGetAllStudentTypeQuery } from "@/store/features/auth/auth.api";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useRegisterUserMutation,
+  useSignInWithGoogleMutation,
+  useLazyGetMeQuery,
+  useGetAllProfileTypesCombinedQuery,
+  useLazyCheckEmailQuery,
+} from "@/store/features/auth/auth.api";
 import { toast } from "sonner";
 import { auth, googleProvider } from "@/config/firebase.config";
 import { signInWithPopup } from "firebase/auth";
 import Cookies from "js-cookie";
 import { useAppDispatch } from "@/store/hook";
 import { setUser } from "@/store/features/auth/auth.slice";
+import { countryDialCodes } from "@/lib/phone/countryDialCodes";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 const signupSchema = z.object({
   firstName: z.string().nonempty("First name is required"),   // ✅ kept
   lastName: z.string().nonempty("Last name is required"),     // ✅ kept
   email: z.string().nonempty("Email is required").email("Invalid email format"),
+  countryCode: z.string().nonempty("Country code is required"),
+  mobileNumber: z
+    .string()
+    .nonempty("Mobile number is required")
+    .regex(/^\d+$/, "Mobile number must contain digits only"),
   password: z
     .string()
     .nonempty("Password is required")
     .min(6, "Password must be at least 6 characters"),
-  studentType: z.string().nonempty("Profile type is required"),
-  // ❌ removed phone (was never in schema before, caused the bug)
-});
+  confirmPassword: z
+    .string()
+    .nonempty("Confirm password is required")
+    .min(6, "Password must be at least 6 characters"),
+  profileTypeId: z.string().nonempty("Profile type is required"),
+})
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  })
+  .superRefine((data, ctx) => {
+    const e164 = `${data.countryCode}${data.mobileNumber}`;
+    const parsed = parsePhoneNumberFromString(e164);
+    if (!parsed || !parsed.isValid()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mobileNumber"],
+        message: "Invalid mobile number for selected country code",
+      });
+    }
+  });
 
 type SignupFormInputs = z.infer<typeof signupSchema>;
 
@@ -33,20 +64,58 @@ const Signup = () => {
   const [registerUser, { isLoading }] = useRegisterUserMutation();
   const [signInWithGoogle, { isLoading: isSocialLoading }] = useSignInWithGoogleMutation();
   const [getMeTrigger] = useLazyGetMeQuery();
-  const { data: studentTypeData, isLoading: isStudentTypeLoading } = useGetAllStudentTypeQuery({});
+  const { data: profileTypesData, isLoading: isProfileTypesLoading } = useGetAllProfileTypesCombinedQuery(undefined);
+  const [triggerCheckEmail, { isFetching: isCheckingEmail }] = useLazyCheckEmailQuery();
   const dispatch = useAppDispatch();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailExists, setEmailExists] = useState(false);
+  const [emailCheckedValue, setEmailCheckedValue] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { isSubmitting, errors },
   } = useForm<SignupFormInputs>({
     resolver: zodResolver(signupSchema),
+    defaultValues: {
+      countryCode: countryDialCodes[0]?.dialCode ?? "+91",
+    } as any,
   });
 
   const navigate = useNavigate();
+
+  const emailValue = watch("email");
+
+  const debouncedEmail = useMemo(() => emailValue?.trim() || "", [emailValue]);
+
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      const v = debouncedEmail;
+      if (!v || !/^\S+@\S+\.\S+$/.test(v)) {
+        setEmailExists(false);
+        setEmailCheckedValue(null);
+        return;
+      }
+      setEmailCheckedValue(v);
+      try {
+        const res: any = await triggerCheckEmail(v, true).unwrap();
+        if (!active) return;
+        setEmailExists(Boolean(res?.data?.exists));
+      } catch {
+        if (!active) return;
+        setEmailExists(false);
+      }
+    };
+    const t = setTimeout(run, 450);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [debouncedEmail, triggerCheckEmail]);
 
   const handleAuthSuccess = async (accessToken: string) => {
     Cookies.set("accessToken", accessToken);
@@ -74,18 +143,23 @@ const Signup = () => {
   // Email signup
   const onSubmit = async (data: SignupFormInputs) => {
     try {
+      if (emailExists) {
+        toast.error("Email is already registered");
+        return;
+      }
+      const phone = `${data.countryCode}${data.mobileNumber}`;
       const result = await registerUser({
         firstName: data.firstName,   // ✅ added
         lastName: data.lastName,     // ✅ added
         email: data.email,
         password: data.password,
-        studentType: data.studentType,
-        // ❌ removed data.phone (not in schema)
+        phone,
+        profileTypeId: data.profileTypeId,
       }).unwrap();
 
       if (result.success) {
-        toast.success("Account created successfully");
-        navigate("/login");
+        toast.success("Account created. Please verify your email.");
+        navigate("/verify-email-pending", { state: { email: data.email } });
       }
     } catch (err: any) {
       const errorMessage =
@@ -149,7 +223,7 @@ const Signup = () => {
             Create an account
           </h2>
           <p className="text-sm font-normal text-[#71717A] leading-5 mb-6 mt-2">
-            Enter your details below to create your student account
+            Enter your details below to create your account
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
@@ -188,6 +262,12 @@ const Signup = () => {
                 {...register("email")}
                 className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
               />
+              {isCheckingEmail && emailCheckedValue === (emailValue?.trim() || "") && (
+                <p className="text-xs text-[#71717A] mt-1">Checking email…</p>
+              )}
+              {!errors.email && emailExists && (
+                <p className="text-red-500 text-sm mt-1">Email is already registered</p>
+              )}
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
               )}
@@ -196,23 +276,52 @@ const Signup = () => {
             {/* Profile Type */}
             <div>
               <select
-                {...register("studentType")}
+                {...register("profileTypeId")}
                 className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                disabled={isStudentTypeLoading}
+                disabled={isProfileTypesLoading}
               >
                 <option value="">Select your profile type</option>
-                {studentTypeData?.data?.map((type: any) => (
-                  <option key={type._id} value={type.typeName}>
-                    {type.typeName}
+                {profileTypesData?.data?.map((type: any) => (
+                  <option key={type._id} value={type._id}>
+                    {type.typeName} {type.category ? `(${type.category})` : ""}
                   </option>
                 ))}
               </select>
-              {errors.studentType && (
-                <p className="text-red-500 text-sm">{errors.studentType.message}</p>
+              {errors.profileTypeId && (
+                <p className="text-red-500 text-sm">{errors.profileTypeId.message}</p>
               )}
             </div>
 
-            {/* ❌ Phone field removed — was never in schema, caused TS errors */}
+            {/* Phone */}
+            <div className="flex gap-2">
+              <div className="w-36">
+                <select
+                  {...register("countryCode")}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  {countryDialCodes.map((c) => (
+                    <option key={c.iso2} value={c.dialCode}>
+                      {c.dialCode} {c.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.countryCode && (
+                  <p className="text-red-500 text-sm">{errors.countryCode.message}</p>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Mobile number"
+                  {...register("mobileNumber")}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                />
+                {errors.mobileNumber && (
+                  <p className="text-red-500 text-sm">{errors.mobileNumber.message}</p>
+                )}
+              </div>
+            </div>
 
             {/* Password */}
             <div className="relative">
@@ -235,11 +344,32 @@ const Signup = () => {
               )}
             </div>
 
+            {/* Confirm Password */}
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm password"
+                {...register("confirmPassword")}
+                className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              <div
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute top-3 right-2 cursor-pointer text-gray-600 hover:text-gray-800"
+              >
+                {showConfirmPassword ? <Eye /> : <EyeOff />}
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-sm">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
             {/* Sign up button */}
             <button
               type="submit"
               className="w-full bg-blue-main text-sm font-medium text-[#FAFAFA] p-3 rounded-md hover:bg-blue-600 cursor-pointer disabled:opacity-50"
-              disabled={isSubmitting || isLoading || isSocialLoading}
+              disabled={isSubmitting || isLoading || isSocialLoading || isCheckingEmail || emailExists}
             >
               {isSubmitting || isLoading || isSocialLoading ? "Loading..." : "Sign up with Email"}
             </button>
