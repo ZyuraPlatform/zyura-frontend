@@ -36,7 +36,7 @@ interface McqTableProps {
 }
 
 const tableHeaders = [
-  { label: "ID", align: "text-center hidden xl:table-cell" },
+  { label: "S. No", align: "text-center hidden xl:table-cell" },
   { label: "Question", align: "text-center" },
   { label: "Correct Answer", align: "text-center hidden 2xl:table-cell" },
   { label: "Action", align: "text-center" },
@@ -238,7 +238,7 @@ const McqTableForExam: React.FC<McqTableProps> = ({
                     <TableCell
                       className={`${tableDesign.cell} hidden xl:table-cell`}
                     >
-                      FAN{String((page - 1) * pageLimit + (index + 1)).padStart(4, "0")}
+                      {(page - 1) * pageLimit + (index + 1)}
                     </TableCell>
 
                     <TableCell
