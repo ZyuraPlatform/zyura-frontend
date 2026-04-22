@@ -14,7 +14,13 @@ export const flashCardAPI = baseAPI.injectEndpoints({
       query: (data) => ({
         url: "/ai_part/generate-flashcard",
         method: "POST",
-        body: data,
+        body: (() => {
+          // Backend expects multipart: file + JSON string in `data`
+          if (data instanceof FormData) return data;
+          const fd = new FormData();
+          fd.append("data", JSON.stringify(data ?? {}));
+          return fd;
+        })(),
       }),
     }),
 

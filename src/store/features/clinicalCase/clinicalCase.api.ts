@@ -31,7 +31,13 @@ export const clinicalCaseAPI = baseAPI.injectEndpoints({
       query: (caseData: any) => ({
         url: "/ai_part/create_clinical_case",
         method: "POST",
-        body: caseData,
+        body: (() => {
+          // Backend expects multipart: file + JSON string in `data`
+          if (caseData instanceof FormData) return caseData;
+          const fd = new FormData();
+          fd.append("data", JSON.stringify(caseData ?? {}));
+          return fd;
+        })(),
       }),
     }),
 
