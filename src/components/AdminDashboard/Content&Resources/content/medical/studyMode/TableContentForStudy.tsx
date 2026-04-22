@@ -2,6 +2,7 @@ import preview from "@/assets/dashboard/tablePreview.svg";
 import CommonHeader from "@/common/header/CommonHeader";
 import { countLeafNodes, sortByTitleAZ } from "@/help/help";
 import { useGetStudyModeTreeQuery } from "@/store/features/adminDashboard/ContentResources/MCQ/mcqApi";
+import { selectProfessionName, selectRole } from "@/store/features/auth/auth.slice";
 import { useAppSelector } from "@/store/hook";
 import { RootState } from "@/store/store";
 import { Plus } from "lucide-react";
@@ -113,11 +114,18 @@ const TableContentForStudy: React.FC<TableContentProps> = ({
   setInitialContent,
   selectedNode,
 }) => {
-  const { profileType, contentFor } = useAppSelector(
+  const { profileType: adminProfileType, contentFor } = useAppSelector(
     (state: RootState) => state.staticContent,
   );
+  const role = useAppSelector(selectRole);
+  const professionName = useAppSelector(selectProfessionName);
+
+  // Professionals use their own professionName; Admin uses staticContent selection
+  const resolvedProfileType = role === "PROFESSIONAL" ? professionName : adminProfileType;
+  const resolvedContentFor = role === "PROFESSIONAL" ? "professional" : contentFor;
+
   const { data: allStudyModeData } = useGetStudyModeTreeQuery(
-    { profileType, contentFor },
+    { profileType: resolvedProfileType, contentFor: resolvedContentFor },
     { refetchOnMountOrArgChange: true },
   );
 
@@ -132,15 +140,17 @@ const TableContentForStudy: React.FC<TableContentProps> = ({
         <div className="flex items-center gap-2">
           <img src={preview} className="w-5 h-5" alt="alt" />
           <CommonHeader className="text-[#0A0A0A] font-arial! line-clamp-1">
-            Subject for {profileType}
+            Subject for {resolvedProfileType}
           </CommonHeader>
         </div>
-        <button
-          onClick={openModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-lg cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
+        {role !== "PROFESSIONAL" && (
+          <button
+            onClick={openModal}
+            className="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-lg cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-1">

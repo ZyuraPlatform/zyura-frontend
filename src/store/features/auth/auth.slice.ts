@@ -41,6 +41,8 @@ export const { setUser, logout } = authSlice.actions;
 
 export const selectUser = (state: RootState) => state.auth?.user;
 export const selectToken = (state: RootState) => state.auth?.accessToken;
+export const selectRole = (state: RootState) => state.auth?.user?.account?.role;
+export const selectProfessionName = (state: RootState) => state.auth?.user?.profile?.professionName;
 
 const authReducer = authSlice.reducer;
 export default authReducer;

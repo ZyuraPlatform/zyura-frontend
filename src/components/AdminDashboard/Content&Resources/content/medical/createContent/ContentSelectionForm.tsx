@@ -9,13 +9,13 @@ import {
   System,
   Topic,
 } from "@/store/features/adminDashboard/ContentResources/MCQ/types/TreeResponse";
-
 import {
   ContentModeType,
   ContentType,
   setContentModeType,
   setFormData,
 } from "@/store/features/adminDashboard/staticContent/staticContentSlice";
+import { selectProfessionName, selectRole } from "@/store/features/auth/auth.slice";
 import { useAppSelector } from "@/store/hook";
 import { AppDispatch, RootState } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,6 @@ export type CreateContentDataType = z.infer<typeof createContentSchema>;
 
 interface CreateMCQStudyProps {
   handleBreadcrumb: (text: string) => void;
-
   setIsContentCreation: (value: boolean) => void;
 }
 
@@ -56,12 +55,19 @@ const ContentSelectionForm: React.FC<CreateMCQStudyProps> = ({
   handleBreadcrumb,
   setIsContentCreation,
 }) => {
-  const { contentFor, profileType, type, universalSelectNode } = useAppSelector(
+  const { contentFor: adminContentFor, profileType: adminProfileType, type, universalSelectNode } = useAppSelector(
     (state: RootState) => state.staticContent,
   );
+  const role = useAppSelector(selectRole);
+  const professionName = useAppSelector(selectProfessionName);
+
+  // Professionals use their own professionName; Admin uses staticContent selection
+  const resolvedProfileType = role === "PROFESSIONAL" ? professionName : adminProfileType;
+  const resolvedContentFor = role === "PROFESSIONAL" ? "professional" : adminContentFor;
+
   const dispatch = useDispatch<AppDispatch>();
   const { data: allStudyModeData } = useGetStudyModeTreeQuery(
-    { contentFor, profileType },
+    { contentFor: resolvedContentFor, profileType: resolvedProfileType },
     {
       refetchOnMountOrArgChange: true,
     },
@@ -187,10 +193,16 @@ const ContentSelectionForm: React.FC<CreateMCQStudyProps> = ({
   const isFormComplete = subject && system && topic;
 
   const onSubmit = (data: CreateContentDataType) => {
-    const payload = { ...data, profileType, contentFor, type };
-    dispatch(setFormData(payload));
-    setIsContentCreation(true);
+  const payload = { 
+    ...data, 
+    profileType: resolvedProfileType ?? "", 
+    contentFor: resolvedContentFor, 
+    type 
   };
+  dispatch(setFormData(payload));
+  setIsContentCreation(true);
+};
+
   const { contentType } = useAppSelector(
     (state: RootState) => state.staticContent,
   );
@@ -205,6 +217,7 @@ const ContentSelectionForm: React.FC<CreateMCQStudyProps> = ({
   };
 
   const bankTitle = contentTitleMap[contentType] ?? "Content Bank Title";
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <CommonBorderWrapper className="space-y-6">
