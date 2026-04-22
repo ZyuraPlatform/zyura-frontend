@@ -4,6 +4,8 @@ import { type FC } from "react";
 import { cn } from "@/lib/utils";
 
 import { SidebarItem, sidebarItems } from "./sidebarConfig";
+import { useSelector } from "react-redux";
+import { selectRole } from "@/store/features/auth/auth.slice";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -16,7 +18,22 @@ const DashboardSidebar: FC<SidebarProps> = ({
   onToggleCollapse,
   onLinkClick,
 }) => {
-  const groupedItems = sidebarItems.reduce(
+  const role = useSelector(selectRole);
+
+  const hiddenForStudent = new Set([
+    "Diagram",
+    "Drug Cards",
+    "CME/CPD Courses",
+    "Resources",
+    "Upgrade Plan",
+  ]);
+
+  const visibleSidebarItems =
+    role === "STUDENT"
+      ? sidebarItems.filter((i) => !hiddenForStudent.has(i.label))
+      : sidebarItems;
+
+  const groupedItems = visibleSidebarItems.reduce(
     (acc, item) => {
       if (!acc[item.section]) acc[item.section] = [];
       acc[item.section].push(item);

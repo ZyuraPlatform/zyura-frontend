@@ -22,6 +22,10 @@ import diagramIcon from "@/assets/navIcon/diagram.png";
 // import osceIcon from "@/assets/navIcon/osce.png";
 import resourceIcon from "@/assets/navIcon/resource.png";
 
+// Student-only UI requirement:
+// Hide these items for STUDENT in the dashboard sidebar:
+// Diagram, Drug Card(s), CME/CPD Courses, Resources, Upgrade Plan.
+
 export interface SidebarItem {
   icon: React.ElementType | string;
   label: string;
@@ -208,7 +212,7 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     icon: Crown,
-    label: "Update Plan",
+    label: "Upgrade Plan",
     path: "/pricing",
     section: "Study Materials",
     iconColor: "text-lime-600",
