@@ -565,24 +565,27 @@ const Quiz = () => {
                     Correct Solutions & Explanations
                   </h4>
                   <div className="space-y-6">
-                    {currentQuestionData?.options?.map((option: any) => {
-                      const isOptionCorrect = option?.value === currentQuestionData?.correctAnswer;
+                    {(() => {
+                      const correct = currentQuestionData?.correctAnswer;
+                      const correctOpt = currentQuestionData?.options?.find((o: any) => o?.value === correct);
+                      const label = correctOpt?.value ?? correct ?? "?";
+                      const explanation = String(correctOpt?.explanation ?? "").trim();
                       return (
-                        <div key={option?.value} className={`p-4 rounded-xl border ${isOptionCorrect ? 'bg-green-50/30 border-green-100' : 'bg-white border-slate-100'}`}>
+                        <div className="p-4 rounded-xl border bg-green-50/30 border-green-100">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold ${isOptionCorrect ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                              {option?.value}
+                            <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold bg-green-600 text-white">
+                              {label}
                             </span>
-                            <span className={`text-xs font-bold ${isOptionCorrect ? 'text-green-700' : 'text-slate-500'}`}>
-                              Choice {option?.value} {isOptionCorrect ? "(Correct Solution)" : ""}
+                            <span className="text-xs font-bold text-green-700">
+                              Choice {label} (Correct Solution)
                             </span>
                           </div>
-                          <p className={`text-sm leading-relaxed ${isOptionCorrect ? 'text-green-900 font-medium' : 'text-slate-600'}`}>
-                            {option?.explanation || "No explanation provided for this option."}
+                          <p className="text-sm leading-relaxed text-green-900 font-medium">
+                            {explanation || "No explanation provided."}
                           </p>
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
                 </div>
               )}
