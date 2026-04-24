@@ -1,3 +1,5 @@
+// studyPlan.api.ts — full replacement
+
 import { baseAPI } from "@/store/api/baseApi";
 
 const studyPlanAPI = baseAPI.injectEndpoints({

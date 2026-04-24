@@ -1,9 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
 
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
-@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/typography"; */
+@import url("https://fonts.googleapis.com/css2?family=Pattaya&family=Sora:wght@300;400;500;600;700;800&display=swap");
+@config "../tailwind.config.js";
+@import "tailwindcss";
+@import "swiper/css";
+@import "swiper/css/pagination";
 
 @theme {
   --color-black-main: #111827;

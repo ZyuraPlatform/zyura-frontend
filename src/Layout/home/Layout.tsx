@@ -1,7 +1,7 @@
 import FaviconUpdater from "@/components/FaviconUpdater";
 import { Outlet } from "react-router-dom";
-import Footer from "./Footer";
-import Navbar from "./Navbar";
+// import Footer from "./Footer";
+// import Navbar from "./Navbar";
 import SocketTracker from "@/common/SocketTracker";
 import ScrollToTop from "@/common/ScrollToTop";
 
@@ -11,11 +11,12 @@ const Layout: React.FC = () => {
       <FaviconUpdater />
       <SocketTracker />
       <ScrollToTop />
-      <Navbar />
+      {/* <Navbar /> */}
+      
       <main>
         <Outlet />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

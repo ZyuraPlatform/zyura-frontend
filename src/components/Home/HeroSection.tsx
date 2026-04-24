@@ -1,88 +1,178 @@
-import CommonWrapper from "@/common/CommonWrapper";
-import heroIcon1 from "@/assets/home/hero_icon_1.png";
-import heroIcon2 from "@/assets/home/hero_icon_2.png";
-import heroIcon3 from "@/assets/home/hero_icon_3.svg";
-import bannerImage from "@/assets/home/heroBanner2.png";
-import PrimaryButton from "../reusable/PrimaryButton";
-import { useNavigate } from "react-router-dom";
+import { Autoplay, Pagination, A11y } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
+import heroBanner from "../../assets/home/hero-banner.png";
+import SplitText from "../ui/SplitText";
 
-const roles = [
+const heroSlides = [
   {
-    id: 1,
-    icon: heroIcon1,
-    title: "Student",
-    alt: "student icon",
+    image: heroBanner,
+    title: "Welcome to Your Personalized AI Learning Experience",
+    description:
+      "From AI-powered MCQs & Exams to real-world clinical simulations, We’re here to help you succeed in every stage of your medical journey.",
   },
   {
-    id: 2,
-    icon: heroIcon2,
-    title: "Professional",
-    alt: "professional icon",
+    image:
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=2000&q=80",
+    title: "Learn Smarter With AI-Powered Study Support",
+    description:
+      "Master tough concepts faster with adaptive quizzes, practical notes, and guided study plans designed for medical students.",
   },
   {
-    id: 3,
-    icon: heroIcon3,
-    title: "Mentor",
-    alt: "mentor icon",
+    image:
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=2000&q=80",
+    title: "Collaborate, Practice, and Grow Together",
+    description:
+      "Join focused study groups, connect with mentors, and build confidence with a community that keeps you moving forward.",
   },
 ];
 
+// const roles = [
+//   {
+//     id: 1,
+//     icon: heroIcon1,
+//     title: "Student",
+//     alt: "student icon",
+//   },
+//   {
+//     id: 2,
+//     icon: heroIcon2,
+//     title: "Professional",
+//     alt: "professional icon",
+//   },
+//   {
+//     id: 3,
+//     icon: heroIcon3,
+//     title: "Mentor",
+//     alt: "mentor icon",
+//   },
+// ];
+
 export default function HeroSection() {
-  const navigate = useNavigate();
+  const handleAnimationComplete = () => {
+    console.log('All letters have animated!');
+  };
+
   return (
-    <div className="bg-[#FAFAFA]">
-      <CommonWrapper>
-        <div className="lg:grid grid-cols-2 gap-10 items-center">
-          {/* Left Content */}
-          <div className="py-10 md:py-16">
-            <h1 className="text-3xl md:text-5xl font-bold text-[#1E293B] mb-4">
-              Welcome to Your Medical <br /> Student Hub
-            </h1>
-            <p className="text-base md:text-lg text-[#334155]">
-              Learn smarter, connect faster, succeed together.
-            </p>
+    <section className="relative h-screen w-full overflow-hidden">
+      <Swiper
+        modules={[Autoplay, Pagination, A11y]}
+        loop
+        navigation={false}
+        speed={900}
+        autoplay={{ delay: 5000, disableOnInteraction: false }}
+        // autoplay={false}
+        pagination={{ clickable: true }}
+        className="h-full w-full"
+      >
+        {heroSlides.map((slide) => (
+          <SwiperSlide key={slide.image}>
+            <div className="relative h-full w-full">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="h-full w-full object-cover"
+              />
 
-            {/* Role Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6 md:my-8 lg:my-10 max-w-2xl">
-              {roles.map(({ id, icon, title, alt }) => (
-                <div
-                  key={id}
-                  className="rounded-lg border bg-blue-50 border-[#0EA5E94D]/30 p-4 md:p-5"
-                >
-                  <img src={icon} alt={alt} />
-                  <h3 className="text-sm md:text-lg font-semibold text-blue-800 mt-2 text-nowrap">
-                    {title}
-                  </h3>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70" />
+
+              <div className="absolute -bottom-30 left-2/4 -translate-3/6 flex items-center w-full">
+                <div className="mx-auto mt-36 w-full max-w-5xl px-6 text-center lg:mt-28 lg:px-10">
+                  <h1 className="">
+
+                  </h1>
+                  <SplitText
+                    text={slide.title}
+                    className="mx-auto max-w-4xl font-sora text-3xl lg:text-6xl font-bold leading-[1.08] text-white md:text-5xl"
+                    delay={50}
+                    duration={0.7}
+                    ease="power3.out"
+                    splitType="chars"
+                    from={{ opacity: 0, y: 40 }}
+                    to={{ opacity: 1, y: 0 }}
+                    threshold={0.1}
+
+                    textAlign="center"
+                    onLetterAnimationComplete={handleAnimationComplete}
+                  />
+
+                  <p className="mx-auto mt-1 lg:mt-6 max-w-3xl text-base font-light leading-relaxed text-white/90 md:text-xl">
+                    {slide.description}
+                  </p>
+
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                    <a
+                      href="#"
+                      className="rounded-xl bg-brand px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-[#0a4f9f]"
+                    >
+                      Join Study Group
+                    </a>
+                    <a
+                      href="#"
+                      className="rounded-xl border border-white/85 px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-white/10"
+                    >
+                      Start Learning Now
+                    </a>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </section>
+    // <div className="bg-[#FAFAFA]">
+    //   <CommonWrapper>
+    //     <div className="lg:grid grid-cols-2 gap-10 items-center">
+    //       {/* Left Content */}
+    //       <div className="py-10 md:py-16">
+    //         <h1 className="text-3xl md:text-5xl font-bold text-[#1E293B] mb-4">
+    //           Welcome to Your Medical <br /> Student Hub
+    //         </h1>
+    //         <p className="text-base md:text-lg text-[#334155]">
+    //           Learn smarter, connect faster, succeed together.
+    //         </p>
 
-            {/* CTA Buttons */}
-            <div className="flex gap-5 items-center">
-              <PrimaryButton
-                onClick={() => {
-                  navigate("/dashboard/smart-study");
-                }}
-                className="bg-teal-600"
-              >
-                Join Study Group
-              </PrimaryButton>
-              <PrimaryButton
-                onClick={() => {
-                  navigate("/dashboard/quiz-page");
-                }}
-              >
-                Take a Quiz
-              </PrimaryButton>
-            </div>
-          </div>
+    //         {/* Role Cards */}
+    //         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6 md:my-8 lg:my-10 max-w-2xl">
+    //           {roles.map(({ id, icon, title, alt }) => (
+    //             <div
+    //               key={id}
+    //               className="rounded-lg border bg-blue-50 border-[#0EA5E94D]/30 p-4 md:p-5"
+    //             >
+    //               <img src={icon} alt={alt} />
+    //               <h3 className="text-sm md:text-lg font-semibold text-blue-800 mt-2 text-nowrap">
+    //                 {title}
+    //               </h3>
+    //             </div>
+    //           ))}
+    //         </div>
 
-          {/* Right Banner */}
-          <div className="hidden lg:block pt-10">
-            <img src={bannerImage} alt="Hero banner" />
-          </div>
-        </div>
-      </CommonWrapper>
-    </div>
+    //         {/* CTA Buttons */}
+    //         <div className="flex gap-5 items-center">
+    //           <PrimaryButton
+    //             onClick={() => {
+    //               navigate("/dashboard/smart-study");
+    //             }}
+    //             className="bg-teal-600"
+    //           >
+    //             Join Study Group
+    //           </PrimaryButton>
+    //           <PrimaryButton
+    //             onClick={() => {
+    //               navigate("/dashboard/quiz-page");
+    //             }}
+    //           >
+    //             Take a Quiz
+    //           </PrimaryButton>
+    //         </div>
+    //       </div>
+
+    //       {/* Right Banner */}
+    //       <div className="hidden lg:block pt-10">
+    //         <img src={bannerImage} alt="Hero banner" />
+    //       </div>
+    //     </div>
+    //   </CommonWrapper>
+    // </div>
   );
 }

@@ -25,19 +25,13 @@ const MedicalStudyGoalTracker: React.FC = () => {
   const { data, isLoading } = useGetGoalQuery({});
 
   const { data: treeData, isLoading: isTreeLoading } = useGetMCQBankTreeQuery(
-    {},
+    {}
   );
 
   const availableSubjects: Subject[] =
     treeData?.data?.map((subject: any) => ({
       name: subject.subjectName,
-      systems: subject.systems.map((system: any) => ({
-        name: system.name,
-        topics: (system.topics ?? []).map((topic: any) => ({
-          topicName: topic.topicName,
-          subTopics: topic.subTopics ?? [],
-        })),
-      })),
+      systems: subject.systems.map((system: any) => system.name),
     })) || [];
 
   const apiGoal = data?.data?.[0];
@@ -50,22 +44,22 @@ const MedicalStudyGoalTracker: React.FC = () => {
   });
 
   const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubject[]>(
-    [],
+    []
   );
 
   const handleSubjectToggle = (subjectName: string): void => {
     const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName,
+      (s) => s.subjectName === subjectName
     );
 
     if (existingIndex >= 0) {
       setSelectedSubjects(
-        selectedSubjects.filter((s) => s.subjectName !== subjectName),
+        selectedSubjects.filter((s) => s.subjectName !== subjectName)
       );
     } else {
       setSelectedSubjects([
         ...selectedSubjects,
-        { subjectName, systemNames: [], systems: [], fullSubject: false },
+        { subjectName, systemNames: [], fullSubject: false },
       ]);
     }
   };
@@ -75,7 +69,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
     if (!subject) return;
 
     const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName,
+      (s) => s.subjectName === subjectName
     );
 
     if (existingIndex >= 0) {
@@ -86,23 +80,13 @@ const MedicalStudyGoalTracker: React.FC = () => {
         updated[existingIndex] = {
           subjectName,
           systemNames: [],
-          systems: [],
           fullSubject: false,
         };
       } else {
         updated[existingIndex] = {
           subjectName,
-          systemNames: subject.systems.map((s) => s.name),
+          systemNames: [...subject.systems],
           fullSubject: true,
-          systems: subject.systems.map((sys) => ({
-            systemName: sys.name,
-            fullSystem: true,
-            topics: sys.topics.map((t) => ({
-              topicName: t.topicName,
-              fullTopic: true,
-              subTopicNames: [...t.subTopics],
-            })),
-          })),
         };
       }
       setSelectedSubjects(updated);
@@ -111,174 +95,35 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const handleSystemToggle = (
     subjectName: string,
-    systemName: string,
+    systemName: string
   ): void => {
     const subject = availableSubjects.find((s) => s.name === subjectName);
     if (!subject) return;
 
     const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName,
+      (s) => s.subjectName === subjectName
     );
 
     if (existingIndex >= 0) {
       const updated = [...selectedSubjects];
       const systemIndex =
-        updated[existingIndex].systemNames!.indexOf(systemName);
+        updated[existingIndex].systemNames.indexOf(systemName);
 
       if (systemIndex >= 0) {
         updated[existingIndex].systemNames = updated[
           existingIndex
-        ].systemNames!.filter((s) => s !== systemName);
-        updated[existingIndex].systems = updated[existingIndex].systems.filter(
-          (s) => s.systemName !== systemName,
-        );
+        ].systemNames.filter((s) => s !== systemName);
       } else {
         updated[existingIndex].systemNames = [
-          ...updated[existingIndex].systemNames!,
+          ...updated[existingIndex].systemNames,
           systemName,
-        ];
-        updated[existingIndex].systems = [
-          ...updated[existingIndex].systems,
-          { systemName, topics: [], fullSystem: false },
         ];
       }
 
       updated[existingIndex].fullSubject =
-        updated[existingIndex].systemNames!.length === subject.systems.length;
+        updated[existingIndex].systemNames.length === subject.systems.length;
       setSelectedSubjects(updated);
     }
-  };
-
-  const handleFullSystemToggle = (
-    subjectName: string,
-    systemName: string,
-  ): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    const system = subject?.systems.find((s) => s.name === systemName);
-    if (!system) return;
-
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: s.systems.map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            if (sys.fullSystem)
-              return { ...sys, fullSystem: false, topics: [] };
-            return {
-              ...sys,
-              fullSystem: true,
-              topics: system.topics.map((t) => ({
-                topicName: t.topicName,
-                fullTopic: true,
-                subTopicNames: [...t.subTopics],
-              })),
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-  ): void => {
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: s.systems.map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            const exists = sys.topics.find((t) => t.topicName === topicName);
-            if (exists) {
-              return {
-                ...sys,
-                topics: sys.topics.filter((t) => t.topicName !== topicName),
-              };
-            }
-            return {
-              ...sys,
-              topics: [
-                ...sys.topics,
-                { topicName, subTopicNames: [], fullTopic: false },
-              ],
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleFullTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-  ): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    const system = subject?.systems.find((s) => s.name === systemName);
-    const topic = system?.topics.find((t) => t.topicName === topicName);
-    if (!topic) return;
-
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: s.systems.map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            return {
-              ...sys,
-              topics: sys.topics.map((t) => {
-                if (t.topicName !== topicName) return t;
-                if (t.fullTopic)
-                  return { ...t, fullTopic: false, subTopicNames: [] };
-                return {
-                  ...t,
-                  fullTopic: true,
-                  subTopicNames: [...topic.subTopics],
-                };
-              }),
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleSubTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-    subTopicName: string,
-  ): void => {
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: s.systems.map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            return {
-              ...sys,
-              topics: sys.topics.map((t) => {
-                if (t.topicName !== topicName) return t;
-                const has = t.subTopicNames.includes(subTopicName);
-                return {
-                  ...t,
-                  subTopicNames: has
-                    ? t.subTopicNames.filter((st) => st !== subTopicName)
-                    : [...t.subTopicNames, subTopicName],
-                };
-              }),
-            };
-          }),
-        };
-      }),
-    );
   };
 
   const calculateDuration = (): number => {
@@ -296,8 +141,8 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const calculateHoursPerSystem = (): string => {
     const totalSystems = selectedSubjects.reduce(
-      (total, subject) => total + subject.systemNames!.length,
-      0,
+      (total, subject) => total + subject.systemNames.length,
+      0
     );
     if (totalSystems === 0) return "0";
     return (calculateTotalStudyHours() / totalSystems).toFixed(1);
@@ -311,7 +156,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
       endDate: formData.endDate,
       selectedSubjects: selectedSubjects.map((s) => ({
         subjectName: s.subjectName,
-        systemNames: s.systemNames ?? [],
+        systemNames: s.systemNames,
       })),
     };
 
@@ -329,7 +174,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
         error?.data?.message ||
           `Failed to ${
             isEditMode ? "update" : "create"
-          } goal. Please try again ❌`,
+          } goal. Please try again ❌`
       );
     }
 
@@ -366,7 +211,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
           subjectName: subject.subjectName,
           systemNames: subject.systemNames,
           fullSubject: subject.fullSubject || false,
-        })),
+        }))
       );
     }
     setShowModal(true);
@@ -409,10 +254,6 @@ const MedicalStudyGoalTracker: React.FC = () => {
               onSubjectToggle={handleSubjectToggle}
               onFullSubjectToggle={handleFullSubjectToggle}
               onSystemToggle={handleSystemToggle}
-              onFullSystemToggle={handleFullSystemToggle}
-              onTopicToggle={handleTopicToggle}
-              onFullTopicToggle={handleFullTopicToggle}
-              onSubTopicToggle={handleSubTopicToggle}
               onPrevious={() => setCurrentStep(1)}
               onNext={() => setCurrentStep(3)}
             />
