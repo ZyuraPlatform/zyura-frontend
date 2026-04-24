@@ -421,6 +421,7 @@ export const Step3: React.FC<Step3Props> = ({
 
     <div className="flex justify-between mt-6">
       <button onClick={onPrevious} className="px-4 py-2 text-gray-600 hover:text-gray-800 cursor-pointer">← Previous</button>
+      
       <button onClick={onCreate} disabled={isLoading}
         className={`px-6 py-2 rounded-lg cursor-pointer ${isLoading ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white hover:bg-blue-600"}`}>
         {isLoading ? "Saving..." : isEditMode ? "Update Preference" : "Create Preference"}
