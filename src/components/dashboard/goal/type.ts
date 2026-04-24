@@ -1,15 +1,44 @@
-import { ReactNode } from "react";
+// type.ts — full replacement
 
-// Types
+export interface SubTopic {
+  name: string;
+}
+
+export interface Topic {
+  topicName: string;
+  subTopics: string[];
+}
+
+export interface System {
+  name: string;
+  topics: Topic[];
+}
+
 export interface Subject {
   name: string;
-  systems: string[];
+  systems: System[]; // ← now full System objects, not just string[]
+}
+
+export interface SelectedSubTopic {
+  name: string;
+}
+
+export interface SelectedTopic {
+  topicName: string;
+  subTopicNames: string[]; // selected subtopics
+  fullTopic: boolean;
+}
+
+export interface SelectedSystem {
+  systemName: string;
+  topics: SelectedTopic[];
+  fullSystem: boolean;
 }
 
 export interface SelectedSubject {
   subjectName: string;
-  systemNames: string[];
-  fullSubject?: boolean;
+  systems: SelectedSystem[]; // ← was systemNames: string[]
+  fullSubject: boolean;
 }
 
 export interface FormData {
@@ -19,47 +48,11 @@ export interface FormData {
   endDate: string;
 }
 
-export interface Goal {
-  todayStudyHours: string | number;
-  _id: string;
-  goalName: string;
-  studyHoursPerDay: number;
-  startDate: string;
-  endDate: string;
-  selectedSubjects: SelectedSubject[];
-  studentId: string;
-  goalStatus: string;
-  totalCompletedStudyHours: number;
-  createdAt: string;
-  updatedAt: string;
-  totalDays: number;
-  totalRequiredHours: number;
-  completedHours: number;
-  progressPercentage: number;
-  daysLeft: number;
-  remainingHours: number;
-  accuracy?: number;
-  complete?: number;
-}
-
-export interface StepIndicatorProps {
-  currentStep: number;
-}
-
-export interface EmptyStateProps {
-  onSetGoal: () => void;
-}
-
-export interface DashboardProps {
-  goal: Goal;
-  onChangeGoal: () => void;
-}
-
 export interface ModalProps {
   showModal: boolean;
   currentStep: number;
   onClose: () => void;
-  children: ReactNode;
+  children?: React.ReactNode;
   isEditMode?: boolean;
 }
 
@@ -76,6 +69,10 @@ export interface Step2Props {
   onSubjectToggle: (subjectName: string) => void;
   onFullSubjectToggle: (subjectName: string) => void;
   onSystemToggle: (subjectName: string, systemName: string) => void;
+  onFullSystemToggle: (subjectName: string, systemName: string) => void;
+  onTopicToggle: (subjectName: string, systemName: string, topicName: string) => void;
+  onFullTopicToggle: (subjectName: string, systemName: string, topicName: string) => void;
+  onSubTopicToggle: (subjectName: string, systemName: string, topicName: string, subTopicName: string) => void;
   onPrevious: () => void;
   onNext: () => void;
 }

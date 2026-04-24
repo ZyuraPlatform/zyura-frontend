@@ -15,6 +15,7 @@ import {
   TestTubeDiagonal,
   NotebookText,
   Crown,
+  Target,
 } from "lucide-react";
 
 import flashcardIcon from "@/assets/navIcon/Flashcard.png";
@@ -44,6 +45,14 @@ export const sidebarItems: SidebarItem[] = [
     icon: Home,
     label: "Home",
     path: "/dashboard",
+    section: "main",
+    iconColor: "text-gray-700",
+    iconBgColor: "bg-gray-100",
+  },
+  {
+    icon: Target,
+    label: "Smart Study Planner",
+    path: "/dashboard/smart-study-plan",
     section: "main",
     iconColor: "text-gray-700",
     iconBgColor: "bg-gray-100",
@@ -103,7 +112,6 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     icon: CalendarRange,
-    // label: "Smart Study Planner",
     label: "Preference",
     path: "/dashboard/smart-study",
     section: "AI Tools",

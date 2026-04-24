@@ -29,6 +29,7 @@ import MyResource from "@/pages/dashboard/careerResource/MyResource";
 import CreateStudyPlan from "@/pages/dashboard/study plan/CreateStudyPlan";
 import MyPlan from "@/pages/dashboard/study plan/MyPlan";
 import WeeklyPlan from "@/pages/dashboard/study plan/WeeklyPlan";
+import SmartStudyPlanPage from "@/pages/dashboard/study plan/SmartStudyPlanPage";
 import EditStudentProfile from "@/pages/dashboard/student profile/EditStudentProfile";
 import DailyChallenge from "@/pages/dashboard/gamifiedLearning/DailyChallenge";
 import DailyChallengeQuiz from "@/pages/dashboard/gamifiedLearning/DailyChallengeQuiz";
@@ -317,6 +318,10 @@ const dashboardRoutes = {
     {
       path: "smart-study",
       element: <MyPlan />,
+    },
+    {
+      path: "smart-study-plan",
+      element: <SmartStudyPlanPage />,
     },
     {
       path: "weekly-plan/:id",
