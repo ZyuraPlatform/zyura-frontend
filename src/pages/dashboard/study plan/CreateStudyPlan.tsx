@@ -37,14 +37,10 @@ export default function CreateStudyPlan() {
   const [createStudyPlan, { isLoading }] = useCreateStudyPlanMutation();
   const { data: treeData } = useGetMCQBankTreeQuery({});
   const subjects: SubjectTree[] = treeData?.data || [];
-  const today = new Date();
-  const maxDate = new Date();
-  maxDate.setDate(today.getDate() + 3);
 
   const [examName, setExamName] = useState("");
   const [dailyTime, setDailyTime] = useState("");
   const [examDate, setExamDate] = useState("");
-  // const [examType, setExamType] = useState("");
 
   const [subject, setSubject] = useState("");
   const [system, setSystem] = useState("");
@@ -82,15 +78,32 @@ export default function CreateStudyPlan() {
     setSubTopic("");
   }, [topic]);
 
+  // Optional safety guard
+  useEffect(() => {
+    if (!systemList.find((s) => s.name === system)) {
+      setSystem("");
+    }
+  }, [systemList]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newErrors = [];
+    const newErrors: string[] = [];
+
+    const parsedTime = Number(dailyTime);
+
     if (!examName) newErrors.push("examName");
-    if (!dailyTime) newErrors.push("dailyTime");
+    if (!parsedTime || parsedTime <= 0) newErrors.push("dailyTime");
     if (!examDate) newErrors.push("examDate");
-    // if (!examType) newErrors.push("examType");
+    if (examDate && new Date(examDate) <= new Date()) newErrors.push("examDate");
+
     if (!subject) newErrors.push("subject");
+    if (!system) newErrors.push("system");
+    if (!topic) newErrors.push("topic");
+
+    if (topic && subTopicList.length > 0 && !subTopic) {
+      newErrors.push("subTopic");
+    }
 
     if (newErrors.length > 0) {
       setErrors(newErrors);
@@ -101,8 +114,8 @@ export default function CreateStudyPlan() {
     const payload = {
       exam_name: examName,
       exam_date: examDate,
-      daily_study_time: Number(dailyTime),
-      exam_type: "", //examType,
+      daily_study_time: parsedTime,
+      exam_type: "",
       topics: [
         {
           subject,
@@ -118,7 +131,6 @@ export default function CreateStudyPlan() {
       const planId = response?.data?._id || response?._id;
 
       if (planId) {
-        // toast.success("Study plan created successfully!");
         navigate(`/dashboard/weekly-plan/${planId}`);
       } else {
         toast.error("Failed to retrieve study plan ID");
@@ -145,9 +157,9 @@ export default function CreateStudyPlan() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5x mx-auto p-1 md:p-6"
+        className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto p-1 md:p-6"
       >
-        {/* Left Side: Exam Information */}
+        {/* Left Side */}
         <div className="p-6 border rounded-xl border-black/10 bg-white">
           <h3 className="text-lg font-semibold mb-2">Exam Information</h3>
           <p className="text-sm text-gray-500 mb-4">
@@ -165,11 +177,8 @@ export default function CreateStudyPlan() {
                   setExamName(e.target.value);
                   clearError("examName");
                 }}
-                placeholder="e.g., Gastroenterology & Hepatology Block Exam"
-                className={`transition-all duration-300 ${errors.includes("examName")
-                    ? "border-red-500 bg-red-50 focus-visible:ring-red-500"
-                    : ""
-                  }`}
+                placeholder="e.g., Gastroenterology Exam"
+                className={errors.includes("examName") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
 
@@ -180,17 +189,13 @@ export default function CreateStudyPlan() {
               <Input
                 type="number"
                 min="0"
-                max={4}
+                max={12}
                 value={dailyTime}
                 onChange={(e) => {
                   setDailyTime(e.target.value);
                   clearError("dailyTime");
                 }}
-                placeholder="e.g., 2"
-                className={`transition-all duration-300 ${errors.includes("dailyTime")
-                  ? "border-red-500 bg-red-50 focus-visible:ring-red-500"
-                  : ""
-                  }`}
+                className={errors.includes("dailyTime") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
 
@@ -201,120 +206,56 @@ export default function CreateStudyPlan() {
               <Input
                 type="date"
                 min={new Date().toISOString().split("T")[0]}
-                max={maxDate.toISOString().split("T")[0]}
                 value={examDate}
                 onChange={(e) => {
                   setExamDate(e.target.value);
                   clearError("examDate");
                 }}
-                className={`transition-all duration-300 ${errors.includes("examDate")
-                  ? "border-red-500 bg-red-50 focus-visible:ring-red-500"
-                  : ""
-                  }`}
+                className={errors.includes("examDate") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
-
-            {/* <div className="grid gap-2 col-span-1 lg:col-span-2">
-              <Label className={errors.includes("examType") ? "text-red-500" : ""}>
-                Exam Type
-              </Label>
-              <Select
-                value={examType}
-                onValueChange={(val) => {
-                  setExamType(val);
-                  clearError("examType");
-                }}
-              >
-                <SelectTrigger
-                  className={`transition-all duration-300 ${errors.includes("examType")
-                    ? "border-red-500 bg-red-50 focus:ring-red-500"
-                    : ""
-                    }`}
-                >
-                  <SelectValue placeholder="Select Exam Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="block">Block Exam</SelectItem>
-                  <SelectItem value="clinical">Clinical</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div> */}
           </div>
         </div>
 
-        {/* Right Side: Topics Selection */}
+        {/* Right Side */}
         <div className="p-6 border rounded-xl border-black/10 bg-white flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Topics to Cover</h3>
-          <p className="text-sm text-gray-500">
-            Select the topics you need to study for this exam
-          </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
-            {/* Subject Dropdown */}
             <div className="grid gap-2">
               <Label className={errors.includes("subject") ? "text-red-500" : ""}>
                 Subject
               </Label>
-              <Select
-                value={subject}
-                onValueChange={(val) => {
-                  setSubject(val);
-                  clearError("subject");
-                }}
-              >
-                <SelectTrigger
-                  className={`transition-all duration-300 ${errors.includes("subject")
-                    ? "border-red-500 bg-red-50 focus:ring-red-500"
-                    : ""
-                    }`}
-                >
+              <Select value={subject} onValueChange={setSubject}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subjects.length > 0 ? (
-                    subjects.map((sub) => (
-                      <SelectItem key={sub._id} value={sub.subjectName}>
-                        {sub.subjectName}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      No Subjects found
-                    </div>
-                  )}
+                  {subjects.map((sub) => (
+                    <SelectItem key={sub._id} value={sub.subjectName}>
+                      {sub.subjectName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* System Dropdown */}
             <div className="grid gap-2">
               <Label>System</Label>
-              <Select
-                value={system}
-                onValueChange={setSystem}
-                disabled={!subject}
-              >
+              <Select value={system} onValueChange={setSystem} disabled={!subject}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select System" />
                 </SelectTrigger>
                 <SelectContent>
-                  {systemList.length > 0 ? (
-                    systemList.map((sys) => (
-                      <SelectItem key={sys.name} value={sys.name}>
-                        {sys.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      No Systems found
-                    </div>
-                  )}
+                  {systemList.map((sys) => (
+                    <SelectItem key={sys.name} value={sys.name}>
+                      {sys.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Topic Dropdown */}
             <div className="grid gap-2">
               <Label>Topic</Label>
               <Select value={topic} onValueChange={setTopic} disabled={!system}>
@@ -322,44 +263,27 @@ export default function CreateStudyPlan() {
                   <SelectValue placeholder="Select Topic" />
                 </SelectTrigger>
                 <SelectContent>
-                  {topicList.length > 0 ? (
-                    topicList.map((t) => (
-                      <SelectItem key={t.topicName} value={t.topicName}>
-                        {t.topicName}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      No Topics found
-                    </div>
-                  )}
+                  {topicList.map((t) => (
+                    <SelectItem key={t.topicName} value={t.topicName}>
+                      {t.topicName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Sub-Topic Dropdown */}
             <div className="grid gap-2">
               <Label>Sub-Topic</Label>
-              <Select
-                value={subTopic}
-                onValueChange={setSubTopic}
-                disabled={!topic}
-              >
+              <Select value={subTopic} onValueChange={setSubTopic} disabled={!topic}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Sub-Topic" />
                 </SelectTrigger>
                 <SelectContent>
-                  {subTopicList.length > 0 ? (
-                    subTopicList.map((st) => (
-                      <SelectItem key={st} value={st}>
-                        {st}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      No Sub-Topics found
-                    </div>
-                  )}
+                  {subTopicList.map((st) => (
+                    <SelectItem key={st} value={st}>
+                      {st}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -368,7 +292,7 @@ export default function CreateStudyPlan() {
           <button
             disabled={isLoading}
             type="submit"
-            className="w-full flex justify-center gap-4 bg-blue-main text-white py-2 rounded-lg hover:bg-blue-main/70 cursor-pointer mt-auto"
+            className="w-full flex justify-center gap-4 bg-blue-main text-white py-2 rounded-lg"
           >
             <Atom className={isLoading ? "animate-spin" : ""} />
             {isLoading ? "Generating..." : "Generate Preference"}

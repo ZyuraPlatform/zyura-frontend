@@ -109,45 +109,53 @@ const MedicalStudyGoalTracker: React.FC = () => {
     }
   };
 
-  const handleSystemToggle = (
-    subjectName: string,
-    systemName: string,
-  ): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    if (!subject) return;
+ const handleSystemToggle = (
+  subjectName: string,
+  systemName: string,
+): void => {
+  const subject = availableSubjects.find((s) => s.name === subjectName);
+  if (!subject) return;
 
-    const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName,
+  const existingIndex = selectedSubjects.findIndex(
+    (s) => s.subjectName === subjectName,
+  );
+
+  if (existingIndex === -1) return;
+
+  const updated = [...selectedSubjects];
+
+  const systemIndex = updated[existingIndex].systems.findIndex(
+    (s) => s.systemName === systemName,
+  );
+
+  if (systemIndex >= 0) {
+    // REMOVE system
+    updated[existingIndex].systemNames = updated[
+      existingIndex
+    ].systemNames!.filter((s) => s !== systemName);
+
+    updated[existingIndex].systems = updated[existingIndex].systems.filter(
+      (s) => s.systemName !== systemName,
     );
+  } else {
+    // ADD system
+    updated[existingIndex].systemNames = [
+      ...(updated[existingIndex].systemNames || []),
+      systemName,
+    ];
 
-    if (existingIndex >= 0) {
-      const updated = [...selectedSubjects];
-      const systemIndex =
-        updated[existingIndex].systemNames!.indexOf(systemName);
+    updated[existingIndex].systems = [
+      ...(updated[existingIndex].systems || []),
+      {
+        systemName,
+        topics: [],
+        fullSystem: false,
+      },
+    ];
+  }
 
-      if (systemIndex >= 0) {
-        updated[existingIndex].systemNames = updated[
-          existingIndex
-        ].systemNames!.filter((s) => s !== systemName);
-        updated[existingIndex].systems = updated[existingIndex].systems.filter(
-          (s) => s.systemName !== systemName,
-        );
-      } else {
-        updated[existingIndex].systemNames = [
-          ...updated[existingIndex].systemNames!,
-          systemName,
-        ];
-        updated[existingIndex].systems = [
-          ...updated[existingIndex].systems,
-          { systemName, topics: [], fullSystem: false },
-        ];
-      }
-
-      updated[existingIndex].fullSubject =
-        updated[existingIndex].systemNames!.length === subject.systems.length;
-      setSelectedSubjects(updated);
-    }
-  };
+  setSelectedSubjects(updated);
+};
 
   const handleFullSystemToggle = (
     subjectName: string,
@@ -197,6 +205,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
             if (exists) {
               return {
                 ...sys,
+                fullSystem: false,
                 topics: sys.topics.filter((t) => t.topicName !== topicName),
               };
             }
@@ -269,6 +278,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
                 const has = t.subTopicNames.includes(subTopicName);
                 return {
                   ...t,
+                  fullTopic: has ? false : t.fullTopic,
                   subTopicNames: has
                     ? t.subTopicNames.filter((st) => st !== subTopicName)
                     : [...t.subTopicNames, subTopicName],
@@ -296,7 +306,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const calculateHoursPerSystem = (): string => {
     const totalSystems = selectedSubjects.reduce(
-      (total, subject) => total + subject.systemNames!.length,
+      (total, subject) => total + (subject.systems?.length ?? 0),
       0,
     );
     if (totalSystems === 0) return "0";
@@ -362,11 +372,50 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
       // Pre-populate selected subjects
       setSelectedSubjects(
-        apiGoal.selectedSubjects.map((subject: any) => ({
-          subjectName: subject.subjectName,
-          systemNames: subject.systemNames,
-          fullSubject: subject.fullSubject || false,
-        })),
+        apiGoal.selectedSubjects.map((subject: any) => {
+          const availableSubject = availableSubjects.find(
+            (s) => s.name === subject.subjectName,
+          );
+
+          const systemNames = subject.systemNames ?? [];
+          const fullSubject = subject.fullSubject || false;
+
+          // If API already has full systems data with topics, use it
+          if (subject.systems && subject.systems.length > 0) {
+            return {
+              subjectName: subject.subjectName,
+              systemNames,
+              systems: subject.systems,
+              fullSubject,
+            };
+          }
+
+          // Reconstruct systems from availableSubjects using systemNames
+          const systems = systemNames
+            .map((sysName: string) => {
+              const system = availableSubject?.systems.find(
+                (s) => s.name === sysName,
+              );
+              if (!system) return null;
+              return {
+                systemName: sysName,
+                fullSystem: false,
+                topics: system.topics.map((t) => ({
+                  topicName: t.topicName,
+                  fullTopic: true,
+                  subTopicNames: [...t.subTopics],
+                })),
+              };
+            })
+            .filter(Boolean);
+
+          return {
+            subjectName: subject.subjectName,
+            systemNames,
+            systems,
+            fullSubject,
+          };
+        }),
       );
     }
     setShowModal(true);
