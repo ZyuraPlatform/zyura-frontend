@@ -20,6 +20,7 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       providesTags: ["StudyPlan"],
     }),
 
+    // ─── Fixed URL (was /study_planner/${id}, route didn't exist) ─────────
     getSingleStudyPlan: build.query({
       query: (id: string) => ({
         url: `/study_planner/${id}`,
@@ -37,6 +38,14 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       invalidatesTags: ["StudyPlan"],
     }),
 
+    cancelStudyPlan: build.mutation({
+      query: (id: string) => ({
+        url: `/study_planner/cancel/${id}`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["StudyPlan"],
+    }),
+
     deleteStudyPlan: build.mutation({
       query: (id: string) => ({
         url: `/study_planner/delete/${id}`,
@@ -44,8 +53,6 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       }),
       invalidatesTags: ["StudyPlan"],
     }),
-
-    //end
   }),
 });
 
@@ -54,5 +61,6 @@ export const {
   useGetStudyPlanQuery,
   useGetSingleStudyPlanQuery,
   useSaveStudyPlanProgressMutation,
+  useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
 } = studyPlanAPI;

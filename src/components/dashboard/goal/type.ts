@@ -1,23 +1,52 @@
 import { ReactNode } from "react";
 
-// Types
+// ─── Tree / Available hierarchy ────────────────────────────────────────────
+
+export interface SubTopic {
+  name: string;
+}
+
+export interface Topic {
+  topicName: string;
+  subTopics: string[];
+}
+
+export interface System {
+  name: string;
+  topics: Topic[];
+}
+
 export interface Subject {
   name: string;
-  systems: string[];
+  systems: System[];
+}
+
+// ─── Selected hierarchy ────────────────────────────────────────────────────
+
+export interface SelectedSubTopic {
+  name: string;
+}
+
+export interface SelectedTopic {
+  topicName: string;
+  subTopicNames: string[];
+  fullTopic: boolean;
+}
+
+export interface SelectedSystem {
+  systemName: string;
+  topics: SelectedTopic[];
+  fullSystem: boolean;
 }
 
 export interface SelectedSubject {
   subjectName: string;
-  systemNames: string[];
-  fullSubject?: boolean;
+  systemNames?: string[]; // kept for backward compat
+  systems: SelectedSystem[];
+  fullSubject: boolean;
 }
 
-export interface FormData {
-  goalName: string;
-  studyHoursPerDay: number;
-  startDate: string;
-  endDate: string;
-}
+// ─── Goal ──────────────────────────────────────────────────────────────────
 
 export interface Goal {
   todayStudyHours: string | number;
@@ -41,6 +70,17 @@ export interface Goal {
   accuracy?: number;
   complete?: number;
 }
+
+// ─── Form ──────────────────────────────────────────────────────────────────
+
+export interface FormData {
+  goalName: string;
+  studyHoursPerDay: number;
+  startDate: string;
+  endDate: string;
+}
+
+// ─── Component Props ───────────────────────────────────────────────────────
 
 export interface StepIndicatorProps {
   currentStep: number;
@@ -76,6 +116,10 @@ export interface Step2Props {
   onSubjectToggle: (subjectName: string) => void;
   onFullSubjectToggle: (subjectName: string) => void;
   onSystemToggle: (subjectName: string, systemName: string) => void;
+  onFullSystemToggle: (subjectName: string, systemName: string) => void;
+  onTopicToggle: (subjectName: string, systemName: string, topicName: string) => void;
+  onFullTopicToggle: (subjectName: string, systemName: string, topicName: string) => void;
+  onSubTopicToggle: (subjectName: string, systemName: string, topicName: string, subTopicName: string) => void;
   onPrevious: () => void;
   onNext: () => void;
 }

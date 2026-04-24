@@ -22,8 +22,8 @@ import { useAppDispatch } from "@/hooks/useRedux";
 import { setUser, selectToken } from "@/store/features/auth/auth.slice";
 import { useSelector } from "react-redux";
 import { examOptions } from "@/pages/authPage/constants";
-import PhoneInput from 'react-phone-number-input'
-import 'react-phone-number-input/style.css'
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 export default function EditStudentProfileModal({ open, setOpen, user }: any) {
   const dispatch = useAppDispatch();
@@ -32,32 +32,20 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
   const [getMe] = useLazyGetMeQuery();
 
   const [firstName, setFirstName] = useState(user.profile?.firstName || "");
- const [phone, setPhone] = useState<string | undefined>();
+  const [phone, setPhone] = useState<string | undefined>();
   const [lastName, setLastName] = useState(user.profile?.lastName || "");
   const [university, setUniversity] = useState(user.profile?.university || "");
   const [country, setCountry] = useState(user.profile?.country || "");
   const [yearOfStudy, setYearOfStudy] = useState(
-    user.profile?.year_of_study || "",
+    user.profile?.year_of_study || ""
   );
   const [studentType, setStudentType] = useState(
-    user.profile?.studentType || "",
+    user.profile?.studentType || ""
   );
   const [preparingFor, setPreparingFor] = useState<any>(
-    user.profile?.preparingFor || "",
+    user.profile?.preparingFor || ""
   );
   const [bio, setBio] = useState(user.profile?.bio || "");
-
-  // Professional fields
-  const [institution, setInstitution] = useState(
-    user.profile?.institution || "",
-  );
-  const [experience, setExperience] = useState(user.profile?.experience || "");
-  const [postGraduate, setPostGraduate] = useState(
-    user.profile?.post_graduate || "",
-  );
-  const [professionName, setProfessionName] = useState(
-    user.profile?.professionName || "",
-  );
 
   useEffect(() => {
     if (!open || !user) return;
@@ -70,21 +58,40 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
     setStudentType(user.profile?.studentType || "");
     setPreparingFor(user.profile?.preparingFor || "");
     setBio(user.profile?.bio || "");
-    setInstitution(user.profile?.institution || "");
-    setExperience(user.profile?.experience || "");
-    setPostGraduate(user.profile?.post_graduate || "");
-    setProfessionName(user.profile?.professionName || "");
   }, [open, user]);
 
   const handleSubmit = async () => {
     try {
-      // Construct data object
+      if (!firstName || !lastName || !country || !university || !yearOfStudy) {
+        toast.error("Please fill all required fields");
+        return;
+      }
+
       const profileData: any = {
         firstName,
         phone,
         lastName,
         country,
         bio,
+        university,
+        year_of_study: yearOfStudy,
+        studentType,
+        preparingFor: Array.isArray(preparingFor)
+          ? preparingFor
+          : (preparingFor || "")
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+              .map((name: string) => {
+                const option = examOptions.find(
+                  (opt: any) =>
+                    opt.examName.toLowerCase() === name.toLowerCase()
+                );
+                return {
+                  examName: option?.examName || name,
+                  description: option?.description || name,
+                };
+              }),
       };
 
       if (user?.profile?.preference) {
@@ -96,67 +103,9 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
         };
       }
 
-      if (user.account?.role === "STUDENT") {
-        profileData.university = university;
-        profileData.year_of_study = yearOfStudy;
-        profileData.studentType = studentType;
-        profileData.preparingFor = Array.isArray(preparingFor)
-          ? preparingFor
-          : (preparingFor || "")
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-              .map((name: string) => {
-                const option = examOptions.find(
-                  (opt: any) =>
-                    opt.examName.toLowerCase() === name.toLowerCase(),
-                );
-                return {
-                  examName: option?.examName || name,
-                  description: option?.description || name,
-                };
-              });
-
-        // Validate Student
-        if (
-          !firstName ||
-          !lastName ||
-          !country ||
-          !university ||
-          !yearOfStudy
-        ) {
-          toast.error("Please fill all required student fields");
-          return;
-        }
-      } else if (user.account?.role === "PROFESSIONAL") {
-        profileData.institution = institution;
-        profileData.experience = experience;
-        profileData.post_graduate = postGraduate;
-        profileData.professionName = professionName;
-
-        // Validate Professional
-        if (
-          !firstName ||
-          !lastName ||
-          !country ||
-          !institution ||
-          !professionName
-        ) {
-          toast.error("Please fill all required professional fields");
-          return;
-        }
-      }
-
-      // Prepare FormData
       const formDataToSend = new FormData();
-
-      // if (photo) {
-      //   formDataToSend.append("image", photo);
-      // }
-
       formDataToSend.append("data", JSON.stringify(profileData));
 
-      // API call
       const res = await updateProfile(formDataToSend).unwrap();
 
       if (res.success) {
@@ -166,7 +115,7 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
           setUser({
             accessToken: accessToken || "",
             user: meRes?.data,
-          }),
+          })
         );
       }
 
@@ -216,6 +165,7 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
               placeholder="Bangladesh"
             />
           </div>
+
           <div className="grid gap-2">
             <Label>Mobile No</Label>
             <PhoneInput
@@ -226,92 +176,50 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
             />
           </div>
 
-          {user.account?.role === "STUDENT" ? (
-            <>
-              <div className="grid gap-2">
-                <Label>University</Label>
-                <Input
-                  value={university}
-                  onChange={(e) => setUniversity(e.target.value)}
-                  placeholder="National University"
-                />
-              </div>
+          <div className="grid gap-2">
+            <Label>University</Label>
+            <Input
+              value={university}
+              onChange={(e) => setUniversity(e.target.value)}
+              placeholder="National University"
+            />
+          </div>
 
-              <div className="grid gap-2">
-                <Label>Year of Study</Label>
-                <Input
-                  value={yearOfStudy}
-                  onChange={(e) => setYearOfStudy(e.target.value)}
-                  placeholder="4th Year"
-                />
-              </div>
+          <div className="grid gap-2">
+            <Label>Year of Study</Label>
+            <Input
+              value={yearOfStudy}
+              onChange={(e) => setYearOfStudy(e.target.value)}
+              placeholder="4th Year"
+            />
+          </div>
 
-              <div className="grid gap-2">
-                <Label>Student Type</Label>
-                <Input
-                  value={studentType}
-                  onChange={(e) => setStudentType(e.target.value)}
-                  placeholder="Undergraduate"
-                />
-              </div>
+          <div className="grid gap-2">
+            <Label>Student Type</Label>
+            <Input
+              value={studentType}
+              onChange={(e) => setStudentType(e.target.value)}
+              placeholder="Undergraduate"
+            />
+          </div>
 
-              <div className="grid gap-2">
-                <Label>Preparing For</Label>
-                <Input
-                  value={
-                    Array.isArray(preparingFor)
-                      ? preparingFor
-                          .map(
-                            (item: { examName: string; description: string }) =>
-                              item.examName,
-                          )
-                          .join(", ")
-                      : preparingFor || ""
-                  }
-                  onChange={(e) => setPreparingFor(e.target.value)}
-                  placeholder="e.g. USMLE Step 1, NCLEX"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="grid gap-2">
-                <Label>Institution</Label>
-                <Input
-                  value={institution}
-                  onChange={(e) => setInstitution(e.target.value)}
-                  placeholder="Medical College"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Profession Name</Label>
-                <Input
-                  value={professionName}
-                  onChange={(e) => setProfessionName(e.target.value)}
-                  placeholder="Doctor / Specialist"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Experience</Label>
-                <Input
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  placeholder="5 Years"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Post Graduate</Label>
-                <Input
-                  value={postGraduate}
-                  onChange={(e) => setPostGraduate(e.target.value)}
-                  placeholder="MD / MS"
-                />
-              </div>
-            </>
-          )}
+          <div className="grid gap-2">
+            <Label>Preparing For</Label>
+            <Input
+              value={
+                Array.isArray(preparingFor)
+                  ? preparingFor
+                      .map(
+                        (item: { examName: string; description: string }) =>
+                          item.examName
+                      )
+                      .join(", ")
+                  : preparingFor || ""
+              }
+              onChange={(e) => setPreparingFor(e.target.value)}
+              placeholder="e.g. USMLE Step 1, NCLEX"
+            />
+          </div>
 
           <div className="grid col-span-2 gap-2">
             <Label>Bio</Label>
@@ -322,15 +230,6 @@ export default function EditStudentProfileModal({ open, setOpen, user }: any) {
               placeholder={bio}
             />
           </div>
-
-          {/* <div className="grid col-span-2 gap-2">
-            <Label>Profile Image</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-            />
-          </div> */}
         </div>
 
         <DialogFooter>

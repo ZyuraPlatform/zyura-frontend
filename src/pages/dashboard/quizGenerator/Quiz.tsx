@@ -124,9 +124,9 @@ const Quiz = () => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
 
-  // Load answers from sessionStorage if in review mode and just submitted
+  // Load answers from sessionStorage in review mode (supports refresh + returning from analysis)
   useEffect(() => {
-    if (isReviewMode && id && location.state?.justSubmitted) {
+    if (isReviewMode && id) {
       const savedAnswers = sessionStorage.getItem(`quiz_answers_${id}`);
       if (savedAnswers) {
         try {
@@ -136,7 +136,7 @@ const Quiz = () => {
         }
       }
     }
-  }, [isReviewMode, id, location.state]);
+  }, [isReviewMode, id]);
 
   // Normalize questions format inside the data
   const rawQuestions = quizData?.questions || [];
@@ -562,27 +562,73 @@ const Quiz = () => {
               {isReviewMode && (
                 <div className="mt-4 p-8 bg-slate-50 rounded-2xl border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
                   <h4 className="text-sm font-bold text-slate-800 uppercase tracking-[0.15em] mb-6 inline-block border-b-2 border-blue-500 pb-1">
-                    Correct Solutions & Explanations
+                    Review & Explanations
                   </h4>
                   <div className="space-y-6">
-                    {currentQuestionData?.options?.map((option: any) => {
-                      const isOptionCorrect = option?.value === currentQuestionData?.correctAnswer;
+                    {(() => {
+                      const correct = currentQuestionData?.correctAnswer;
+                      const correctOpt = currentQuestionData?.options?.find((o: any) => o?.value === correct);
+                      const label = correctOpt?.value ?? correct ?? "?";
+                      const explanation = String(correctOpt?.explanation ?? "").trim();
+                      const userSelected = answers[currentQuestion];
+                      const userOpt = currentQuestionData?.options?.find((o: any) => o?.value === userSelected);
+                      const userLabel = userOpt?.value ?? userSelected ?? "";
+                      const userExplanation = String(userOpt?.explanation ?? "").trim();
+                      const isUserCorrect = !!userSelected && userSelected === correct;
                       return (
-                        <div key={option?.value} className={`p-4 rounded-xl border ${isOptionCorrect ? 'bg-green-50/30 border-green-100' : 'bg-white border-slate-100'}`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold ${isOptionCorrect ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                              {option?.value}
-                            </span>
-                            <span className={`text-xs font-bold ${isOptionCorrect ? 'text-green-700' : 'text-slate-500'}`}>
-                              Choice {option?.value} {isOptionCorrect ? "(Correct Solution)" : ""}
-                            </span>
+                        <div className="space-y-4">
+                          {!userSelected ? (
+                            <div className="p-4 rounded-xl border bg-white border-slate-200">
+                              <p className="text-sm text-slate-700 font-medium">
+                                You didn’t answer this question.
+                              </p>
+                            </div>
+                          ) : isUserCorrect ? (
+                            <div className="p-4 rounded-xl border bg-green-50/30 border-green-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold bg-green-600 text-white">
+                                  {userLabel || label}
+                                </span>
+                                <span className="text-xs font-bold text-green-700">
+                                  Your selection (Correct)
+                                </span>
+                              </div>
+                              <p className="text-sm leading-relaxed text-green-900 font-medium">
+                                {(userExplanation || explanation) || "No explanation provided."}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="p-4 rounded-xl border bg-red-50/30 border-red-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold bg-red-600 text-white">
+                                  {userLabel || "?"}
+                                </span>
+                                <span className="text-xs font-bold text-red-700">
+                                  Your selection (Wrong)
+                                </span>
+                              </div>
+                              <p className="text-sm leading-relaxed text-red-900 font-medium">
+                                {userExplanation || "No explanation provided for your selected option."}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="p-4 rounded-xl border bg-green-50/30 border-green-100">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold bg-green-600 text-white">
+                                {label}
+                              </span>
+                              <span className="text-xs font-bold text-green-700">
+                                Correct answer
+                              </span>
+                            </div>
+                            <p className="text-sm leading-relaxed text-green-900 font-medium">
+                              {explanation || "No explanation provided."}
+                            </p>
                           </div>
-                          <p className={`text-sm leading-relaxed ${isOptionCorrect ? 'text-green-900 font-medium' : 'text-slate-600'}`}>
-                            {option?.explanation || "No explanation provided for this option."}
-                          </p>
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
                 </div>
               )}

@@ -16,6 +16,7 @@ import {
   setContentType,
   setUniversalSelectNode,
 } from "@/store/features/adminDashboard/staticContent/staticContentSlice";
+import { selectProfessionName, selectRole } from "@/store/features/auth/auth.slice";
 import { useAppDispatch, useAppSelector } from "@/store/hook";
 import { RootState } from "@/store/store";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -41,9 +42,23 @@ export type SelectedNode = {
 const StudyMode = () => {
   const dispatch = useAppDispatch();
 
-  const { contentType, contentFor, profileType } = useAppSelector(
+  const { contentType, contentFor: adminContentFor, profileType: adminProfileType } = useAppSelector(
     (state: RootState) => state.staticContent,
   );
+
+  // Professional and Student override
+  const role = useAppSelector(selectRole);
+  const professionName = useAppSelector(selectProfessionName);
+  
+  // For both PROFESSIONAL and STUDENT roles, use their professionName
+  // For ADMIN, use the adminProfileType from state
+  const resolvedProfileType = 
+    (role === "PROFESSIONAL" || role === "STUDENT") ? professionName : adminProfileType;
+  
+  const resolvedContentFor = 
+    role === "PROFESSIONAL" ? "professional" : 
+    role === "STUDENT" ? "student" : 
+    adminContentFor;
 
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
 
@@ -99,22 +114,27 @@ const StudyMode = () => {
     }
   };
 
-  // ✅ API QUERY
-  const queryArg =
-    isValidSelection || debouncedSearch.trim() !== ""
-      ? {
-          key: contentType,
-          contentFor,
-          profileType: profileType.trim() || undefined,
-          subject: selectedNode.subject.trim(),
-          system: selectedNode.system.trim(),
-          topic: selectedNode.topic.trim(),
-          subtopic: selectedNode.subtopic.trim(),
-          searchTerm: debouncedSearch,
-          page: currentPage,
-          limit,
-        }
-      : skipToken;
+  // ✅ FIX: Ensure profileType is always passed for PROFESSIONAL and STUDENT roles
+  // Skip query if no valid selection AND no search term
+  // Also skip if PROFESSIONAL/STUDENT but professionName is not available
+  const shouldSkipQuery = 
+    (!isValidSelection && debouncedSearch.trim() === "") ||
+    ((role === "PROFESSIONAL" || role === "STUDENT") && !professionName);
+
+  const queryArg = shouldSkipQuery
+    ? skipToken
+    : {
+        key: contentType,
+        contentFor: resolvedContentFor,
+        profileType: resolvedProfileType?.trim() || undefined,
+        subject: selectedNode.subject.trim(),
+        system: selectedNode.system.trim(),
+        topic: selectedNode.topic.trim(),
+        subtopic: selectedNode.subtopic.trim(),
+        searchTerm: debouncedSearch,
+        page: currentPage,
+        limit,
+      };
 
   const { data: mcqBank, isLoading } = useGetStudyModeAllContentQuery(
     queryArg,
@@ -175,12 +195,14 @@ const StudyMode = () => {
                   dispatch(setContentType(value as ContentType))
                 }
               />
-              <button
-                onClick={() => navigate("create-content")}
-                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
-              >
-                + {addButtonLabels[contentType]}
-              </button>
+              {role !== "PROFESSIONAL" && role !== "STUDENT" && (
+                <button
+                  onClick={() => navigate("create-content")}
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors"
+                >
+                  + {addButtonLabels[contentType]}
+                </button>
+              )}
             </div>
 
             {/* ✅ GLOBAL SEARCH BAR — only visible when NOT inside a bank */}

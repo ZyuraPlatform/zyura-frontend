@@ -171,6 +171,11 @@ const UpdateMcqForExamModal: FC<UpdateMCQModalProps> = ({
     }
   };
 
+  const handleRemoveImage = () => {
+    setValue("imageDescription", "", { shouldDirty: true, shouldValidate: true });
+    setImagePreview("");
+  };
+
   const handleFormSubmit = (formData: UpdateMCQFormValues) => {
     onSubmit(formData);
   };
@@ -209,17 +214,29 @@ const UpdateMcqForExamModal: FC<UpdateMCQModalProps> = ({
           {/* Image */}
           <div>
             <label className={inputClass.label}>Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              className={`cursor-pointer ${inputClass.input}`}
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleUploadImage(e.target.files[0]);
-                }
-              }}
-              disabled={isUploadingImage}
-            />
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                className={`cursor-pointer ${inputClass.input}`}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleUploadImage(e.target.files[0]);
+                  }
+                }}
+                disabled={isUploadingImage}
+              />
+              {imagePreview && (
+                <CommonButton
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={isUploadingImage}
+                  className="!text-red-500"
+                >
+                  Remove
+                </CommonButton>
+              )}
+            </div>
             {isUploadingImage && (
               <p className="text-blue-500 text-sm mt-1">Uploading image...</p>
             )}

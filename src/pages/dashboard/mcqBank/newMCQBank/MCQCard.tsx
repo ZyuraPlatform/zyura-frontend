@@ -122,25 +122,17 @@ const MCQCard: React.FC<MCQCardProps> = ({
         <div className="mt-4 p-4 bg-slate-100 rounded-lg">
           <h4 className="text-lg font-medium mb-2">Explanation</h4>
 
-          {question?.options?.map((option, idx) => {
-            if (!option) return null;
-
-            const isOptionCorrect = option?.option === question?.correctOption;
-
+          {(() => {
+            const correctOpt = question?.options?.find((o) => o?.option === question?.correctOption);
+            const label = correctOpt?.option ?? question?.correctOption ?? "?";
+            const explanation = String(correctOpt?.explanation ?? "").trim();
             return (
-              <div key={idx} className="mb-3">
-                <p
-                  className={`font-medium ${
-                    isOptionCorrect ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {isOptionCorrect ? "[Correct - Choice " : "[Choice "}
-                  {option?.option ?? "?"}]
-                </p>
-                <p className="text-gray-800">{option?.explanation ?? "No explanation provided."}</p>
+              <div className="mb-3">
+                <p className="font-medium text-green-600">[Correct - Choice {label}]</p>
+                <p className="text-gray-800">{explanation || "No explanation provided."}</p>
               </div>
             );
-          })}
+          })()}
         </div>
       )}
     </div>

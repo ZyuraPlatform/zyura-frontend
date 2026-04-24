@@ -96,6 +96,10 @@ export default function DailyChallengeQuiz() {
 
     if (!challenge) return <div className="p-6 text-center">Challenge not found</div>;
 
+    if (questions.length === 0) {
+        return <div className="p-6 text-center">No questions available for this challenge.</div>;
+    }
+
     if (isFinished) {
         const totalQuestions = questions.length;
         const correctPercent = Math.round((results.correct / totalQuestions) * 100);
@@ -329,14 +333,24 @@ export default function DailyChallengeQuiz() {
                     <div className="mt-8 p-6 bg-slate-50 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-500">
                         <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">Explanation</h4>
                         <div className="space-y-4">
-                            {currentQuestion.options.map((option: any) => (
-                                <div key={option.option} className="text-sm">
-                                    <span className={`font-bold mr-2 ${option.option === currentQuestion.correctOption ? 'text-green-600' : 'text-red-600'}`}>
-                                        {option.option}:
-                                    </span>
-                                    <span className="text-slate-700">{option.explanation}</span>
-                                </div>
-                            ))}
+                            {(() => {
+                                const correctOpt = currentQuestion?.options?.find(
+                                    (o: any) => o?.option === currentQuestion?.correctOption
+                                );
+                                const explanation = String(correctOpt?.explanation ?? "").trim();
+                                const label = correctOpt?.option ?? currentQuestion?.correctOption ?? "?";
+
+                                return (
+                                    <div className="text-sm">
+                                        <span className="font-bold mr-2 text-green-600">
+                                            {label}:
+                                        </span>
+                                        <span className="text-slate-700">
+                                            {explanation || "No explanation provided."}
+                                        </span>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}

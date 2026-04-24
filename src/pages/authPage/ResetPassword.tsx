@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import signupImage from "../../assets/signUp/signUpImage.png";
 import logo from "../../assets/signUp/logo.png";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -61,10 +60,13 @@ const ResetPassword = () => {
     <div className="flex h-screen">
       {/* Left Side */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src="/videos/auth-illustration.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <img src={logo} alt="Logo" />

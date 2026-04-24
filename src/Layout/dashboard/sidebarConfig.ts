@@ -15,12 +15,17 @@ import {
   TestTubeDiagonal,
   NotebookText,
   Crown,
+  Target,
 } from "lucide-react";
 
 import flashcardIcon from "@/assets/navIcon/Flashcard.png";
 import diagramIcon from "@/assets/navIcon/diagram.png";
 // import osceIcon from "@/assets/navIcon/osce.png";
 import resourceIcon from "@/assets/navIcon/resource.png";
+
+// Student-only UI requirement:
+// Hide these items for STUDENT in the dashboard sidebar:
+// Diagram, Drug Card(s), CME/CPD Courses, Resources, Upgrade Plan.
 
 export interface SidebarItem {
   icon: React.ElementType | string;
@@ -40,6 +45,14 @@ export const sidebarItems: SidebarItem[] = [
     icon: Home,
     label: "Home",
     path: "/dashboard",
+    section: "main",
+    iconColor: "text-gray-700",
+    iconBgColor: "bg-gray-100",
+  },
+  {
+    icon: Target,
+    label: "Smart Study Planner",
+    path: "/dashboard/smart-study-plan",
     section: "main",
     iconColor: "text-gray-700",
     iconBgColor: "bg-gray-100",
@@ -99,7 +112,6 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     icon: CalendarRange,
-    // label: "Smart Study Planner",
     label: "Preference",
     path: "/dashboard/smart-study",
     section: "AI Tools",
@@ -208,7 +220,7 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     icon: Crown,
-    label: "Update Plan",
+    label: "Upgrade Plan",
     path: "/pricing",
     section: "Study Materials",
     iconColor: "text-lime-600",

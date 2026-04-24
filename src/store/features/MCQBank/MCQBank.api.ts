@@ -120,7 +120,7 @@ export const mcqBankAPI = baseAPI.injectEndpoints({
 
     generateMCQ: build.mutation({
       query: (data: any) => ({
-        url: "ai_part/generate-mcq",
+        url: "/ai_part/generate-mcq",
         method: "POST",
         body: data,
       }),

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import signupImage from "../../assets/signUp/signUpImage.png";
+// Left-side illustration uses a public video asset.
 // import logo from "../../assets/signUp/logo.png";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -22,6 +22,7 @@ import { useAppDispatch } from "@/store/hook";
 import { setUser } from "@/store/features/auth/auth.slice";
 import { countryDialCodes } from "@/lib/phone/countryDialCodes";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import CountryDialCodeSelect from "@/components/phone/CountryDialCodeSelect";
 
 const signupSchema = z.object({
   firstName: z.string().nonempty("First name is required"),   // ✅ kept
@@ -77,6 +78,7 @@ const Signup = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { isSubmitting, errors },
   } = useForm<SignupFormInputs>({
     resolver: zodResolver(signupSchema),
@@ -196,10 +198,13 @@ const Signup = () => {
     <div className="flex h-screen">
       {/* Left Side */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src="/videos/auth-illustration.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <Link to="/">
@@ -295,16 +300,12 @@ const Signup = () => {
             {/* Phone */}
             <div className="flex gap-2">
               <div className="w-36">
-                <select
-                  {...register("countryCode")}
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  {countryDialCodes.map((c) => (
-                    <option key={c.iso2} value={c.dialCode}>
-                      {c.dialCode} {c.name}
-                    </option>
-                  ))}
-                </select>
+                <CountryDialCodeSelect
+                  valueDialCode={watch("countryCode")}
+                  onChange={(v) =>
+                    setValue("countryCode", v.dialCode, { shouldValidate: true })
+                  }
+                />
                 {errors.countryCode && (
                   <p className="text-red-500 text-sm">{errors.countryCode.message}</p>
                 )}

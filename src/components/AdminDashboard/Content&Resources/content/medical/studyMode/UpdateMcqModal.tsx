@@ -227,6 +227,11 @@ const UpdateMcqModal: FC<UpdateMCQModalProps> = ({
     [handleUploadImage],
   );
 
+  const handleRemoveImage = useCallback(() => {
+    setValue("imageDescription", "", { shouldDirty: true, shouldValidate: true });
+    setImagePreview("");
+  }, [setValue]);
+
   // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleFormSubmit = useCallback(
@@ -274,13 +279,25 @@ const UpdateMcqModal: FC<UpdateMCQModalProps> = ({
           {/* Image */}
           <div>
             <label className={INPUT_CLASS.label}>Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              className={`cursor-pointer ${INPUT_CLASS.input}`}
-              onChange={handleFileChange}
-              disabled={isUploadingImage}
-            />
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                className={`cursor-pointer ${INPUT_CLASS.input}`}
+                onChange={handleFileChange}
+                disabled={isUploadingImage}
+              />
+              {imagePreview && (
+                <CommonButton
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={isUploadingImage}
+                  className="!text-red-500"
+                >
+                  Remove
+                </CommonButton>
+              )}
+            </div>
             {isUploadingImage && (
               <p className="text-blue-500 text-sm mt-1">Uploading image…</p>
             )}

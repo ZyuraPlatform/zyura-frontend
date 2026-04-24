@@ -3,7 +3,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import signupImage from "../../assets/signUp/signUpImage.png";
 import logo from "../../assets/signUp/logo.png";
 import {
   useResendOTPMutation,
@@ -90,10 +89,13 @@ export default function VerificationOTP() {
     <div className="flex h-screen">
       {/* Left Side (unchanged) */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src="/videos/auth-illustration.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <img src={logo} alt="Logo" />

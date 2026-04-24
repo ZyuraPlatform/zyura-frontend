@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import signupImage from "../../assets/signUp/signUpImage.png";
 import { useResendVerificationEmailMutation } from "@/store/features/auth/auth.api";
 import { toast } from "sonner";
 
@@ -21,10 +20,13 @@ export default function EmailVerificationPending() {
   return (
     <div className="flex h-screen">
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src="/videos/auth-illustration.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <Link to="/">

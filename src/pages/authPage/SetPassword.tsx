@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 // import { useNavigate } from "react-router-dom";
-import signupImage from "../../assets/signUp/signUpImage.png";
 import logo from "../../assets/signUp/logo.png"
 
 const signupSchema = z
@@ -47,10 +46,13 @@ const SetPassword = () => {
         <div className="flex h-screen">
             {/* Left Side */}
             <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-                <img
-                    src={signupImage}
-                    alt="Signup Illustration"
+                <video
                     className="h-full w-full object-cover"
+                    src="/videos/auth-illustration.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
                 />
                 <div className="absolute top-6 left-6">
                     {/* <h1 className="text-blue-600 font-bold text-lg">

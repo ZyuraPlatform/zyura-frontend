@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import signupImage from "../../assets/signUp/signUpImage.png";
+import authHeroVideo from "../../assets/auth/authHero.mp4";
 // import logo from "../../assets/signUp/logo.png";
 import {
   useLazyGetMeQuery,
@@ -115,10 +115,13 @@ const Login = () => {
     <div className="flex h-screen">
       {/* Left Side */}
       <div className="hidden md:flex md:w-1/2 relative items-center justify-center">
-        <img
-          src={signupImage}
-          alt="Signup Illustration"
+        <video
           className="h-full w-full object-cover"
+          src={authHeroVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
         />
         <div className="absolute top-6 left-6">
           <Link to="/">
