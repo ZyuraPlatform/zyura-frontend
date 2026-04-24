@@ -1,4 +1,6 @@
-// type.ts — full replacement
+import { ReactNode } from "react";
+
+// ─── Tree / Available hierarchy ────────────────────────────────────────────
 
 export interface SubTopic {
   name: string;
@@ -16,8 +18,10 @@ export interface System {
 
 export interface Subject {
   name: string;
-  systems: System[]; // ← now full System objects, not just string[]
+  systems: System[];
 }
+
+// ─── Selected hierarchy ────────────────────────────────────────────────────
 
 export interface SelectedSubTopic {
   name: string;
@@ -25,7 +29,7 @@ export interface SelectedSubTopic {
 
 export interface SelectedTopic {
   topicName: string;
-  subTopicNames: string[]; // selected subtopics
+  subTopicNames: string[];
   fullTopic: boolean;
 }
 
@@ -37,9 +41,37 @@ export interface SelectedSystem {
 
 export interface SelectedSubject {
   subjectName: string;
-  systems: SelectedSystem[]; // ← was systemNames: string[]
+  systemNames?: string[]; // kept for backward compat
+  systems: SelectedSystem[];
   fullSubject: boolean;
 }
+
+// ─── Goal ──────────────────────────────────────────────────────────────────
+
+export interface Goal {
+  todayStudyHours: string | number;
+  _id: string;
+  goalName: string;
+  studyHoursPerDay: number;
+  startDate: string;
+  endDate: string;
+  selectedSubjects: SelectedSubject[];
+  studentId: string;
+  goalStatus: string;
+  totalCompletedStudyHours: number;
+  createdAt: string;
+  updatedAt: string;
+  totalDays: number;
+  totalRequiredHours: number;
+  completedHours: number;
+  progressPercentage: number;
+  daysLeft: number;
+  remainingHours: number;
+  accuracy?: number;
+  complete?: number;
+}
+
+// ─── Form ──────────────────────────────────────────────────────────────────
 
 export interface FormData {
   goalName: string;
@@ -48,11 +80,26 @@ export interface FormData {
   endDate: string;
 }
 
+// ─── Component Props ───────────────────────────────────────────────────────
+
+export interface StepIndicatorProps {
+  currentStep: number;
+}
+
+export interface EmptyStateProps {
+  onSetGoal: () => void;
+}
+
+export interface DashboardProps {
+  goal: Goal;
+  onChangeGoal: () => void;
+}
+
 export interface ModalProps {
   showModal: boolean;
   currentStep: number;
   onClose: () => void;
-  children?: React.ReactNode;
+  children: ReactNode;
   isEditMode?: boolean;
 }
 
