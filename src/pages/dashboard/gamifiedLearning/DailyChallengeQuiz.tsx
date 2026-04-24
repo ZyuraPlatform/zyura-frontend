@@ -96,6 +96,10 @@ export default function DailyChallengeQuiz() {
 
     if (!challenge) return <div className="p-6 text-center">Challenge not found</div>;
 
+    if (questions.length === 0) {
+        return <div className="p-6 text-center">No questions available for this challenge.</div>;
+    }
+
     if (isFinished) {
         const totalQuestions = questions.length;
         const correctPercent = Math.round((results.correct / totalQuestions) * 100);
