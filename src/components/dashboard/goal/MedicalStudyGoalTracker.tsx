@@ -93,37 +93,186 @@ const MedicalStudyGoalTracker: React.FC = () => {
     }
   };
 
-  const handleSystemToggle = (
+ const handleSystemToggle = (
+  subjectName: string,
+  systemName: string,
+): void => {
+  const subject = availableSubjects.find((s) => s.name === subjectName);
+  if (!subject) return;
+
+  const existingIndex = selectedSubjects.findIndex(
+    (s) => s.subjectName === subjectName,
+  );
+
+  if (existingIndex === -1) return;
+
+  const updated = [...selectedSubjects];
+
+  const systemIndex = updated[existingIndex].systems.findIndex(
+    (s) => s.systemName === systemName,
+  );
+
+  if (systemIndex >= 0) {
+    // REMOVE system
+    updated[existingIndex].systemNames = updated[
+      existingIndex
+    ].systemNames!.filter((s) => s !== systemName);
+
+    updated[existingIndex].systems = updated[existingIndex].systems.filter(
+      (s) => s.systemName !== systemName,
+    );
+  } else {
+    // ADD system
+    updated[existingIndex].systemNames = [
+      ...(updated[existingIndex].systemNames || []),
+      systemName,
+    ];
+
+    updated[existingIndex].systems = [
+      ...(updated[existingIndex].systems || []),
+      {
+        systemName,
+        topics: [],
+        fullSystem: false,
+      },
+    ];
+  }
+
+  setSelectedSubjects(updated);
+};
+
+  const handleFullSystemToggle = (
     subjectName: string,
-    systemName: string
+    systemName: string,
   ): void => {
     const subject = availableSubjects.find((s) => s.name === subjectName);
-    if (!subject) return;
+    const system = subject?.systems.find((s) => s.name === systemName);
+    if (!system) return;
 
-    const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName
+    setSelectedSubjects(
+      selectedSubjects.map((s) => {
+        if (s.subjectName !== subjectName) return s;
+        return {
+          ...s,
+          systems: s.systems.map((sys) => {
+            if (sys.systemName !== systemName) return sys;
+            if (sys.fullSystem)
+              return { ...sys, fullSystem: false, topics: [] };
+            return {
+              ...sys,
+              fullSystem: true,
+              topics: system.topics.map((t) => ({
+                topicName: t.topicName,
+                fullTopic: true,
+                subTopicNames: [...t.subTopics],
+              })),
+            };
+          }),
+        };
+      }),
     );
+  };
 
-    if (existingIndex >= 0) {
-      const updated = [...selectedSubjects];
-      const systemIndex =
-        updated[existingIndex].systemNames.indexOf(systemName);
+  const handleTopicToggle = (
+    subjectName: string,
+    systemName: string,
+    topicName: string,
+  ): void => {
+    setSelectedSubjects(
+      selectedSubjects.map((s) => {
+        if (s.subjectName !== subjectName) return s;
+        return {
+          ...s,
+          systems: s.systems.map((sys) => {
+            if (sys.systemName !== systemName) return sys;
+            const exists = sys.topics.find((t) => t.topicName === topicName);
+            if (exists) {
+              return {
+                ...sys,
+                fullSystem: false,
+                topics: sys.topics.filter((t) => t.topicName !== topicName),
+              };
+            }
+            return {
+              ...sys,
+              topics: [
+                ...sys.topics,
+                { topicName, subTopicNames: [], fullTopic: false },
+              ],
+            };
+          }),
+        };
+      }),
+    );
+  };
 
-      if (systemIndex >= 0) {
-        updated[existingIndex].systemNames = updated[
-          existingIndex
-        ].systemNames.filter((s) => s !== systemName);
-      } else {
-        updated[existingIndex].systemNames = [
-          ...updated[existingIndex].systemNames,
-          systemName,
-        ];
-      }
+  const handleFullTopicToggle = (
+    subjectName: string,
+    systemName: string,
+    topicName: string,
+  ): void => {
+    const subject = availableSubjects.find((s) => s.name === subjectName);
+    const system = subject?.systems.find((s) => s.name === systemName);
+    const topic = system?.topics.find((t) => t.topicName === topicName);
+    if (!topic) return;
 
-      updated[existingIndex].fullSubject =
-        updated[existingIndex].systemNames.length === subject.systems.length;
-      setSelectedSubjects(updated);
-    }
+    setSelectedSubjects(
+      selectedSubjects.map((s) => {
+        if (s.subjectName !== subjectName) return s;
+        return {
+          ...s,
+          systems: s.systems.map((sys) => {
+            if (sys.systemName !== systemName) return sys;
+            return {
+              ...sys,
+              topics: sys.topics.map((t) => {
+                if (t.topicName !== topicName) return t;
+                if (t.fullTopic)
+                  return { ...t, fullTopic: false, subTopicNames: [] };
+                return {
+                  ...t,
+                  fullTopic: true,
+                  subTopicNames: [...topic.subTopics],
+                };
+              }),
+            };
+          }),
+        };
+      }),
+    );
+  };
+
+  const handleSubTopicToggle = (
+    subjectName: string,
+    systemName: string,
+    topicName: string,
+    subTopicName: string,
+  ): void => {
+    setSelectedSubjects(
+      selectedSubjects.map((s) => {
+        if (s.subjectName !== subjectName) return s;
+        return {
+          ...s,
+          systems: s.systems.map((sys) => {
+            if (sys.systemName !== systemName) return sys;
+            return {
+              ...sys,
+              topics: sys.topics.map((t) => {
+                if (t.topicName !== topicName) return t;
+                const has = t.subTopicNames.includes(subTopicName);
+                return {
+                  ...t,
+                  fullTopic: has ? false : t.fullTopic,
+                  subTopicNames: has
+                    ? t.subTopicNames.filter((st) => st !== subTopicName)
+                    : [...t.subTopicNames, subTopicName],
+                };
+              }),
+            };
+          }),
+        };
+      }),
+    );
   };
 
   const calculateDuration = (): number => {
@@ -141,8 +290,8 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const calculateHoursPerSystem = (): string => {
     const totalSystems = selectedSubjects.reduce(
-      (total, subject) => total + subject.systemNames.length,
-      0
+      (total, subject) => total + (subject.systems?.length ?? 0),
+      0,
     );
     if (totalSystems === 0) return "0";
     return (calculateTotalStudyHours() / totalSystems).toFixed(1);
@@ -207,11 +356,50 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
       // Pre-populate selected subjects
       setSelectedSubjects(
-        apiGoal.selectedSubjects.map((subject: any) => ({
-          subjectName: subject.subjectName,
-          systemNames: subject.systemNames,
-          fullSubject: subject.fullSubject || false,
-        }))
+        apiGoal.selectedSubjects.map((subject: any) => {
+          const availableSubject = availableSubjects.find(
+            (s) => s.name === subject.subjectName,
+          );
+
+          const systemNames = subject.systemNames ?? [];
+          const fullSubject = subject.fullSubject || false;
+
+          // If API already has full systems data with topics, use it
+          if (subject.systems && subject.systems.length > 0) {
+            return {
+              subjectName: subject.subjectName,
+              systemNames,
+              systems: subject.systems,
+              fullSubject,
+            };
+          }
+
+          // Reconstruct systems from availableSubjects using systemNames
+          const systems = systemNames
+            .map((sysName: string) => {
+              const system = availableSubject?.systems.find(
+                (s) => s.name === sysName,
+              );
+              if (!system) return null;
+              return {
+                systemName: sysName,
+                fullSystem: false,
+                topics: system.topics.map((t) => ({
+                  topicName: t.topicName,
+                  fullTopic: true,
+                  subTopicNames: [...t.subTopics],
+                })),
+              };
+            })
+            .filter(Boolean);
+
+          return {
+            subjectName: subject.subjectName,
+            systemNames,
+            systems,
+            fullSubject,
+          };
+        }),
       );
     }
     setShowModal(true);
