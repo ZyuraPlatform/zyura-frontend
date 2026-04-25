@@ -1,12 +1,15 @@
-
 import { GoalStepIndicator } from "./GoalStepIndicator";
 import {
   ModalProps,
   SelectedSubject,
+  SelectedSystem,
+  SelectedTopic,
   Step1Props,
   Step2Props,
   Step3Props,
   Subject,
+  System,
+  Topic,
 } from "./type";
 
 // ─── Reusable Toggle ───────────────────────────────────────────────────────
@@ -203,7 +206,7 @@ const TopicRow: React.FC<{
         </span>
         {isSelected && hasSubTopics && (
           <span className="ml-auto text-xs text-gray-400">
-            {selectedTopic?.subTopicNames.length ?? 0}/{topic.subTopics.length} sub-topics
+            {selectedTopic?.subTopicNames?.length ?? 0}/{topic.subTopics.length} sub-topics
           </span>
         )}
       </div>
@@ -224,7 +227,7 @@ const TopicRow: React.FC<{
                 <SubTopicRow
                   key={st}
                   subTopicName={st}
-                  isChecked={selectedTopic?.subTopicNames.includes(st) ?? false}
+                  isChecked={selectedTopic?.subTopicNames?.includes(st) ?? false}
                   onToggle={() => onSubTopicToggle(st)}
                 />
               ))}
@@ -295,7 +298,7 @@ const SystemRow: React.FC<{
               <p className="text-xs text-gray-400 mb-1 px-1">Select topics</p>
               {/* Map over the FULL list of topics from availableSubjects */}
               {system.topics.map((topic) => {
-                const selTopic = selectedSystem?.topics.find(
+                const selTopic = selectedSystem?.topics?.find(
                   (t) => t.topicName === topic.topicName
                 );
                 return (
@@ -318,7 +321,7 @@ const SystemRow: React.FC<{
 };
 
 // ─── Subject Item ──────────────────────────────────────────────────────────
-// Unchanged except for passing correct props.
+// FIXED: fullSubject type error
 export const SubjectItem: React.FC<{
   subject: Subject;
   selected: SelectedSubject | undefined;
@@ -372,11 +375,11 @@ export const SubjectItem: React.FC<{
           {/* Systems revealed when subject is selected */}
           {isSelected && selected && (
             <>
-              {/* Full subject toggle */}
+              {/* Full subject toggle - FIXED: Added default value */}
               <div className="mt-2 flex items-center justify-between bg-blue-50 p-2 rounded">
                 <span className="text-sm text-gray-600">Cover Full Subject</span>
                 <Toggle
-                  checked={selected.fullSubject}
+                  checked={selected.fullSubject ?? false}
                   onChange={() => onFullSubjectToggle(subject.name)}
                 />
               </div>
@@ -418,7 +421,7 @@ export const SubjectItem: React.FC<{
   );
 };
 
-// ─── Step 2 (unchanged) ────────────────────────────────────────────────────
+// ─── Step 2 - FIXED: Removed unused totalTopics variable ──────────────────
 export const Step2: React.FC<Step2Props> = ({
   availableSubjects,
   selectedSubjects,
@@ -434,15 +437,6 @@ export const Step2: React.FC<Step2Props> = ({
 }) => {
   const totalSystems = selectedSubjects.reduce(
     (t, s) => t + (s.systems?.length ?? 0),
-    0,
-  );
-  const totalTopics = selectedSubjects.reduce(
-    (t, s) =>
-      t +
-      (s.systems ?? []).reduce(
-        (tt, sys) => tt + (sys.topics?.length ?? 0),
-        0,
-      ),
     0,
   );
   const isValid = selectedSubjects.length > 0 && totalSystems > 0;
@@ -461,7 +455,7 @@ export const Step2: React.FC<Step2Props> = ({
         </span>
         <span className="mx-2">·</span>
         <span className="font-medium">
-          {getTotalSystemsSelected()} systems total
+          {totalSystems} systems total
         </span>
       </div>
 
@@ -478,6 +472,10 @@ export const Step2: React.FC<Step2Props> = ({
               onSubjectToggle={onSubjectToggle}
               onFullSubjectToggle={onFullSubjectToggle}
               onSystemToggle={onSystemToggle}
+              onFullSystemToggle={onFullSystemToggle}
+              onTopicToggle={onTopicToggle}
+              onFullTopicToggle={onFullTopicToggle}
+              onSubTopicToggle={onSubTopicToggle}
             />
           );
         })}
@@ -506,7 +504,7 @@ export const Step2: React.FC<Step2Props> = ({
   );
 };
 
-// ─── Step 3 (unchanged) ────────────────────────────────────────────────────
+// ─── Step 3 - FIXED: Added safety check for subject.systems ───────────────
 export const Step3: React.FC<Step3Props> = ({
   formData,
   selectedSubjects,
@@ -551,7 +549,7 @@ export const Step3: React.FC<Step3Props> = ({
           <div className="flex justify-between items-start mb-2">
             <div className="font-medium text-lg">{subject.subjectName}</div>
             <div className="text-sm text-gray-600">
-              {subject.fullSubject ? "Full Subject" : `${subject.systems.length} systems`}
+              {subject.fullSubject ? "Full Subject" : `${subject.systems?.length ?? 0} systems`}
             </div>
           </div>
 

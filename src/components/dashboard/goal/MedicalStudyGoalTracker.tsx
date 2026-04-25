@@ -31,7 +31,13 @@ const MedicalStudyGoalTracker: React.FC = () => {
   const availableSubjects: Subject[] =
     treeData?.data?.map((subject: any) => ({
       name: subject.subjectName,
-      systems: subject.systems.map((system: any) => system.name),
+      systems: subject.systems.map((system: any) => ({
+        name: system.name,
+        topics: system.topics.map((topic: any) => ({
+          topicName: topic.topicName,
+          subTopics: topic.subTopics || [],
+        })),
+      })),
     })) || [];
 
   const apiGoal = data?.data?.[0];
@@ -85,7 +91,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
       } else {
         updated[existingIndex] = {
           subjectName,
-          systemNames: [...subject.systems],
+          systemNames: subject.systems.map((s) => s.name),
           fullSubject: true,
         };
       }
@@ -108,28 +114,28 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const updated = [...selectedSubjects];
 
-  const systemIndex = updated[existingIndex].systems.findIndex(
+  const systemIndex = (updated[existingIndex].systems ?? []).findIndex(
     (s) => s.systemName === systemName,
   );
 
   if (systemIndex >= 0) {
     // REMOVE system
-    updated[existingIndex].systemNames = updated[
-      existingIndex
-    ].systemNames!.filter((s) => s !== systemName);
+    updated[existingIndex].systemNames = (
+      updated[existingIndex].systemNames ?? []
+    ).filter((s) => s !== systemName);
 
-    updated[existingIndex].systems = updated[existingIndex].systems.filter(
-      (s) => s.systemName !== systemName,
-    );
+    updated[existingIndex].systems = (
+      updated[existingIndex].systems ?? []
+    ).filter((s) => s.systemName !== systemName);
   } else {
     // ADD system
     updated[existingIndex].systemNames = [
-      ...(updated[existingIndex].systemNames || []),
+      ...(updated[existingIndex].systemNames ?? []),
       systemName,
     ];
 
     updated[existingIndex].systems = [
-      ...(updated[existingIndex].systems || []),
+      ...(updated[existingIndex].systems ?? []),
       {
         systemName,
         topics: [],
@@ -154,7 +160,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
         if (s.subjectName !== subjectName) return s;
         return {
           ...s,
-          systems: s.systems.map((sys) => {
+          systems: (s.systems ?? []).map((sys) => {
             if (sys.systemName !== systemName) return sys;
             if (sys.fullSystem)
               return { ...sys, fullSystem: false, topics: [] };
@@ -183,7 +189,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
         if (s.subjectName !== subjectName) return s;
         return {
           ...s,
-          systems: s.systems.map((sys) => {
+          systems: (s.systems ?? []).map((sys) => {
             if (sys.systemName !== systemName) return sys;
             const exists = sys.topics.find((t) => t.topicName === topicName);
             if (exists) {
@@ -221,7 +227,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
         if (s.subjectName !== subjectName) return s;
         return {
           ...s,
-          systems: s.systems.map((sys) => {
+          systems: (s.systems ?? []).map((sys) => {
             if (sys.systemName !== systemName) return sys;
             return {
               ...sys,
@@ -253,7 +259,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
         if (s.subjectName !== subjectName) return s;
         return {
           ...s,
-          systems: s.systems.map((sys) => {
+          systems: (s.systems ?? []).map((sys) => {
             if (sys.systemName !== systemName) return sys;
             return {
               ...sys,
@@ -442,6 +448,10 @@ const MedicalStudyGoalTracker: React.FC = () => {
               onSubjectToggle={handleSubjectToggle}
               onFullSubjectToggle={handleFullSubjectToggle}
               onSystemToggle={handleSystemToggle}
+              onFullSystemToggle={handleFullSystemToggle}
+              onTopicToggle={handleTopicToggle}
+              onFullTopicToggle={handleFullTopicToggle}
+              onSubTopicToggle={handleSubTopicToggle}
               onPrevious={() => setCurrentStep(1)}
               onNext={() => setCurrentStep(3)}
             />
