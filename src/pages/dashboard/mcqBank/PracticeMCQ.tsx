@@ -73,7 +73,7 @@ export default function PracticeMCQ() {
   const storageKey = `mcq_practice_data_${id}`;
 
   // Track correctness of each question: { [qId]: boolean } (true=correct, false=incorrect)
-  const [results, setResults] = useState<{ [key: string]: boolean }>(() => {
+  const [results] = useState<{ [key: string]: boolean }>(() => {
     const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved).results : {};
   });
@@ -129,13 +129,13 @@ export default function PracticeMCQ() {
       return saved ? JSON.parse(saved).selected : {};
     }
   );
-  const [showAnswer, setShowAnswer] = useState<{ [key: string]: boolean }>(
+  const [showAnswer] = useState<{ [key: string]: boolean }>(
     () => {
       const saved = localStorage.getItem(storageKey);
       return saved ? JSON.parse(saved).showAnswer : {};
     }
   );
-  const [lockedQuestions, setLockedQuestions] = useState<{
+  const [lockedQuestions] = useState<{
     [key: string]: boolean;
   }>(() => {
     const saved = localStorage.getItem(storageKey);
@@ -160,32 +160,10 @@ export default function PracticeMCQ() {
 
 
   const handleSelect = (qId: string, index: number) => {
-    // Prevent changing option if already locked
-    if (lockedQuestions[qId]) return;
-
     setSelected((prev) => ({ ...prev, [qId]: index }));
-    setShowAnswer((prev) => ({ ...prev, [qId]: true }));
-    setLockedQuestions((prev) => ({ ...prev, [qId]: true }));
-
-    // Find the question to check correctness
-    const question = questions.find(
-      (q: McqQuestion) => (q.mcqId || `question-${currentPage}`) === qId
-    );
-    if (question) {
-      // Check correctness: index matches correctOption (assuming A=0, B=1...)
-      // Start from 'A' char code 65.
-      const selectedOptionChar = String.fromCharCode(65 + index); // 0->A, 1->B
-      const isCorrect = selectedOptionChar === question.correctOption;
-      setResults((prev) => ({ ...prev, [qId]: isCorrect }));
-    }
   };
 
-  const toggleAnswer = (qId: string) => {
-    setShowAnswer((prev) => ({ ...prev, [qId]: !prev[qId] }));
-    if (!lockedQuestions[qId]) {
-      setLockedQuestions((prev) => ({ ...prev, [qId]: true }));
-    }
-  };
+  // Strict mode: no per-question answer reveal during attempt.
 
   const totalPages = meta?.total ? Math.ceil(meta.total / meta.limit) : 1;
 
@@ -225,7 +203,7 @@ export default function PracticeMCQ() {
   const handleSubmit = async () => {
     if (!mcqData?._id) return;
 
-    const totalAttempted = Object.keys(results).length;
+    const totalAttempted = Object.keys(selected).length;
     const totalQuestions = meta?.total || 0;
 
     if (totalAttempted < totalQuestions) {
@@ -235,8 +213,17 @@ export default function PracticeMCQ() {
 
     setIsSubmitting(true);
 
-    const totalCorrect = Object.values(results).filter(Boolean).length;
-    const totalIncorrect = totalAttempted - totalCorrect;
+    let totalCorrect = 0;
+    let totalIncorrect = 0;
+    const allQuestions = mcqData?.mcqs || [];
+    allQuestions.forEach((q: any) => {
+      const qId = q?.mcqId;
+      const selectedIdx = selected[qId];
+      if (selectedIdx === undefined || selectedIdx === null) return;
+      const selectedOptionChar = String.fromCharCode(65 + selectedIdx);
+      if (selectedOptionChar === q.correctOption) totalCorrect++;
+      else totalIncorrect++;
+    });
 
     try {
       await updateProgress({
@@ -279,9 +266,17 @@ export default function PracticeMCQ() {
     }
   };
 
-  const totalAttempted = Object.keys(results).length;
-  const totalCorrect = Object.values(results).filter(Boolean).length;
-  const totalIncorrect = totalAttempted - totalCorrect;
+  const totalAttempted = Object.keys(selected).length;
+  let totalCorrect = 0;
+  let totalIncorrect = 0;
+  (mcqData?.mcqs || []).forEach((q: any) => {
+    const qId = q?.mcqId;
+    const selectedIdx = selected[qId];
+    if (selectedIdx === undefined || selectedIdx === null) return;
+    const selectedOptionChar = String.fromCharCode(65 + selectedIdx);
+    if (selectedOptionChar === q.correctOption) totalCorrect++;
+    else totalIncorrect++;
+  });
   const correctPercentage = totalAttempted > 0 ? (totalCorrect / totalAttempted) * 100 : 0;
   const incorrectPercentage = totalAttempted > 0 ? (totalIncorrect / totalAttempted) * 100 : 0;
 
@@ -603,7 +598,7 @@ export default function PracticeMCQ() {
                     {q.options.map((opt: any, optionIdx: number) => {
                       const isSelected = selectedIndex === optionIdx;
                       const isCorrect = opt.option === q.correctOption;
-                      const showResult = showAnswer[qId];
+                      const showResult = false;
 
                       let borderClass = "border-slate-200 hover:border-blue-300";
                       let bgClass = "bg-white";
@@ -630,7 +625,7 @@ export default function PracticeMCQ() {
                         <button
                           key={optionIdx}
                           onClick={() => handleSelect(qId, optionIdx)}
-                          disabled={showResult}
+                          disabled={false}
                           className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 cursor-pointer ${borderClass} ${bgClass}`}
                         >
                           <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border 
@@ -647,38 +642,10 @@ export default function PracticeMCQ() {
                   </div>
 
                   <div className="flex gap-4">
-                    <button
-                      onClick={() => toggleAnswer(qId)}
-                      disabled={selected[qId] === undefined || selected[qId] === null}
-                      className={`px-6 py-2 border rounded-xl text-sm font-semibold transition-colors ${selected[qId] === undefined || selected[qId] === null
-                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-70"
-                        : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 cursor-pointer"
-                        }`}
-                    >
-                      {showAnswer[qId] ? "Hide Answer" : "Show Answer"}
-                    </button>
+                    {/* Strict mode: no per-question answer reveal during attempt */}
                   </div>
 
-                  {showAnswer[qId] && (
-                    <div className="mt-8 p-6 bg-slate-50 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-500">
-                      <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">Explanation</h4>
-                      <div className="space-y-4">
-                        {(() => {
-                          const correctOpt = q?.options?.find((o: any) => o?.option === q?.correctOption);
-                          const explanation = String(correctOpt?.explanation ?? "").trim();
-                          const label = correctOpt?.option ?? q?.correctOption ?? "?";
-                          return (
-                            <div className="text-sm">
-                              <span className="font-bold mr-2 text-green-600">
-                                {label}:
-                              </span>
-                              <span className="text-slate-700">{explanation || "No explanation provided."}</span>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  )}
+                  {/* Strict mode: no explanation until after submission */}
                 </div>
               );
             })}

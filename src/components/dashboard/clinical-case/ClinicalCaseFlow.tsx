@@ -277,16 +277,16 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
           {showReview && totalMCQs > 0 && (
             <div className="max-h-[50vh] overflow-y-auto border rounded-lg p-3 bg-slate-50">
               <div className="space-y-4">
-                {mcqs.map((q, idx) => {
+                {mcqs.map((q: any, idx) => {
                   const selected = mcqAnswers[idx];
                   const correct = q.correctOption;
                   return (
-                    <div key={q.mcqId || idx} className="bg-white border rounded-lg p-3">
+                    <div key={idx} className="bg-white border rounded-lg p-3">
                       <p className="text-sm font-semibold text-slate-800 mb-2">
                         Q{idx + 1}. {q.question}
                       </p>
                       <div className="space-y-1">
-                        {q.options?.map((opt) => {
+                        {q.options?.map((opt: any) => {
                           const isSelected = selected === opt.option;
                           const isCorrect = correct === opt.option;
                           const border =

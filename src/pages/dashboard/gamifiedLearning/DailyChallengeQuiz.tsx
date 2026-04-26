@@ -22,7 +22,8 @@ export default function DailyChallengeQuiz() {
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedOptions, setSelectedOptions] = useState<{ [key: number]: string }>({});
-    const [showExplanation, setShowExplanation] = useState<{ [key: number]: boolean }>({});
+    // Strict mode: no per-question explanation during attempt
+    // const [showExplanation, setShowExplanation] = useState<{ [key: number]: boolean }>({});
     const [isFinished, setIsFinished] = useState(false);
     const [results, setResults] = useState({ correct: 0, wrong: 0 });
     const [startTime] = useState(Date.now());
@@ -49,9 +50,7 @@ export default function DailyChallengeQuiz() {
     ];
 
     const handleOptionSelect = (option: string) => {
-        if (selectedOptions[currentQuestionIndex]) return;
         setSelectedOptions({ ...selectedOptions, [currentQuestionIndex]: option });
-        setShowExplanation({ ...showExplanation, [currentQuestionIndex]: true });
     };
 
     const handleNext = async () => {
@@ -286,7 +285,7 @@ export default function DailyChallengeQuiz() {
                         const optChar = opt.option;
                         const isOptionSelected = selectedOptions[currentQuestionIndex] === optChar;
                         const isOptionCorrect = optChar === currentQuestion.correctOption;
-                        const showResult = isSelected;
+                        const showResult = false;
 
                         let borderClass = "border-slate-200 hover:border-blue-300";
                         let bgClass = "bg-white";
@@ -313,7 +312,7 @@ export default function DailyChallengeQuiz() {
                             <button
                                 key={idx}
                                 onClick={() => handleOptionSelect(optChar)}
-                                disabled={showResult}
+                                disabled={false}
                                 className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 ${borderClass} ${bgClass}`}
                             >
                                 <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border 
@@ -329,31 +328,7 @@ export default function DailyChallengeQuiz() {
                     })}
                 </div>
 
-                {showExplanation[currentQuestionIndex] && (
-                    <div className="mt-8 p-6 bg-slate-50 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">Explanation</h4>
-                        <div className="space-y-4">
-                            {(() => {
-                                const correctOpt = currentQuestion?.options?.find(
-                                    (o: any) => o?.option === currentQuestion?.correctOption
-                                );
-                                const explanation = String(correctOpt?.explanation ?? "").trim();
-                                const label = correctOpt?.option ?? currentQuestion?.correctOption ?? "?";
-
-                                return (
-                                    <div className="text-sm">
-                                        <span className="font-bold mr-2 text-green-600">
-                                            {label}:
-                                        </span>
-                                        <span className="text-slate-700">
-                                            {explanation || "No explanation provided."}
-                                        </span>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </div>
-                )}
+                {/* Strict mode: no explanation/correctness until after completion */}
             </div>
 
             <div className="flex justify-end gap-4">
