@@ -121,7 +121,9 @@ const Quiz = () => {
 
 
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  // Store answers by stable question id (mcqId/id), not by array index.
+  // Index-based storage breaks review when question order/data differs.
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
 
   // Load answers from sessionStorage in review mode (supports refresh + returning from analysis)
@@ -138,10 +140,33 @@ const Quiz = () => {
     }
   }, [isReviewMode, id]);
 
+  // Review fallback: if sessionStorage is empty (or answers missing), load persisted last attempt from API.
+  useEffect(() => {
+    if (!isReviewMode) return;
+    if (Object.keys(answers).length > 0) return;
+
+    const payload: any = apiQuizData?.data || apiQuizData;
+    const fromApi = payload?.tracking?.lastAttemptAnswers;
+    if (!Array.isArray(fromApi) || fromApi.length === 0) return;
+
+    const mapped: Record<string, string> = {};
+    for (const a of fromApi) {
+      const qid = String(a?.mcqId ?? "").trim();
+      const val = String(a?.userSelectedOption ?? "").trim();
+      if (qid && val) mapped[qid] = val;
+    }
+    if (Object.keys(mapped).length === 0) return;
+
+    setAnswers(mapped);
+    if (id) {
+      sessionStorage.setItem(`quiz_answers_${id}`, JSON.stringify(mapped));
+    }
+  }, [isReviewMode, apiQuizData, id, answers]);
+
   // Normalize questions format inside the data
   const rawQuestions = quizData?.questions || [];
   const questions = rawQuestions?.map((q: any, index: number) => ({
-    id: q?.id || (index + 1).toString(),
+    id: String(q?.mcqId || q?.id || (index + 1)),
     text: q?.question || q?.text || "Question " + (index + 1),
     options: (q?.options || []).map((opt: any, i: number) => {
       if (typeof opt === "string") {
@@ -188,9 +213,10 @@ const Quiz = () => {
     if (isReviewMode) return;
 
     setAnswers((prev) => {
+      const qid = String(questions?.[currentQuestion]?.id ?? currentQuestion);
       const newAnswers = {
         ...prev,
-        [currentQuestion]: value,
+        [qid]: value,
       };
 
       // Save to sessionStorage
@@ -213,7 +239,8 @@ const Quiz = () => {
   };
 
   const handleNext = () => {
-    if (!isReviewMode && !answers[currentQuestion]) return;
+    const qid = String(questions?.[currentQuestion]?.id ?? currentQuestion);
+    if (!isReviewMode && !answers[qid]) return;
 
     if (currentQuestion < (questions?.length || 0) - 1) {
       setCurrentQuestion((prev) => prev + 1);
@@ -243,11 +270,21 @@ const Quiz = () => {
     let correctCount = 0;
 
     questions?.forEach((q: any, index: number) => {
-      if (answers[index] === q?.correctAnswer) {
+      const qid = String(q?.id ?? index);
+      if (answers[qid] === q?.correctAnswer) {
         correctCount++;
       }
     });
 
+
+    const attemptAnswers = questions
+      ?.map((q: any, index: number) => {
+        const qid = String(q?.id ?? index);
+        const userSelectedOption = answers[qid];
+        if (!userSelectedOption) return null;
+        return { mcqId: qid, userSelectedOption };
+      })
+      .filter(Boolean);
 
     const trackingData = {
       totalMcqCount: totalQuestions,
@@ -255,11 +292,13 @@ const Quiz = () => {
       correctMcqCount: correctCount,
       wrongMcqCount: answeredCount - correctCount,
       timeTaken: formatTime(timeElapsed),
+      answers: attemptAnswers,
     };
 
     const wrongAnswers = questions
       ?.map((q: any, index: number) => {
-        if (answers[index] === q?.correctAnswer) return null;
+        const qid = String(q?.id ?? index);
+        if (answers[qid] === q?.correctAnswer) return null;
 
         const originalQ = rawQuestions[index];
 
@@ -273,7 +312,7 @@ const Quiz = () => {
             explanation: opt?.explanation,
           })),
           correctOption: q?.correctAnswer,
-          userSelectedOption: answers[index],
+          userSelectedOption: answers[qid],
         };
       })
       .filter(Boolean);
@@ -399,7 +438,7 @@ const Quiz = () => {
           <div className="max-h-[calc(100vh-250px)] overflow-y-auto thin-scrollbar border-t border-gray-200 custom-scrollbar p-3 space-y-2">
             {questions?.map((q: any, index: number) => {
               const isActive = index === currentQuestion;
-              const isAnswered = answers[index] !== undefined;
+              const isAnswered = answers[String(q?.id ?? index)] !== undefined;
 
               return (
                 <div
@@ -425,9 +464,9 @@ const Quiz = () => {
                     {isSidebarOpen && <span>Question {q?.id}</span>}
                   </span>
 
-                  {isSidebarOpen && isReviewMode && answers[index] && (
+                  {isSidebarOpen && isReviewMode && answers[String(q?.id ?? index)] && (
                     <span className="ml-2">
-                      {answers[index] === q?.correctAnswer ? (
+                      {answers[String(q?.id ?? index)] === q?.correctAnswer ? (
                         <CheckCircle className={`w-4 h-4 ${isActive ? "text-white" : "text-green-500"}`} />
                       ) : (
                         <XCircle className={`w-4 h-4 ${isActive ? "text-white" : "text-red-500"}`} />
@@ -479,11 +518,12 @@ const Quiz = () => {
                   Question {currentQuestion + 1} of {questions?.length}
                 </span>
                 {/* {isReviewMode && (
-                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${answers[currentQuestion] === currentQuestionData?.correctAnswer
+                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
+                    answers[String(currentQuestionData?.id ?? currentQuestion)] === currentQuestionData?.correctAnswer
                       ? "bg-green-50 text-green-600 border-green-100"
                       : "bg-red-50 text-red-600 border-red-100"
                     }`}>
-                    {answers[currentQuestion] === currentQuestionData?.correctAnswer ? "Correct" : "Incorrect"}
+                    {answers[String(currentQuestionData?.id ?? currentQuestion)] === currentQuestionData?.correctAnswer ? "Correct" : "Incorrect"}
                   </span>
                 )} */}
               </div>
@@ -499,14 +539,15 @@ const Quiz = () => {
               )}
 
               <RadioGroup
-                value={answers[currentQuestion] || ""}
+                value={answers[String(currentQuestionData?.id ?? currentQuestion)] || ""}
                 onValueChange={handleAnswerChange}
                 disabled={isReviewMode}
                 className="space-y-3 mb-8"
               >
                 {currentQuestionData?.options?.map((option: any) => {
                   const isCorrect = option?.value === currentQuestionData?.correctAnswer;
-                  const isUserSelection = answers[currentQuestion] === option?.value;
+                  const isUserSelection =
+                    answers[String(currentQuestionData?.id ?? currentQuestion)] === option?.value;
                   const showResult = isReviewMode;
 
                   let borderClass = "border-slate-200 hover:border-blue-300";
@@ -570,7 +611,7 @@ const Quiz = () => {
                       const correctOpt = currentQuestionData?.options?.find((o: any) => o?.value === correct);
                       const label = correctOpt?.value ?? correct ?? "?";
                       const explanation = String(correctOpt?.explanation ?? "").trim();
-                      const userSelected = answers[currentQuestion];
+                      const userSelected = answers[String(currentQuestionData?.id ?? currentQuestion)];
                       const userOpt = currentQuestionData?.options?.find((o: any) => o?.value === userSelected);
                       const userLabel = userOpt?.value ?? userSelected ?? "";
                       const userExplanation = String(userOpt?.explanation ?? "").trim();
@@ -648,14 +689,14 @@ const Quiz = () => {
                   <div></div>
                 )}
                 <Button
-                  className={`cursor-pointer px-12 h-12 rounded-xl text-white font-bold tracking-tight shadow-lg transition-all active:scale-95 flex items-center gap-2 ${!(!isReviewMode && !answers[currentQuestion]) ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'
+                  className={`cursor-pointer px-12 h-12 rounded-xl text-white font-bold tracking-tight shadow-lg transition-all active:scale-95 flex items-center gap-2 ${!(!isReviewMode && !answers[String(currentQuestionData?.id ?? currentQuestion)]) ? 'hover:opacity-90' : 'opacity-40 cursor-not-allowed'
                     }`}
                   style={{
-                    background: !(!isReviewMode && !answers[currentQuestion]) ? "linear-gradient(103deg, #0076F5 6.94%, #0058B8 99.01%)" : "#cbd5e1",
-                    boxShadow: !(!isReviewMode && !answers[currentQuestion]) ? "0 4px 14px 0 rgba(0, 118, 245, 0.3)" : "none"
+                    background: !(!isReviewMode && !answers[String(currentQuestionData?.id ?? currentQuestion)]) ? "linear-gradient(103deg, #0076F5 6.94%, #0058B8 99.01%)" : "#cbd5e1",
+                    boxShadow: !(!isReviewMode && !answers[String(currentQuestionData?.id ?? currentQuestion)]) ? "0 4px 14px 0 rgba(0, 118, 245, 0.3)" : "none"
                   }}
                   onClick={handleNext}
-                  disabled={!isReviewMode && !answers[currentQuestion]}
+                  disabled={!isReviewMode && !answers[String(currentQuestionData?.id ?? currentQuestion)]}
                 >
                   {currentQuestion === (questions?.length || 0) - 1
                     ? isReviewMode
