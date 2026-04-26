@@ -4,15 +4,25 @@ import { ClinicalCaseData, MCQOption } from "@/types/clinicalCase";
 type Props = {
   clinicalCase: ClinicalCaseData;
   currentQuestionIndex: number;
+  /**
+   * When `examMode` is true, do NOT reveal correctness during the attempt.
+   * The parent should compute results on final submit and show review separately.
+   */
+  examMode?: boolean;
+  selectedOption?: string | null;
+  onSelectOption?: (option: string) => void;
   onAnswerShown: (isShown: boolean, isCorrect: boolean) => void;
 };
 
 const ClinicalCaseMCQ: React.FC<Props> = ({
   clinicalCase,
   currentQuestionIndex,
+  examMode = false,
+  selectedOption: selectedOptionProp,
+  onSelectOption,
   onAnswerShown,
 }) => {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptionState, setSelectedOptionState] = useState<string | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionScore, setSessionScore] = useState(0);
 
@@ -22,21 +32,26 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
 
   // Reset state when question changes
   useEffect(() => {
-    setSelectedOption(null);
+    setSelectedOptionState(null);
     setShowAnswer(false);
     onAnswerShown(false, false);
   }, [currentQuestionIndex]);
 
   const handleSelectOption = (option: string) => {
-    if (!showAnswer) {
-      setSelectedOption(option);
+    if (examMode) {
+      onSelectOption?.(option);
+      onAnswerShown(true, false);
+      return;
     }
+
+    if (!showAnswer) setSelectedOptionState(option);
   };
 
   const handleShowAnswer = () => {
-    if (selectedOption) {
+    if (examMode) return;
+    if (selectedOptionState) {
       setShowAnswer(true);
-      const isCorrect = selectedOption === currentMCQ.correctOption;
+      const isCorrect = selectedOptionState === currentMCQ.correctOption;
       if (isCorrect) {
         setSessionScore((prev) => prev + 1);
       }
@@ -53,6 +68,8 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
       </div>
     );
   }
+
+  const selectedOption = examMode ? (selectedOptionProp ?? null) : selectedOptionState;
 
   return (
     <div className="space-y-6">
@@ -85,7 +102,7 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
           {currentMCQ?.options?.map((opt: MCQOption, optionIdx: number) => {
             const isSelected = selectedOption === opt.option;
             const isCorrect = opt.option === currentMCQ.correctOption;
-            const show = showAnswer;
+            const show = examMode ? false : showAnswer;
 
             // Determine styles
             let borderClass = "border-gray-300";
@@ -122,7 +139,7 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
                   className="mr-3"
                   onChange={() => handleSelectOption(opt.option)}
                   checked={isSelected}
-                  disabled={show}
+                  disabled={examMode ? false : show}
                 />
                 <span className={textClass}>
                   {opt.option}. {opt.optionText}
@@ -132,18 +149,20 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
           })}
         </div>
 
-        <div className="flex gap-3">
-          {selectedOption && !showAnswer && (
+        {!examMode && (
+          <div className="flex gap-3">
+            {selectedOption && !showAnswer && (
             <button
               onClick={handleShowAnswer}
               className="px-6 py-2 border rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
             >
               Show Answer
             </button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        {showAnswer && (
+        {!examMode && showAnswer && (
           <div className="mt-4 p-4 bg-slate-100 rounded-lg">
             <h4 className="text-lg font-medium mb-3">Explanation</h4>
             {currentMCQ?.options?.map((option: MCQOption) => {
@@ -168,13 +187,14 @@ const ClinicalCaseMCQ: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Score Display (Optional - user didn't ask to remove it, but internal state might vary from parent. Keeping local for now or we can lift it too if needed. Since parent does final calc, local is just for display.) */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm font-medium text-gray-700">
-          Current Session Score: {sessionScore} /{" "}
-          {currentQuestionIndex + (showAnswer ? 1 : 0)}
-        </p>
-      </div>
+      {!examMode && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm font-medium text-gray-700">
+            Current Session Score: {sessionScore} /{" "}
+            {currentQuestionIndex + (showAnswer ? 1 : 0)}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

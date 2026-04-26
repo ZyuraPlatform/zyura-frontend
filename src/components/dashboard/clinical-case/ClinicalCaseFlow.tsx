@@ -32,8 +32,11 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
   // MCQ State
   const [mcqIndex, setMcqIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [isAnswerShown, setIsAnswerShown] = useState(false);
+  // Strict exam behavior: allow changes, do not reveal correctness while attempting.
+  const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
+  const [isAnswered, setIsAnswered] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   // API
   const [updateProgress, { isLoading: isUpdating }] =
@@ -54,17 +57,16 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
     setCurrentStep(3);
   };
 
-  const handleAnswerShown = (isShown: boolean, isCorrect: boolean) => {
-    setIsAnswerShown(isShown);
-    if (isCorrect) {
-      setCorrectAnswers((prev) => prev + 1);
-    }
+  const handleAnswerShown = (isShown: boolean) => {
+    // In strict exam mode we only need to know if the user answered,
+    // correctness is computed on final submit.
+    setIsAnswered(isShown);
   };
 
   const handleNextMCQ = () => {
     if (mcqIndex < totalMCQs - 1) {
       setMcqIndex((prev) => prev + 1);
-      setIsAnswerShown(false);
+      setIsAnswered(Boolean(mcqAnswers[mcqIndex + 1]));
     }
   };
 
@@ -85,12 +87,20 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
   };
 
   const handleFinishQuiz = async () => {
+    // Compute score at submission time (strict exam mode)
+    const computedCorrect = mcqs.reduce((acc, q, idx) => {
+      const selected = mcqAnswers[idx];
+      if (selected && selected === q.correctOption) return acc + 1;
+      return acc;
+    }, 0);
+    setCorrectAnswers(computedCorrect);
+
     // API Call
     try {
       if (!fromAnalysis && clinicalCase._id) {
         await updateProgress({
-          totalCorrect: correctAnswers,
-          totalIncorrect: totalMCQs - correctAnswers,
+          totalCorrect: computedCorrect,
+          totalIncorrect: totalMCQs - computedCorrect,
           totalAttempted: totalMCQs,
           key: "clinicalcase",
           bankId: clinicalCase._id,
@@ -153,7 +163,7 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
           ? "Finishing..."
           : "Finish Quiz"
         : "Next Question",
-      disabled: !isAnswerShown || isUpdating,
+      disabled: !isAnswered || isUpdating,
       onClick: isLastQuestion ? handleFinishQuiz : handleNextMCQ,
     };
   };
@@ -183,7 +193,13 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
           <ClinicalCaseMCQ
             clinicalCase={clinicalCase}
             currentQuestionIndex={mcqIndex}
-            onAnswerShown={handleAnswerShown}
+            examMode
+            selectedOption={mcqAnswers[mcqIndex] ?? null}
+            onSelectOption={(opt) => {
+              setMcqAnswers((prev) => ({ ...prev, [mcqIndex]: opt }));
+              setIsAnswered(true);
+            }}
+            onAnswerShown={(shown) => handleAnswerShown(shown)}
           />
         )}
       </div>
@@ -244,6 +260,13 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
                 <div className="text-4xl font-bold text-blue-600">
                   {correctAnswers} / {totalMCQs}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowReview((v) => !v)}
+                  className="mt-3 text-sm font-medium text-blue-700 hover:underline cursor-pointer"
+                >
+                  {showReview ? "Hide Review" : "Review Answers"}
+                </button>
               </>
             ) : (
               <p className="text-lg text-slate-600">
@@ -251,6 +274,46 @@ const ClinicalCaseFlow: React.FC<Props> = ({ clinicalCase }) => {
               </p>
             )}
           </div>
+          {showReview && totalMCQs > 0 && (
+            <div className="max-h-[50vh] overflow-y-auto border rounded-lg p-3 bg-slate-50">
+              <div className="space-y-4">
+                {mcqs.map((q, idx) => {
+                  const selected = mcqAnswers[idx];
+                  const correct = q.correctOption;
+                  return (
+                    <div key={q.mcqId || idx} className="bg-white border rounded-lg p-3">
+                      <p className="text-sm font-semibold text-slate-800 mb-2">
+                        Q{idx + 1}. {q.question}
+                      </p>
+                      <div className="space-y-1">
+                        {q.options?.map((opt) => {
+                          const isSelected = selected === opt.option;
+                          const isCorrect = correct === opt.option;
+                          const border =
+                            isCorrect ? "border-green-500" : isSelected ? "border-red-500" : "border-slate-200";
+                          const bg =
+                            isCorrect ? "bg-green-50" : isSelected ? "bg-red-50" : "bg-white";
+                          return (
+                            <div key={opt.option} className={`p-2 border rounded ${border} ${bg}`}>
+                              <span className="text-sm text-slate-800">
+                                {opt.option}. {opt.optionText}
+                              </span>
+                              {isCorrect && (
+                                <span className="ml-2 text-xs font-bold text-green-700">Correct</span>
+                              )}
+                              {isSelected && !isCorrect && (
+                                <span className="ml-2 text-xs font-bold text-red-700">Your choice</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <DialogFooter className="sm:justify-center">
             <PrimaryButton
               onClick={handleBack}
