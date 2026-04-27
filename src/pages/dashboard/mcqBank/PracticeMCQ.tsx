@@ -28,6 +28,8 @@ import {
 
 export default function PracticeMCQ() {
   const [openQuizModal, setOpenQuizModal] = useState(false);
+  const [openUnansweredModal, setOpenUnansweredModal] = useState(false);
+  const [unansweredCount, setUnansweredCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const [navigationState] = useState(location.state);
@@ -207,7 +209,8 @@ export default function PracticeMCQ() {
     const totalQuestions = meta?.total || 0;
 
     if (totalAttempted < totalQuestions) {
-      toast.warning("Please answer all questions before submitting.");
+      setUnansweredCount(Math.max(totalQuestions - totalAttempted, 0));
+      setOpenUnansweredModal(true);
       return;
     }
 
@@ -263,6 +266,57 @@ export default function PracticeMCQ() {
       console.error("Failed to save progress:", error);
       toast.error("Failed to save progress");
       setIsSubmitting(false); // Enable blocker again if failed
+    }
+  };
+
+  const handleSubmitAnyway = async () => {
+    setOpenUnansweredModal(false);
+    setIsSubmitting(true);
+
+    let totalCorrect = 0;
+    let totalIncorrect = 0;
+    const allQuestions = mcqData?.mcqs || [];
+    allQuestions.forEach((q: any) => {
+      const qId = q?.mcqId;
+      const selectedIdx = selected[qId];
+      if (selectedIdx === undefined || selectedIdx === null) return;
+      const selectedOptionChar = String.fromCharCode(65 + selectedIdx);
+      if (selectedOptionChar === q.correctOption) totalCorrect++;
+      else totalIncorrect++;
+    });
+
+    const totalAttempted = Object.keys(selected).length;
+
+    try {
+      await updateProgress({
+        totalCorrect,
+        totalIncorrect,
+        totalAttempted,
+        key: "mcq",
+        bankId: mcqData?._id,
+      }).unwrap();
+
+      if (
+        (navigationState?.from === "weekly-plan" ||
+          navigationState?.from === "home") &&
+        navigationState?.planId
+      ) {
+        try {
+          await saveStudyPlanProgress({
+            planId: navigationState.planId,
+            day: navigationState.day,
+            suggest_content: navigationState.suggest_content,
+          }).unwrap();
+        } catch (error) {
+          console.error("Failed to save study plan progress:", error);
+        }
+      }
+
+      setShowResult(true);
+    } catch (error) {
+      console.error("Failed to save progress:", error);
+      toast.error("Failed to save progress");
+      setIsSubmitting(false);
     }
   };
 
@@ -750,6 +804,24 @@ export default function PracticeMCQ() {
         topic={mcqData?.topic || ""}
         subTopic={mcqData?.subtopic || ""}
       />
+
+      <AlertDialog open={openUnansweredModal} onOpenChange={setOpenUnansweredModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unanswered questions</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have <span className="font-semibold">{unansweredCount}</span> unanswered questions.
+              They will be counted as <span className="font-semibold">unattempted</span>. Do you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmitAnyway}>
+              Submit anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

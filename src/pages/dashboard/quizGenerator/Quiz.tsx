@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   CheckCircle,
   Timer,
   CheckCircle2,
@@ -125,6 +132,8 @@ const Quiz = () => {
   // Index-based storage breaks review when question order/data differs.
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
+  const [openUnansweredModal, setOpenUnansweredModal] = useState(false);
+  const [unansweredIndices, setUnansweredIndices] = useState<number[]>([]);
 
   // Load answers from sessionStorage in review mode (supports refresh + returning from analysis)
   useEffect(() => {
@@ -262,6 +271,31 @@ const Quiz = () => {
 
   const [updateTracking] = useUpdateQuizTrackingMutation();
   const [generateRecommendation] = useGenerateRecommendationMutation();
+
+  const getUnansweredIndices = () => {
+    const indices: number[] = [];
+    questions?.forEach((q: any, idx: number) => {
+      const qid = String(q?.id ?? idx);
+      if (!answers[qid]) indices.push(idx + 1); // 1-based for display
+    });
+    return indices;
+  };
+
+  const handleEndQuizClick = () => {
+    if (isReviewMode) {
+      if (id) sessionStorage.removeItem(`quiz_answers_${id}`);
+      navigate(`/dashboard/quiz-analysis/${id}${isExamMode ? "?source=exam" : ""}`);
+      return;
+    }
+
+    const missing = getUnansweredIndices();
+    if (missing.length > 0) {
+      setUnansweredIndices(missing);
+      setOpenUnansweredModal(true);
+      return;
+    }
+    handleSubmit();
+  };
 
   // Submit answers
   const handleSubmit = async () => {
@@ -497,19 +531,53 @@ const Quiz = () => {
             </div>
             <Button
               className="cursor-pointer bg-slate-800 hover:bg-slate-900 text-white rounded-lg h-10 px-6 font-semibold shadow-sm transition-all active:scale-95"
-              onClick={
-                isReviewMode
-                  ? () => {
-                    if (id) sessionStorage.removeItem(`quiz_answers_${id}`);
-                    navigate(`/dashboard/quiz-analysis/${id}${isExamMode ? "?source=exam" : ""}`);
-                  }
-                  : handleSubmit
-              }
+              onClick={handleEndQuizClick}
               disabled={!isReviewMode && Object.keys(answers).length === 0}
             >
               {isReviewMode ? "Finish Review" : "End Quiz"}
             </Button>
           </div>
+
+          <Dialog open={openUnansweredModal} onOpenChange={setOpenUnansweredModal}>
+            <DialogContent className="sm:max-w-[520px]">
+              <DialogHeader>
+                <DialogTitle>Unanswered questions</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-slate-700">
+                  You have <span className="font-semibold">{unansweredIndices.length}</span> unanswered questions.
+                  They will be counted as <span className="font-semibold">unattempted</span>.
+                </p>
+                {unansweredIndices.length > 0 && (
+                  <div className="text-sm text-slate-600">
+                    <span className="font-semibold text-slate-700">Unanswered:</span>{" "}
+                    {unansweredIndices.slice(0, 20).join(", ")}
+                    {unansweredIndices.length > 20 ? ` +${unansweredIndices.length - 20} more` : ""}
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const first = unansweredIndices[0];
+                    if (first) setCurrentQuestion(Math.max(0, first - 1));
+                    setOpenUnansweredModal(false);
+                  }}
+                >
+                  Go to first unanswered
+                </Button>
+                <Button
+                  onClick={() => {
+                    setOpenUnansweredModal(false);
+                    handleSubmit();
+                  }}
+                >
+                  Submit anyway
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {currentQuestionData && (
             <div className="w-full bg-white p-6 md:px-10 rounded-2xl shadow-sm border border-slate-100 flex-grow flex flex-col">
