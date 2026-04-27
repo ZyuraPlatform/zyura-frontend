@@ -9,6 +9,7 @@ import {
 import { DifficultyFilter } from "@/types";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useState } from "react";
+import AlertDialogBox from "@/common/custom/AlertDialogBox";
 import SearchWithTabs from "../../medical/examMode/SearchWithTabs";
 import EditFlashCardModal, { EditFlashCardInput } from "./EditFlashCardModal";
 
@@ -145,20 +146,24 @@ const SingleFlashCardCard: React.FC<FlashCardProps> = ({ bankId }) => {
                       Edit
                     </button>
 
-                    <button
-                      disabled={deletingId === flashCard.flashCardId}
-                      onClick={() =>
+                    <AlertDialogBox
+                      action={async () =>
                         handleDelete(
                           singleMcqBank?.data._id ?? "",
-                          flashCard.flashCardId
+                          flashCard.flashCardId,
                         )
                       }
-                      className="px-4 py-2 text-sm bg-red-500 cursor-pointer  hover:bg-red-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {deletingId === flashCard.flashCardId
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
+                      isLoading={deletingId === flashCard.flashCardId}
+                      trigger={
+                        <button
+                          className="px-4 py-2 text-sm bg-red-500 cursor-pointer hover:bg-red-600 text-white rounded-lg"
+                        >
+                          {deletingId === flashCard.flashCardId
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
+                      }
+                    />
                   </div>
                 </div>
               ))}

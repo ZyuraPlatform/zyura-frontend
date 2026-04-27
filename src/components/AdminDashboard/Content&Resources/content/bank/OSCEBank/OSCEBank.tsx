@@ -35,16 +35,11 @@ const OSCEBank: React.FC<Props> = ({ mcqBank, bankId, setBankId, searchTerm }) =
   const [deleteOsce, { isLoading: isDeleting }] = useDeleteOsceMutation();
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this Clinical Case?",
-    );
-    if (!confirmDelete) return;
-    await id;
-    deleteOsce(id)
-      .unwrap()
-      .catch((error) =>
-        console.error("Failed to delete Clinical Case:", error),
-      );
+    try {
+      await deleteOsce(id).unwrap();
+    } catch (error) {
+      console.error("Failed to delete Clinical Case:", error);
+    }
   };
 
   return (

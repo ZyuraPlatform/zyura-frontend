@@ -2,6 +2,7 @@ import Spinner from "@/common/button/Spinner";
 import CommonSelect, { SelectOption } from "@/common/custom/CommonSelect";
 import CommonHeader from "@/common/header/CommonHeader";
 import CommonSpace from "@/common/space/CommonSpace";
+import AlertDialogBox from "@/common/custom/AlertDialogBox";
 import {
   useDeleteFaqMutation,
   useGetFaqQuery,
@@ -55,7 +56,7 @@ const FAQManagement = () => {
     }));
   };
 
-  const [deleteFaq] = useDeleteFaqMutation();
+  const [deleteFaq, { isLoading: isDeleting }] = useDeleteFaqMutation();
   const handleDelete = async (id: string) => {
     if (id) await deleteFaq(id).unwrap();
   };
@@ -154,12 +155,15 @@ const FAQManagement = () => {
                                   <Edit2 size={14} /> Edit
                                 </button>
 
-                                <button
-                                  onClick={() => handleDelete(faq._id)}
-                                  className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer"
-                                >
-                                  <Trash2 size={14} /> Delete
-                                </button>
+                                <AlertDialogBox
+                                  action={() => handleDelete(faq._id)}
+                                  isLoading={isDeleting}
+                                  trigger={
+                                    <button className="flex items-center gap-1 px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer">
+                                      <Trash2 size={14} /> Delete
+                                    </button>
+                                  }
+                                />
                               </div>
                             </div>
                           </div>

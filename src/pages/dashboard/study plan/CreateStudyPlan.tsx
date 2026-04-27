@@ -13,6 +13,7 @@ import { ArrowLeft, Atom } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateStudyPlanMutation } from "@/store/features/studyPlan/studyPlan.api";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
+import { useGetGoalQuery } from "@/store/features/goal/goal.api";
 import { toast } from "sonner";
 
 // Types for hierarchy
@@ -36,11 +37,28 @@ export default function CreateStudyPlan() {
   const navigate = useNavigate();
   const [createStudyPlan, { isLoading }] = useCreateStudyPlanMutation();
   const { data: treeData } = useGetMCQBankTreeQuery({});
-  const subjects: SubjectTree[] = treeData?.data || [];
+  const { data: goalData } = useGetGoalQuery({});
+  const goal = goalData?.data?.[0];
+  const allSubjects: SubjectTree[] = treeData?.data || [];
+  const selectedSubjectNames =
+    goal?.selectedSubjects?.map(
+      (s: { subjectName: string }) => s.subjectName,
+    ) || [];
+  const subjects: SubjectTree[] =
+    selectedSubjectNames.length > 0
+      ? allSubjects.filter((sub) =>
+          selectedSubjectNames.includes(sub.subjectName),
+        )
+      : allSubjects;
 
   const [examName, setExamName] = useState("");
   const [dailyTime, setDailyTime] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [examDate, setExamDate] = useState("");
+
+  // SmartStudyPlan date boundaries
+  const [smartPlanStartDate, setSmartPlanStartDate] = useState<string>("");
+  const [smartPlanEndDate, setSmartPlanEndDate] = useState<string>("");
 
   const [subject, setSubject] = useState("");
   const [system, setSystem] = useState("");
@@ -85,6 +103,41 @@ export default function CreateStudyPlan() {
     }
   }, [systemList]);
 
+  // Pre-fill start/end dates from the goal and store boundaries
+  useEffect(() => {
+    if (goal) {
+      const start = goal.startDate.split("T")[0];
+      const end = goal.endDate.split("T")[0];
+      setSmartPlanStartDate(start);
+      setSmartPlanEndDate(end);
+      if (!startDate) setStartDate(start);
+      if (!examDate) setExamDate(end);
+
+      // Pre-fill selected subject, system, topic, subtopic from goal
+      if (goal.selectedSubjects && goal.selectedSubjects.length > 0) {
+        const firstSubject = goal.selectedSubjects[0];
+        if (!subject) setSubject(firstSubject.subjectName);
+
+        if (firstSubject.systems && firstSubject.systems.length > 0) {
+          const firstSystem = firstSubject.systems[0];
+          if (!system) setSystem(firstSystem.systemName);
+
+          if (firstSystem.topics && firstSystem.topics.length > 0) {
+            const firstTopic = firstSystem.topics[0];
+            if (!topic) setTopic(firstTopic.topicName);
+
+            if (
+              firstTopic.subTopicNames &&
+              firstTopic.subTopicNames.length > 0
+            ) {
+              if (!subTopic) setSubTopic(firstTopic.subTopicNames[0]);
+            }
+          }
+        }
+      }
+    }
+  }, [goal]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -94,8 +147,36 @@ export default function CreateStudyPlan() {
 
     if (!examName) newErrors.push("examName");
     if (!parsedTime || parsedTime <= 0) newErrors.push("dailyTime");
+    if (!startDate) newErrors.push("startDate");
     if (!examDate) newErrors.push("examDate");
-    if (examDate && new Date(examDate) <= new Date()) newErrors.push("examDate");
+    if (startDate && examDate && new Date(startDate) > new Date(examDate)) {
+      newErrors.push("startDate");
+      newErrors.push("examDate");
+      toast.error("Start date must be before or equal to finish date");
+    }
+
+    const todayString = new Date().toISOString().split("T")[0];
+    if (examDate && examDate < todayString) newErrors.push("examDate");
+
+    // Validate dates are within SmartStudyPlan range
+    if (smartPlanStartDate && smartPlanEndDate) {
+      if (startDate && new Date(startDate) < new Date(smartPlanStartDate)) {
+        newErrors.push("startDate");
+        toast.error(`Start date must be on or after ${smartPlanStartDate}`);
+      }
+      if (examDate && new Date(examDate) > new Date(smartPlanEndDate)) {
+        newErrors.push("examDate");
+        toast.error(`Finish date must be on or before ${smartPlanEndDate}`);
+      }
+      if (startDate && new Date(startDate) > new Date(smartPlanEndDate)) {
+        newErrors.push("startDate");
+        toast.error(`Start date must be on or before ${smartPlanEndDate}`);
+      }
+      if (examDate && new Date(examDate) < new Date(smartPlanStartDate)) {
+        newErrors.push("examDate");
+        toast.error(`Finish date must be on or after ${smartPlanStartDate}`);
+      }
+    }
 
     if (!subject) newErrors.push("subject");
     if (!system) newErrors.push("system");
@@ -113,6 +194,7 @@ export default function CreateStudyPlan() {
 
     const payload = {
       exam_name: examName,
+      start_date: startDate,
       exam_date: examDate,
       daily_study_time: parsedTime,
       exam_type: "",
@@ -168,7 +250,9 @@ export default function CreateStudyPlan() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
             <div className="grid gap-2 col-span-1 lg:col-span-2">
-              <Label className={errors.includes("examName") ? "text-red-500" : ""}>
+              <Label
+                className={errors.includes("examName") ? "text-red-500" : ""}
+              >
                 Exam Name
               </Label>
               <Input
@@ -178,12 +262,16 @@ export default function CreateStudyPlan() {
                   clearError("examName");
                 }}
                 placeholder="e.g., Gastroenterology Exam"
-                className={errors.includes("examName") ? "border-red-500 bg-red-50" : ""}
+                className={
+                  errors.includes("examName") ? "border-red-500 bg-red-50" : ""
+                }
               />
             </div>
 
             <div className="grid gap-2">
-              <Label className={errors.includes("dailyTime") ? "text-red-500" : ""}>
+              <Label
+                className={errors.includes("dailyTime") ? "text-red-500" : ""}
+              >
                 Daily Study Time (hours)
               </Label>
               <Input
@@ -195,25 +283,63 @@ export default function CreateStudyPlan() {
                   setDailyTime(e.target.value);
                   clearError("dailyTime");
                 }}
-                className={errors.includes("dailyTime") ? "border-red-500 bg-red-50" : ""}
+                className={
+                  errors.includes("dailyTime") ? "border-red-500 bg-red-50" : ""
+                }
               />
             </div>
 
             <div className="grid gap-2">
-              <Label className={errors.includes("examDate") ? "text-red-500" : ""}>
+              <Label
+                className={errors.includes("startDate") ? "text-red-500" : ""}
+              >
+                Start Date
+              </Label>
+              <Input
+                type="date"
+                min={smartPlanStartDate || undefined}
+                max={smartPlanEndDate || undefined}
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  clearError("startDate");
+                }}
+                className={
+                  errors.includes("startDate") ? "border-red-500 bg-red-50" : ""
+                }
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label
+                className={errors.includes("examDate") ? "text-red-500" : ""}
+              >
                 Finish Date
               </Label>
               <Input
                 type="date"
-                min={new Date().toISOString().split("T")[0]}
+                min={startDate || smartPlanStartDate || undefined}
+                max={smartPlanEndDate || undefined}
                 value={examDate}
                 onChange={(e) => {
                   setExamDate(e.target.value);
                   clearError("examDate");
                 }}
-                className={errors.includes("examDate") ? "border-red-500 bg-red-50" : ""}
+                className={
+                  errors.includes("examDate") ? "border-red-500 bg-red-50" : ""
+                }
               />
             </div>
+
+            {/* SmartStudyPlan date range helper */}
+            {smartPlanStartDate && smartPlanEndDate && (
+              <div className="col-span-1 lg:col-span-2">
+                <p className="text-xs text-blue-600 mt-1">
+                  Dates must be between <strong>{smartPlanStartDate}</strong>{" "}
+                  and <strong>{smartPlanEndDate}</strong>
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -223,7 +349,9 @@ export default function CreateStudyPlan() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
             <div className="grid gap-2">
-              <Label className={errors.includes("subject") ? "text-red-500" : ""}>
+              <Label
+                className={errors.includes("subject") ? "text-red-500" : ""}
+              >
                 Subject
               </Label>
               <Select value={subject} onValueChange={setSubject}>
@@ -242,7 +370,11 @@ export default function CreateStudyPlan() {
 
             <div className="grid gap-2">
               <Label>System</Label>
-              <Select value={system} onValueChange={setSystem} disabled={!subject}>
+              <Select
+                value={system}
+                onValueChange={setSystem}
+                disabled={!subject}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select System" />
                 </SelectTrigger>
@@ -274,7 +406,11 @@ export default function CreateStudyPlan() {
 
             <div className="grid gap-2">
               <Label>Sub-Topic</Label>
-              <Select value={subTopic} onValueChange={setSubTopic} disabled={!topic}>
+              <Select
+                value={subTopic}
+                onValueChange={setSubTopic}
+                disabled={!topic}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Sub-Topic" />
                 </SelectTrigger>
