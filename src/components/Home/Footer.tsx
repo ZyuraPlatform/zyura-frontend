@@ -1,4 +1,5 @@
-﻿import ZyuraLogo from "../../assets/home/footer-logo.svg";
+﻿import { Link } from "react-router-dom";
+import ZyuraLogo from "../../assets/home/footer-logo.svg";
 
 const pages = ["Home", "Tools", "Study Plan", "AI Tools", "Mentors", "Pricing"];
 const siteMap = ["About", "Articles", "Tools", "For Students"];
@@ -67,7 +68,7 @@ export const Footer = () => {
             </h3>
             <p className="mt-4 text-[16px] text-[#4a5565]">Subscribe to our newsletter</p>
 
-            <form className="mt-4 flex flex-row gap-3">
+            <form className="mt-4 flex flex-row flex-wrap md:flex-nowrap justify-center gap-3">
               <input
                 type="email"
                 placeholder="Enter your email here..."
@@ -90,25 +91,25 @@ export const Footer = () => {
             © 2025 Medical Search Hub | All Rights Reserved
           </p>
           <div className="flex items-center flex-wrap gap-4 justify-center">
-            <a href="/cookie-policy-zyura-e" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link to="/cookie-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Cookie Policy
-            </a>
+            </Link>
             <span className="text-white/70">|</span>
-            <a href="/terms-and-conditions-zyura-e" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link to="/terms-and-conditions" className="font-sora text-[14px] text-white/95 hover:text-white">
               Terms & Conditions
-            </a>
+            </Link>
             <span className="text-white/70">|</span>
-            <a href="/refund-policy-zyura-edu" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link to="/refund-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Refund Policy
-            </a>
+            </Link>
             <span className="text-white/70">|</span>
-            <a href="/copyright-policy-zyura-e" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link to="/copyright-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Copyright Policy
-            </a>
+            </Link>
             <span className="text-white/70">|</span>
-            <a href="/disclaimer-policy-zyura-e" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link to="/disclaimer-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Disclaimer Policy
-            </a>
+            </Link>
           </div>
         </div>
       </div>

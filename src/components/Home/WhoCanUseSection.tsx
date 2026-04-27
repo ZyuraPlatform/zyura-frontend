@@ -1,12 +1,10 @@
 import whoBgImage from "../../assets/home/Who-Can-Use.jpg";
 
 const audienceList = [
-  "Medical Students (MBBS, MD, DO)",
-  "Nursing Students (BSN, MSN)",
-  "Dental Students (BDS, DDS)",
-  "Pharmacy Students (B.Pharm, Pharm.D)",
-  "Allied Health Professionals",
-  "Educators, mentors, and clinical instructors",
+  "Strong clinical reasoning skills",
+  "Faster decision-making under pressure",
+  "Higher exam performance",
+  "Real-world confidence",
 ];
 
 export const WhoCanUseSection = () => {
@@ -29,7 +27,7 @@ export const WhoCanUseSection = () => {
               WHO IT&apos;S FOR
             </p>
             <h2 className="mx-auto text-left mt-3 font-sora text-xl md:text-2xl lg:text-[38px] font-semibold text-dark">
-              Who Can Use ZYURA?
+              What You Gain with Zyura-E
             </h2>
 
             <ul className="mt-6 space-y-3">

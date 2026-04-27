@@ -25,9 +25,9 @@
   /* Font family configuration */
   --font-inter: "Inter", sans-serif;
   --font-bricolage: "Bricolage Grotesque", sans-serif;
-  --font-geist: "Geist",sans-serif;
+  --font-geist: "Geist", sans-serif;
   --font-arial: "Arial", "Helvetica", sans-serif;
- 
+
 }
 
 @layer base {
@@ -182,22 +182,53 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE/Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .thin-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
+
 .thin-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .thin-scrollbar::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 10px;
 }
+
 .thin-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
+}
+
+:global(.testimonial-swiper .swiper-button-next),
+:global(.testimonial-swiper .swiper-button-prev) {
+  color: #1976d2;
+  width: 40px;
+  height: 40px;
+  background: #f0f4f8;
+  border-radius: 50%;
+  top: auto;
+  bottom: 5px;
+}
+
+:global(.testimonial-swiper .swiper-button-next::after),
+:global(.testimonial-swiper .swiper-button-prev::after) {
+  font-size: 16px;
+}
+
+:global(.testimonial-swiper .swiper-pagination-bullet) {
+  background: #cbd5e0;
+  opacity: 1;
+}
+
+:global(.testimonial-swiper .swiper-pagination-bullet-active) {
+  background: #1976d2;
 }

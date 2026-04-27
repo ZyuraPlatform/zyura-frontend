@@ -5,7 +5,7 @@ import HeroSection from "@/components/Home/HeroSection";
 // import StudyPlanSection from "@/components/Home/StudyPlanSection";
 // import studyPlanImage from "@/assets/home/study_plan_image.png";
 // import Tools from "@/components/Home/Tools";
-import { ValueBanner } from "@/components/Home/ValueBanner";
+ //import { ValueBanner } from "@/components/Home/ValueBanner";
 import { FeatureCards } from "@/components/Home/FeatureCards";
 import { AIFeaturesGrid } from "@/components/Home/AIFeaturesGrid";
 import { StudyExamModeSection } from "@/components/Home/StudyExamModeSection";
@@ -30,6 +30,10 @@ import { TermsConditionsPage } from "@/components/Home/TermsConditionsPage";
 import AOS from "aos";
 import 'aos/dist/aos.css';
 import { useEffect } from 'react'
+import { WhyZyuraDifferent } from "@/components/Home/WhyZyuraDifferent";
+import { BuiltForEveryProfessional } from "@/components/Home/BuiltForEveryProfessional";
+import { LearnByDoingSection } from "@/components/Home/LearnByDoingSection";
+import { TestimonialSection } from "@/components/Home/TestimonialSection";
 
 const Home = () => {
    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -102,8 +106,12 @@ const Home = () => {
     <>
       <Header />
       <HeroSection />
-      <ValueBanner />
+      <WhyZyuraDifferent/>
+      <BuiltForEveryProfessional/>
+      
+      {/* <ValueBanner /> */}
       <FeatureCards />
+      <LearnByDoingSection/>
       <AIFeaturesGrid />
       <StudyExamModeSection />
       <ContentCredibilitySection />
@@ -113,8 +121,10 @@ const Home = () => {
       <PricingSection />
       <AIStudySection />
       <WhoCanUseSection />
+      
       <MentorsSection />
       <FAQSection />
+      <TestimonialSection/>
       <CTASection />
       <Footer/>
     </>

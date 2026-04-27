@@ -47,12 +47,13 @@ export const AIStudySection = () => {
     <section className="pt-25 lg:pt-36" data-aos="fade-up" id="about-us">
       <div className="mx-auto container px-5">
         <div className="grid gap-4 grid-rows-1 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-2xl w-full overflow-hidden" data-aos="fade-right">
+          <div className="rounded-2xl w-full overflow-hidden relative" data-aos="fade-right">
             <img
               src={innovativeStudyImage}
               alt="Students using a laptop for AI-powered study"
               className="h-full min-h-[360px] w-full object-cover lg:min-h-[860px]"
             />
+            <div className="absolute inset-0 bg-black/40" />
           </div>
 
           <div

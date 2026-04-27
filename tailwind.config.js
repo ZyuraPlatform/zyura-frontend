@@ -32,6 +32,7 @@ export default {
       backgroundImage: {
         gradient: 'linear-gradient(135deg, #aa3bff 0%, #6b6375 100%)',
         'brand-gradient': 'linear-gradient(to bottom right, #0059C0, #063C79)',
+        'brand-gradient-hover': 'linear-gradient(to bottom right, #4397F8, #063C79)',
       },
     },
   },

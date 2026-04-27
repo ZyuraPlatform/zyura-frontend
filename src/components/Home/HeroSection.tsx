@@ -6,9 +6,9 @@ import SplitText from "../ui/SplitText";
 const heroSlides = [
   {
     image: heroBanner,
-    title: "Welcome to Your Personalized AI Learning Experience",
+    title: "Train Like a Clinician. Think Like an Expert. Perform Under Pressure.",
     description:
-      "From AI-powered MCQs & Exams to real-world clinical simulations, We’re here to help you succeed in every stage of your medical journey.",
+      "An AI-powered medical learning platform designed for students, doctors, nurses, and allied health professionals to master clinical thinking, ace exams, and build real-world confidence.",
   },
   {
     image:
@@ -104,13 +104,13 @@ export default function HeroSection() {
                       href="#"
                       className="rounded-xl bg-brand px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-[#0a4f9f]"
                     >
-                      Join Study Group
+                      Start AI Training
                     </a>
                     <a
                       href="#"
                       className="rounded-xl border border-white/85 px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-white/10"
                     >
-                      Start Learning Now
+                      Explore Clinical Simulations
                     </a>
                   </div>
                 </div>

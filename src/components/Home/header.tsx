@@ -122,7 +122,7 @@ export default function Header() {
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-sora font-light text-sm text-white transition bg-brand-gradient"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-sora font-light text-sm text-white transition bg-brand-gradient hover:bg-brand-gradient-hover"
                   >
                     Logout
                   </button>
@@ -137,7 +137,7 @@ export default function Header() {
                   </Link>
                   <Link
                     to="/login"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-sora font-light text-sm text-white transition bg-brand-gradient"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-sora font-light text-sm text-white transition bg-brand-gradient hover:bg-brand-gradient-hover"
                   >
                     Login
                   </Link>

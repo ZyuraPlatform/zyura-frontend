@@ -6,34 +6,34 @@ import AdaptiveStudyExperience from "../../assets/home/Adaptive-Study-Experience
 
 const cards = [
   {
-    tag: "Smart Tools",
-    title: "Smart Learning Tools",
+    tag: "AI Examiner",
+    title: "AI Viva Examiner",
     image: SmartLearningTools,
     description:
-      "Learn efficiently with AI-powered tools designed to simplify complex medical concepts and improve retention.",
+      "Practice oral exams with a realistic AI examiner that challenges your thinking and communication skills.",
     bg: "#F6F8E9",
   },
   {
-    tag: "All-in-One",
-    title: "Unified Study Platform",
+    tag: "Case-Based Learning",
+    title: "Clinical Case Simulator",
     image: allInOneImage,
     description:
-      "Learn efficiently with AI-powered tools designed to simplify complex medical concepts and improve retention.",
+      "Diagnose, investigate, and manage virtual patients in real-time scenarios.",
     bg: "#E9F8EF",
   },
   {
-    tag: "Flexible Learning",
-    title: "Adaptive Study Experience",
+    tag: "Timed Practice",
+    title: "Board Exam Stress Simulator",
     image: AdaptiveStudyExperience,
     description:
-      "Study anytime, anywhere at your own pace with tools that adjust to your learning style and schedule.",
+      "Train under real exam pressure with timed, adaptive questioning.",
     bg: "#E0EAF9",
   },
   {
-    tag: "24/7 Access",
-    title: "Learn Without Limits",
+    tag: "AI Tracking",
+    title: "Smart Study Engine",
     description:
-      "Get uninterrupted access to your study resources whenever you need on desktop or mobile devices anytime.",
+      "AI tracks your progress and builds a personalized learning path.",
     image: access247Image,
     bg: "#F8E9F3",
   },
@@ -47,9 +47,8 @@ export const FeatureCards = () => {
         data-aos="fade-up"
       >
         <h2 className="mx-auto text-center font-sora text-2xl md:text-3xl lg:text-[48px] font-semibold text-dark">
-          Because your success in medicine needs more than effort{" "}
-          <span className="font-pattaya text-[1.02em] font-normal leading-[1.08] inline">
-            it needs the right tools.
+          Next-Generation <span className="font-pattaya text-[1.02em] font-normal leading-[1.08] inline">
+            AI Training Tools
           </span>
         </h2>
       </div>
@@ -58,7 +57,7 @@ export const FeatureCards = () => {
           {cards.map((card, index) => (
             <article
               key={card.title}
-              className="flex min-h-auto lg:min-h-[460px] flex-col rounded-2xl p-6 cursor-pointer hover:shadow-lg transition-shadow duration-300"
+              className="flex min-h-auto lg:min-h-[460px] flex-col rounded-2xl p-6 cursor-pointer hover:shadow-lg transition-shadow duration-300 group"
               data-aos="fade-up"
               data-aos-delay={index * 90}
               style={{ backgroundColor: card.bg }}
@@ -68,11 +67,14 @@ export const FeatureCards = () => {
               </span>
 
               {card.image ? (
-                <img
-                  src={card.image}
-                  alt={card.title}
-                  className="mt-4 h-[220px] w-full rounded-2xl object-cover"
-                />
+                <div className="relative mt-4 rounded-2xl overflow-hidden h-[220px]">
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300" />
+                </div>
               ) : (
                 <div className="mt-4 h-[220px]" />
               )}
@@ -80,7 +82,7 @@ export const FeatureCards = () => {
               <h3 className="mt-6 font-sora text-xl lg:text-2xl leading-tight text-[#141923]">
                 {card.title}
               </h3>
-              <p className="mt-4 text-[12px] lg:text-[14px] leading-relaxed text-[#252b36]">
+              <p className="mt-4 text-[14px] lg:text-[14px] leading-relaxed text-[#252b36]">
                 {card.description}
               </p>
             </article>

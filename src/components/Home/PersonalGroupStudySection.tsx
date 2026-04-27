@@ -48,12 +48,13 @@ export const PersonalGroupStudySection = () => {
               ))}
             </div>
           </div>
-          <div className="overflow-hidden rounded-[32px]" data-aos="fade-left">
+          <div className="overflow-hidden rounded-[32px] relative" data-aos="fade-left">
             <img
               src={studyImage}
               alt="Students studying together"
               className="h-[440px] w-full object-cover md:h-[560px] lg:h-[760px]"
             />
+            <div className="absolute inset-0 bg-black/40" />
           </div>
         </div>
       </div>

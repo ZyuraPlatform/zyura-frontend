@@ -1,7 +1,7 @@
 
 import { createElement } from "react";
 import { ArrowUpRight, type IconNode } from "lucide";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper, SwiperSlide, } from "swiper/react";
 import doctorOne from "../../assets/home/doctor-1.png";
 import doctorTwo from "../../assets/home/doctor-2.png";
 import doctorThree from "../../assets/home/doctor-3.png";
@@ -74,35 +74,35 @@ const dummyMentorPool: Mentor[] = [
     image: doctorOne,
     isDummy: true,
   },
-    {
+  {
     name: "Dr. Mentor Slot",
     specialty: "Specialty Mentor",
     bio: "We are onboarding additional experts for this mentoring track.",
     image: doctorOne,
     isDummy: true,
   },
-    {
+  {
     name: "Dr. Mentor Slot",
     specialty: "Specialty Mentor",
     bio: "We are onboarding additional experts for this mentoring track.",
     image: doctorOne,
     isDummy: true,
   },
-    {
+  {
     name: "Dr. Mentor Slot",
     specialty: "Specialty Mentor",
     bio: "We are onboarding additional experts for this mentoring track.",
     image: doctorOne,
     isDummy: true,
   },
-    {
+  {
     name: "Dr. Mentor Slot",
     specialty: "Specialty Mentor",
     bio: "We are onboarding additional experts for this mentoring track.",
     image: doctorOne,
     isDummy: true,
   },
-    {
+  {
     name: "Dr. Mentor Slot",
     specialty: "Specialty Mentor",
     bio: "We are onboarding additional experts for this mentoring track.",
@@ -175,9 +175,13 @@ export const MentorsSection = () => {
 
               <Swiper
                 spaceBetween={16}
+                autoplay={{
+                  delay: 2500,
+                  disableOnInteraction: false,
+                }}
                 slidesPerView={1}
                 breakpoints={{
-                  640: { slidesPerView: 2 },
+                  640: { slidesPerView: 1 },
                   1024: { slidesPerView: 3 },
                 }}
                 className="h-full"
@@ -185,11 +189,10 @@ export const MentorsSection = () => {
                 {padMentors(group.mentors).map((mentor, index) => (
                   <SwiperSlide key={`${group.title}-${mentor.name}`} className="h-auto">
                     <article
-                      className={`group flex h-full flex-col overflow-hidden rounded-2xl border bg-white ${
-                        mentor.isDummy
+                      className={`group flex h-full flex-col overflow-hidden rounded-2xl border bg-white ${mentor.isDummy
                           ? "border-dashed border-[#c9d3e6]"
                           : "border-[#d4dbe7]"
-                      }`}
+                        }`}
                       data-aos="fade-up"
                       data-aos-delay={index * 90}
                     >
@@ -199,6 +202,7 @@ export const MentorsSection = () => {
                           alt={`${mentor.name} - ${mentor.specialty}`}
                           className="h-full w-full object-cover object-top"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300" />
                       </div>
 
                       <div className="flex flex-1 flex-col p-5">
@@ -209,7 +213,7 @@ export const MentorsSection = () => {
                           <p className="mt-1 font-sora text-base font-medium text-brand">
                             {mentor.specialty}
                           </p>
-                          <p className="mt-3 font-sora text-[15px] leading-relaxed text-[#3a4453]">
+                          <p className="mt-3 font-sora text-[15px] leading-relaxed text-[#3a4453] min-h-12">
                             {mentor.bio}
                           </p>
                         </div>
@@ -228,7 +232,7 @@ export const MentorsSection = () => {
                           </button>
                           <button
                             type="button"
-                            className="rounded-lg bg-brand px-4 py-2.5 font-sora text-[14px] font-medium text-white transition hover:bg-[#0a4f9f]"
+                            className="flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-3 font-sora font-light text-sm text-white transition bg-brand-gradient hover:bg-brand-gradient-hover"
                           >
                             Book a Session
                           </button>

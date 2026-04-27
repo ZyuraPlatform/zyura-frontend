@@ -7,6 +7,11 @@ import SetPassword from "@/pages/authPage/SetPassword";
 import Signup from "@/pages/authPage/Signup";
 import EmailVerificationPending from "@/pages/authPage/EmailVerificationPending";
 import VerifyEmail from "@/pages/authPage/VerifyEmail";
+import { CookiePolicyPage } from "@/components/Home/CookiePolicyPage";
+import { TermsConditionsPage } from "@/components/Home/TermsConditionsPage";
+import { RefundPolicyPage } from "@/components/Home/RefundPolicyPage";
+import { CopyrightPolicyPage } from "@/components/Home/CopyrightPolicyPage";
+import { DisclaimerPolicyPage } from "@/components/Home/DisclaimerPolicyPage";
 // import VerificationOTP from "@/pages/authPage/VerificationOTP";
 
 const authRoutes = [
@@ -45,6 +50,26 @@ const authRoutes = [
   {
     path: "/reset-password",
     element: <ResetPassword />,
+  },
+  {
+    path: "/cookie-policy",
+    element: <CookiePolicyPage />,
+  },
+  {
+    path: "/terms-and-conditions",
+    element: <TermsConditionsPage />,
+  },
+  {
+    path: "/refund-policy",
+    element: <RefundPolicyPage />,
+  },
+  {
+    path: "/copyright-policy",
+    element: <CopyrightPolicyPage />,
+  },
+  {
+    path: "/disclaimer-policy",
+    element: <DisclaimerPolicyPage />,
   },
 ];
 

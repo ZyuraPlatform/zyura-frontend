@@ -120,15 +120,18 @@ export const AIFeaturesGrid = () => {
               return (
                 <article
                   key={`image-${index}`}
-                  className="overflow-hidden rounded-xl hidden md:block"
+                  className="overflow-hidden rounded-xl hidden md:block group"
                   data-aos="fade-up"
                   data-aos-delay={index * 70}
                 >
-                  <img
-                    src={card.image}
-                    alt={card.alt}
-                    className="h-[250px] w-full object-cover md:h-[280px]"
-                  />
+                  <div className="relative h-[250px] md:h-[280px] overflow-hidden">
+                    <img
+                      src={card.image}
+                      alt={card.alt}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300" />
+                  </div>
                 </article>
               );
             }
@@ -145,11 +148,11 @@ export const AIFeaturesGrid = () => {
                   {card.title}
                 </h3>
                 <div>
-                  <p className="mt-5 text-[12px] lg:text-[14px] leading-relaxed text-[#2b3441]">
+                  <p className="mt-5 text-[14px] lg:text-[14px] leading-relaxed text-[#2b3441]">
                     {card.description}
                   </p>
                   {card.points && (
-                    <ul className="mt-3 list-disc pl-5 text-[12px] lg:text-[14px] leading-relaxed text-[#2b3441]">
+                    <ul className="mt-3 list-disc pl-5 text-[14px] lg:text-[14px] leading-relaxed text-[#2b3441]">
                       {card.points.map((point) => (
                         <li key={point}>{point}</li>
                       ))}

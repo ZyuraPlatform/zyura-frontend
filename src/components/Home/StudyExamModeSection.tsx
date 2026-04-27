@@ -25,12 +25,13 @@ export const StudyExamModeSection = () => {
             className="grid grid-cols-1 items-center gap-6 md:grid-cols-2 md:gap-8"
             data-aos="fade-up"
           >
-            <div>
+            <div className="relative overflow-hidden rounded-2xl">
               <img
                 src={doctorStudy}
                 alt="Doctor studying"
                 className="h-[260px] w-full rounded-2xl object-cover sm:h-[340px] lg:h-full"
               />
+              <div className="absolute inset-0 bg-black/40" />
             </div>
             <div className="text-blackLight">
               <h3 className="font-sora text-xl font-semibold lg:text-3xl leading-tight">
@@ -148,12 +149,13 @@ export const StudyExamModeSection = () => {
                 </div>
               </div>
             </div>
-            <div className="order-1 md:order-2">
+            <div className="order-1 md:order-2 rounded-2xl relative overflow-hidden">
               <img
                 src={doctorExam}
                 alt="Doctor studying"
                 className="h-[260px] w-full rounded-2xl object-cover sm:h-[340px] lg:h-full"
               />
+              <div className="absolute inset-0 bg-black/40" />
             </div>
           </article>
         </div>
