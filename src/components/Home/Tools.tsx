@@ -50,7 +50,7 @@ const Tools = () => {
             </p>
             <PrimaryButton
               onClick={() => {
-                navigate("/dashboard/smart-study");
+                navigate("/signup");
               }}
               className="lg:px-8 lg:py-4 mb-10"
             >

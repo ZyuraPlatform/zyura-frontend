@@ -12,6 +12,8 @@ import {
 import { toast } from "sonner";
 import GlobalLoader from "@/common/GlobalLoader";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
+import { useCreateStudyPlanMutation } from "@/store/features/studyPlan/studyPlan.api";
+import { goalToStudyPlanTopics } from "@/utils/goalToStudyPlanTopics";
 
 // Main Component
 const MedicalStudyGoalTracker: React.FC = () => {
@@ -23,6 +25,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
   const [createGoal, { isLoading: isCreating }] = useCreateGoalMutation();
   const [updateGoal, { isLoading: isUpdating }] = useUpdateGoalMutation();
   const { data, isLoading } = useGetGoalQuery({});
+  const [createStudyPlan] = useCreateStudyPlanMutation();
 
   const { data: treeData, isLoading: isTreeLoading } = useGetMCQBankTreeQuery(
     {}
@@ -312,6 +315,8 @@ const MedicalStudyGoalTracker: React.FC = () => {
       selectedSubjects: selectedSubjects.map((s) => ({
         subjectName: s.subjectName,
         systemNames: s.systemNames,
+        systems: s.systems ?? [],
+        fullSubject: s.fullSubject ?? false,
       })),
     };
 
@@ -322,6 +327,22 @@ const MedicalStudyGoalTracker: React.FC = () => {
       } else {
         await createGoal(goalDataToSend).unwrap();
         // toast.success("Goal created successfully! ✅");
+      }
+      // Auto-generate a Smart Study Planner plan after goal create/update
+      const topics = goalToStudyPlanTopics(
+        goalDataToSend.selectedSubjects as any,
+        availableSubjects,
+      );
+      if (topics.length) {
+        await createStudyPlan({
+          exam_name: goalDataToSend.goalName,
+          start_date: goalDataToSend.startDate,
+          exam_date: goalDataToSend.endDate,
+          daily_study_time: Number(goalDataToSend.studyHoursPerDay || 0),
+          exam_type: "",
+          topics,
+          created_from: "smart_study_planner",
+        }).unwrap();
       }
     } catch (error: any) {
       console.error("Goal operation error:", error);
@@ -335,6 +356,8 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
     handleCloseModal();
   };
+
+  // Planner page should not have a separate \"Generate Study Plan\" button.
 
   const handleCloseModal = (): void => {
     setShowModal(false);

@@ -1,14 +1,11 @@
 ﻿import { Link } from "react-router-dom";
 import ZyuraLogo from "../../assets/home/footer-logo.svg";
 
-const pages = ["Home", "Tools", "Study Plan", "AI Tools", "Mentors", "Pricing"];
-const siteMap = ["About", "Articles", "Tools", "For Students"];
-
 export const Footer = () => {
   return (
     <footer className="bg-[#d5e0ef]" data-aos="fade-up">
       <div className="mx-auto container px-5 pb-12 pt-12 md:px-10 lg:px-12">
-        <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.5fr_0.6fr_0.6fr_0.9fr]">
+        <div className="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.5fr_0.9fr]">
           <div className="space-y-8" data-aos="fade-up">
             <div className="text-center md:text-left">
               <img src={ZyuraLogo} alt="Zyura logo" className="mx-auto h-20 w-auto object-contain lg:mx-0" />
@@ -25,41 +22,9 @@ export const Footer = () => {
                 Contact Info:
               </h3>
               <div className="mt-3 space-y-1 text-[14px] text-[#4a5565]">
-                <p>Contact Info: Phone: +1 800 123 4567</p>
-                <p>Email: support@zyurae.com</p>
-                <p>Address: 125 Wellness Avenue, California, USA</p>
+                <p>Email: support@zyura-e.com</p>
               </div>
             </div>
-          </div>
-
-          <div className="text-center md:text-left" data-aos="fade-up" data-aos-delay="70">
-            <h3 className="font-sora text-[18px] font-semibold text-dark md:text-[20px]">
-              Pages
-            </h3>
-            <ul className="mt-5 space-y-3">
-              {pages.map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-[14px] text-[#4a5565] transition hover:text-[#0b3f80]">
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="text-center md:text-left" data-aos="fade-up" data-aos-delay="120">
-            <h3 className="font-sora text-[18px] font-semibold text-dark md:text-[20px]">
-              Site Map
-            </h3>
-            <ul className="mt-5 space-y-3">
-              {siteMap.map((item) => (
-                <li key={item}>
-                  <a href="#" className="text-[14px] text-[#4a5565] transition hover:text-[#0b3f80]">
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div className="text-center md:text-left" data-aos="fade-up" data-aos-delay="170">

@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle, XCircle, Clock, MinusCircle } from "lucide-reac
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import DashboardHeading from "@/components/reusable/DashboardHeading";
 import {
-  useGetStudyPlanQuery,
+  useGetSingleStudyPlanQuery,
   useSaveStudyPlanProgressMutation,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
@@ -33,6 +33,7 @@ interface DailyPlan {
 
 interface StudyPlanData {
   _id: string;
+  created_from?: "smart_study" | "smart_study_planner";
   plan_summary: string;
   total_days: number;
   daily_plan: DailyPlan[];
@@ -61,14 +62,19 @@ export default function WeeklyPlan() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { data, isLoading } = useGetStudyPlanQuery({});
+  const { data, isLoading } = useGetSingleStudyPlanQuery(id as string, {
+    skip: !id,
+  });
   const [saveProgress, { isLoading: isSaving }] = useSaveStudyPlanProgressMutation();
   const [cancelPlan] = useCancelStudyPlanMutation();
   const [deletePlan] = useDeleteStudyPlanMutation();
 
   const planFromState = location.state?.plan as StudyPlanData | undefined;
-  const studyPlan: StudyPlanData | undefined =
-    data?.data?.find((p: StudyPlanData) => p._id === id) || planFromState;
+  const studyPlan: StudyPlanData | undefined = data?.data || planFromState;
+  const backPath =
+    studyPlan?.created_from === "smart_study_planner"
+      ? "/dashboard/smart-study-plan"
+      : "/dashboard/smart-study";
 
   const today = getTodayLocal();
 
@@ -116,7 +122,7 @@ export default function WeeklyPlan() {
     try {
       await cancelPlan(studyPlan._id).unwrap();
       toast.success("Plan cancelled.");
-      navigate("/dashboard/smart-study");
+      navigate(backPath);
     } catch {
       toast.error("Failed to cancel plan.");
     }
@@ -127,19 +133,19 @@ export default function WeeklyPlan() {
     try {
       await deletePlan(studyPlan._id).unwrap();
       toast.success("Plan deleted.");
-      navigate("/dashboard/smart-study");
+      navigate(backPath);
     } catch {
       toast.error("Failed to delete plan.");
     }
   };
 
-  if (isLoading && !planFromState) return <GlobalLoader2 />;
+  if ((isLoading || !id) && !planFromState) return <GlobalLoader2 />;
 
   if (!studyPlan) {
     return (
       <div className="mb-10 bg-slate-50">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard/smart-study" className="mb-7">
+          <Link to={backPath} className="mb-7">
             <ArrowLeft />
           </Link>
           <DashboardHeading
@@ -167,7 +173,7 @@ export default function WeeklyPlan() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard/smart-study" className="mb-7">
+          <Link to={backPath} className="mb-7">
             <ArrowLeft />
           </Link>
           <DashboardHeading
