@@ -2,6 +2,7 @@ import { Autoplay, Pagination, A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import heroBanner from "../../assets/home/hero-banner.png";
 import SplitText from "../ui/SplitText";
+import { Link } from "react-router-dom";
 
 const heroSlides = [
   {
@@ -100,18 +101,21 @@ export default function HeroSection() {
                   </p>
 
                   <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                    <a
-                      href="#"
+
+                    <Link
+                      to="/login"
                       className="rounded-xl bg-brand px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-[#0a4f9f]"
                     >
                       Start AI Training
-                    </a>
-                    <a
-                      href="#"
+                    </Link>
+
+                    <Link
+                      to="/login"
                       className="rounded-xl border border-white/85 px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-white/10"
                     >
                       Explore Clinical Simulations
-                    </a>
+                    </Link>
+
                   </div>
                 </div>
               </div>
