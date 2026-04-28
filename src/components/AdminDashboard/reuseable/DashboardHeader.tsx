@@ -16,7 +16,7 @@ import Cookies from "js-cookie";
 // import { FaRegBell } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardSearch from "@/Layout/dashboard/DashboardSearch";
-// import NotificationIcon from "./NotificationIcon";
+import AdminNotificationBell from "./AdminNotificationBell";
 
 interface DashboardHeaderProps {
   sidebarOpen: boolean;
@@ -71,12 +71,7 @@ const DashboardHeader = ({ sidebarOpen }: DashboardHeaderProps) => {
             </DropdownMenu>
           </div> */}
 
-          {/* <NotificationIcon
-            className="hidden md:flex"
-            icon={<FaRegBell />}
-            count={12}
-            color="bg-[#E2E8F0]"
-          /> */}
+          <AdminNotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="cursor-pointer">

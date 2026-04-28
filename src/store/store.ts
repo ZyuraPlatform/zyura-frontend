@@ -13,6 +13,7 @@ import storage from "redux-persist/lib/storage";
 import { baseAPI } from "./api/baseApi";
 import staticContentSlice from "./features/adminDashboard/staticContent/staticContentSlice";
 import authReducer from "./features/auth/auth.slice";
+import notificationReducer from "./features/notifications/notification.slice"; // ✅ new
 
 const persistConfig = {
   key: "auth",
@@ -49,6 +50,7 @@ export const store = configureStore({
     auth: persistedReducer,
     staticContent: persistedStaticContentReducer,
     quiz: quizReducer,
+    notifications: notificationReducer, // ✅ new
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

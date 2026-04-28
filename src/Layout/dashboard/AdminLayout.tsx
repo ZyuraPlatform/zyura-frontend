@@ -3,13 +3,40 @@ import AdminSidebar from "@/components/AdminDashboard/reuseable/AdminSidebar";
 import DashboardHeader from "@/components/AdminDashboard/reuseable/DashboardHeader";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // ✅ added useEffect
 import { Outlet, useLocation } from "react-router-dom";
+import { io } from "socket.io-client"; // ✅ new
+import { useSelector, useDispatch } from "react-redux"; // ✅ new
+import { selectToken } from "@/store/features/auth/auth.slice"; // ✅ new
+import { addNotification } from "@/store/features/notifications/notification.slice"; // ✅ new
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const { pathname } = useLocation();
+  const token = useSelector(selectToken); // ✅ new
+  const dispatch = useDispatch(); // ✅ new
+
+  // ✅ persistent socket — lives as long as admin is logged in
+  useEffect(() => {
+    if (!token) return;
+
+    const socket = io("http://localhost:1800", {
+      query: { token },
+      transports: ["websocket"],
+      reconnection: true,
+    });
+
+    socket.on("connect", () => {
+      console.log("✅ Admin layout socket connected:", socket.id);
+    });
+
+    socket.on("new-report", (data: any) => {
+      console.log("🔔 New report received:", data);
+      dispatch(addNotification(data)); // ✅ store in Redux
+    });
+
+    return () => { socket.disconnect(); };
+  }, [token]);
 
   const hideSidebar =
     pathname.startsWith("/admin/student-profile/") ||

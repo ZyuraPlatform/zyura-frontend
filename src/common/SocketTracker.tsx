@@ -3,6 +3,7 @@ import { useAppSelector } from "@/store/hook";
 import { selectToken, selectUser } from "@/store/features/auth/auth.slice";
 import { io, Socket } from "socket.io-client";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 const SocketTracker = () => {
   const token = useAppSelector(selectToken);
@@ -44,7 +45,8 @@ const SocketTracker = () => {
 
   useEffect(() => {
     const role = user?.account?.role;
-    const isEligible = role === "STUDENT" || role === "PROFESSIONAL";
+    const isEligible = role === "STUDENT" || role === "PROFESSIONAL" || role === "ADMIN";
+    const isAdmin = role === "ADMIN";
 
     // Helper to establish connection
     const connectSocket = () => {
@@ -96,6 +98,16 @@ const SocketTracker = () => {
       socket.on("connect_error", (error) => {
         console.error("Socket.IO connection error:", error);
       });
+
+      if (isAdmin) {
+        socket.on("new-report", (data: any) => {
+            console.log("Received new-report:", data);
+          toast.info("New report submitted", {
+            description: `${data?.name || "A user"} reported: ${data?.report?.text || ""}`,
+            duration: 8000,
+          });
+        });
+      }
     };
 
     // Helper to disconnect
