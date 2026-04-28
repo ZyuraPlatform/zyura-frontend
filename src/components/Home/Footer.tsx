@@ -1,5 +1,7 @@
 ﻿import { Link } from "react-router-dom";
 import ZyuraLogo from "../../assets/home/footer-logo.svg";
+import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 export const Footer = () => {
   return (
@@ -23,6 +25,50 @@ export const Footer = () => {
               </h3>
               <div className="mt-3 space-y-1 text-[14px] text-[#4a5565]">
                 <p>Email: support@zyura-e.com</p>
+              </div>
+            </div>
+
+            <div className="text-center md:text-left">
+              <h3 className="font-sora text-[18px] font-semibold text-dark md:text-[20px]">
+                Follow us
+              </h3>
+              <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
+                <a
+                  href="https://www.facebook.com/profile.php?id=61582502243778"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Facebook"
+                  className="w-10 h-10 rounded-full bg-brand/90 hover:bg-brand flex items-center justify-center text-white transition"
+                >
+                  <FaFacebookF className="text-lg" />
+                </a>
+                <a
+                  href="https://www.instagram.com/zyrualearning/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="Instagram"
+                  className="w-10 h-10 rounded-full bg-brand/90 hover:bg-brand flex items-center justify-center text-white transition"
+                >
+                  <FaInstagram className="text-lg" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/feed/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="LinkedIn"
+                  className="w-10 h-10 rounded-full bg-brand/90 hover:bg-brand flex items-center justify-center text-white transition"
+                >
+                  <FaLinkedinIn className="text-lg" />
+                </a>
+                <a
+                  href="https://x.com/ZyuraE66010"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label="X (Twitter)"
+                  className="w-10 h-10 rounded-full bg-brand/90 hover:bg-brand flex items-center justify-center text-white transition"
+                >
+                  <FaXTwitter className="text-lg" />
+                </a>
               </div>
             </div>
           </div>
