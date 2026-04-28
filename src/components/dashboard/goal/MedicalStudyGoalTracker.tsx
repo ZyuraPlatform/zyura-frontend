@@ -328,13 +328,18 @@ const MedicalStudyGoalTracker: React.FC = () => {
         await createGoal(goalDataToSend).unwrap();
         // toast.success("Goal created successfully! ✅");
       }
+
+      // Close modal immediately after goal save (do not wait on AI)
+      handleCloseModal();
+
       // Auto-generate a Smart Study Planner plan after goal create/update
       const topics = goalToStudyPlanTopics(
         goalDataToSend.selectedSubjects as any,
         availableSubjects,
       );
       if (topics.length) {
-        await createStudyPlan({
+        // Fire-and-forget: backend will upsert planner plan (single plan per user)
+        createStudyPlan({
           exam_name: goalDataToSend.goalName,
           start_date: goalDataToSend.startDate,
           exam_date: goalDataToSend.endDate,
@@ -342,7 +347,9 @@ const MedicalStudyGoalTracker: React.FC = () => {
           exam_type: "",
           topics,
           created_from: "smart_study_planner",
-        }).unwrap();
+        }).unwrap().catch(() => {
+          // Best-effort: goal is saved; plan generation can be retried on next update/refresh
+        });
       }
     } catch (error: any) {
       console.error("Goal operation error:", error);
@@ -352,9 +359,8 @@ const MedicalStudyGoalTracker: React.FC = () => {
             isEditMode ? "update" : "create"
           } goal. Please try again ❌`
       );
+      return;
     }
-
-    handleCloseModal();
   };
 
   // Planner page should not have a separate \"Generate Study Plan\" button.
