@@ -20,7 +20,7 @@ import Pagination from "@/common/custom/Pagination";
 export default function MyPlan() {
   const [page, setPage] = useState(1);
   const limit = 12;
-  const { data, isLoading } = useGetStudyPlanQuery({ page, limit });
+  const { data, isLoading } = useGetStudyPlanQuery({ page, limit, plan_type: "preference" });
   const [deleteStudyPlan, { isLoading: isDeleting }] = useDeleteStudyPlanMutation();
   const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 

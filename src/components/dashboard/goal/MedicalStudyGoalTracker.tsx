@@ -9,6 +9,7 @@ import {
   useGetGoalQuery,
   useUpdateGoalMutation,
 } from "@/store/features/goal/goal.api";
+import { useCreateStudyPlanMutation } from "@/store/features/studyPlan/studyPlan.api";
 import { toast } from "sonner";
 import GlobalLoader from "@/common/GlobalLoader";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
@@ -22,6 +23,7 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const [createGoal, { isLoading: isCreating }] = useCreateGoalMutation();
   const [updateGoal, { isLoading: isUpdating }] = useUpdateGoalMutation();
+  const [createStudyPlan] = useCreateStudyPlanMutation();
   const { data, isLoading } = useGetGoalQuery({});
 
   const { data: treeData, isLoading: isTreeLoading } = useGetMCQBankTreeQuery(
@@ -312,16 +314,60 @@ const MedicalStudyGoalTracker: React.FC = () => {
       selectedSubjects: selectedSubjects.map((s) => ({
         subjectName: s.subjectName,
         systemNames: s.systemNames,
+        systems: s.systems ?? [],
+        fullSubject: s.fullSubject ?? false,
       })),
     };
 
     try {
-      if (isEditMode) {
-        await updateGoal(goalDataToSend).unwrap();
-        // toast.success("Goal updated successfully! ✅");
+      const savedGoal: any = isEditMode
+        ? await updateGoal(goalDataToSend).unwrap()
+        : await createGoal(goalDataToSend).unwrap();
+
+      const goalId =
+        savedGoal?.data?._id ||
+        savedGoal?._id ||
+        savedGoal?.data?.id ||
+        savedGoal?.id;
+
+      // Build study plan topics from the selectedSubjects hierarchy.
+      const topics = (selectedSubjects ?? []).flatMap((sub) =>
+        (sub.systems ?? []).flatMap((sys) =>
+          (sys.topics ?? []).flatMap((t) => {
+            const sts = Array.isArray(t.subTopicNames) ? t.subTopicNames : [];
+            if (sts.length > 0) {
+              return sts.map((st) => ({
+                subject: sub.subjectName,
+                system: sys.systemName,
+                topic: t.topicName,
+                subtopic: st,
+              }));
+            }
+            return [
+              {
+                subject: sub.subjectName,
+                system: sys.systemName,
+                topic: t.topicName,
+                subtopic: "",
+              },
+            ];
+          }),
+        ),
+      );
+
+      if (!topics.length) {
+        toast.error("Please select at least one topic before generating a plan.");
       } else {
-        await createGoal(goalDataToSend).unwrap();
-        // toast.success("Goal created successfully! ✅");
+        await createStudyPlan({
+          exam_name: formData.goalName,
+          start_date: formData.startDate,
+          exam_date: formData.endDate,
+          daily_study_time: Number(formData.studyHoursPerDay),
+          exam_type: "",
+          plan_type: "smart",
+          goalId,
+          topics,
+        }).unwrap();
       }
     } catch (error: any) {
       console.error("Goal operation error:", error);

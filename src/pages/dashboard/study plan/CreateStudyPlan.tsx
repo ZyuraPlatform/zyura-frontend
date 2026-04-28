@@ -198,6 +198,7 @@ export default function CreateStudyPlan() {
       exam_date: examDate,
       daily_study_time: parsedTime,
       exam_type: "",
+      plan_type: "preference",
       topics: [
         {
           subject,
