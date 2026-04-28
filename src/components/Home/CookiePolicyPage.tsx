@@ -67,7 +67,7 @@ const updateReasons = [
 
 export const CookiePolicyPage = () => {
   return (
-    <main className="min-h-screen bg-[#eef2f8] px-4 py-10 md:px-6 md:py-14">
+    <main className="min-h-screen bg-[#eef2f8] px-4 py-10 md:px-6 md:py-14" id="cookie-policy">
       <div className="mx-auto max-w-5xl rounded-2xl border border-[#dbe3f0] bg-white p-6 md:p-10">
         <h1 className="font-sora text-[22px] font-bold text-black">
           Cookie Policy
@@ -75,7 +75,7 @@ export const CookiePolicyPage = () => {
 
         <p className="mt-2 whitespace-pre-line font-sora text-[18px] text-[#6b7280]">
           MEDIMIND MANAGING EMARKETPLACES W.L.L (Operating Zyura Education)
-          {"\n"}Last Updated: [Insert Date]
+          {"\n"}Last Updated: 28/04/2026
         </p>
 
         <div className="mt-6 space-y-4 font-sora text-[16px] text-[#6b7280]">

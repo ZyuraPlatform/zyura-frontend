@@ -91,23 +91,23 @@ export const Footer = () => {
             © 2025 Medical Search Hub | All Rights Reserved
           </p>
           <div className="flex items-center flex-wrap gap-4 justify-center">
-            <Link to="/cookie-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link onClick={() => window.scrollTo(0, 0)} to="/cookie-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Cookie Policy
             </Link>
             <span className="text-white/70">|</span>
-            <Link to="/terms-and-conditions" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link onClick={() => window.scrollTo(0, 0)} to="/terms-and-conditions" className="font-sora text-[14px] text-white/95 hover:text-white">
               Terms & Conditions
             </Link>
             <span className="text-white/70">|</span>
-            <Link to="/refund-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link onClick={() => window.scrollTo(0, 0)} to="/refund-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Refund Policy
             </Link>
             <span className="text-white/70">|</span>
-            <Link to="/copyright-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link onClick={() => window.scrollTo(0, 0)} to="/copyright-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Copyright Policy
             </Link>
             <span className="text-white/70">|</span>
-            <Link to="/disclaimer-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
+            <Link onClick={() => window.scrollTo(0, 0)} to="/disclaimer-policy" className="font-sora text-[14px] text-white/95 hover:text-white">
               Disclaimer Policy
             </Link>
           </div>

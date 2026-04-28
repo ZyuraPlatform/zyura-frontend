@@ -77,7 +77,7 @@ export const DisclaimerPolicyPage = () => {
 
         <p className="mt-2 whitespace-pre-line font-sora text-[18px] text-[#6b7280]">
           MEDIMIND MANAGING EMARKETPLACES W.L.L (Operating Zyura Education)
-          {"\n"}Last Updated: [Insert Date]
+          {"\n"}Last Updated: 28/04/2026
         </p>
 
         <div className="mt-6 space-y-4 font-sora text-[16px] text-[#6b7280]">
@@ -308,8 +308,6 @@ export const DisclaimerPolicyPage = () => {
             MEDIMIND MANAGING EMARKETPLACES W.L.L{"\n"}Email: <a className="text-primary" href="mailto:info@zyura-e.com">info@zyura-e.com</a>
             {"\n"}Website: <a className="text-primary" href="https://www.zyura-e.com" target="_blank" rel="noopener noreferrer">www.zyura-e.com</a>
           </p>
-          <p className="font-sora text-[16px] text-[#6b7280]">Top of Form</p>
-          <p className="font-sora text-[16px] text-[#6b7280]">Bottom of Form</p>
         </section>
       </div>
     </main>
