@@ -15,7 +15,7 @@ import {
   useLazyCheckEmailQuery,
 } from "@/store/features/auth/auth.api";
 import { toast } from "sonner";
-import { auth, googleProvider } from "@/config/firebase.config";
+import { auth, firebaseEnabled, googleProvider } from "@/config/firebase.config";
 import { signInWithPopup } from "firebase/auth";
 import Cookies from "js-cookie";
 import { useAppDispatch } from "@/store/hook";
@@ -173,6 +173,10 @@ const Signup = () => {
 
   const handleGoogleSignup = async () => {
     try {
+      if (!firebaseEnabled || !auth || !googleProvider) {
+        toast.error("Google signup is temporarily unavailable");
+        return;
+      }
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
@@ -388,11 +392,15 @@ const Signup = () => {
           {/* Google button */}
           <button
             onClick={handleGoogleSignup}
-            disabled={isSubmitting || isLoading || isSocialLoading}
+            disabled={isSubmitting || isLoading || isSocialLoading || !firebaseEnabled}
             className="w-full flex items-center justify-center text-sm text-[#3F3F46] font-medium border border-[#D2D6DB] p-[8px] rounded-lg hover:bg-gray-100 cursor-pointer disabled:opacity-50"
           >
             <FcGoogle className="mr-2 text-xl" />
-            {isSocialLoading ? "Connecting..." : "Google"}
+            {!firebaseEnabled
+              ? "Google (temporarily unavailable)"
+              : isSocialLoading
+                ? "Connecting..."
+                : "Google"}
           </button>
 
           {/* Terms + Sign in */}
