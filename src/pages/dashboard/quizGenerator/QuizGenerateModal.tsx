@@ -67,6 +67,11 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
 
   const user = useSelector(selectUser);
   const isProfessional = user?.account?.role === "PROFESSIONAL";
+  const preferredExamSubject = String(
+    isProfessional
+      ? user?.profile?.professionName || ""
+      : user?.account?.profile_type || user?.profile?.studentType || "",
+  ).trim();
 
   const { data: allExamResForStudent } = useGetAllExamForStudentQuery(
     { limit: 100 },
@@ -86,6 +91,21 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
   const subjectsFromExams = Array.from(
     new Set(allExams.map((e: any) => (isProfessional ? e.professionName : e.subject)))
   ).filter(Boolean);
+
+  // Safe default: auto-select Subject only when there's an exact match.
+  // If no match exists, keep current behavior (user selects manually).
+  useEffect(() => {
+    if (quizMode !== "exam") return;
+    if (examSubject) return;
+    if (!preferredExamSubject) return;
+    if (!subjectsFromExams.length) return;
+
+    if (subjectsFromExams.includes(preferredExamSubject)) {
+      setExamSubject(preferredExamSubject);
+      setExamName("");
+      clearError("examSubject");
+    }
+  }, [quizMode, examSubject, preferredExamSubject, subjectsFromExams]);
 
   const isExamListLoading =
     quizMode === "exam" &&
