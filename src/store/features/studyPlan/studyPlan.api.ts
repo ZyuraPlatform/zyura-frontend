@@ -40,6 +40,25 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       invalidatesTags: ["StudyPlan"],
     }),
 
+    saveMcqAttempts: build.mutation({
+      query: (data: {
+        planId: string;
+        day: number;
+        suggest_content: string;
+        total_count: number;
+        attempts: {
+          questionId: string;
+          selectedOption: string;
+          isCorrect: boolean;
+        }[];
+      }) => ({
+        url: "/study_planner/save-mcq-attempts",
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["StudyPlan"],
+    }),
+
     cancelStudyPlan: build.mutation({
       query: (id: string) => ({
         url: `/study_planner/cancel/${id}`,
@@ -63,6 +82,7 @@ export const {
   useGetStudyPlanQuery,
   useGetSingleStudyPlanQuery,
   useSaveStudyPlanProgressMutation,
+  useSaveMcqAttemptsMutation,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
 } = studyPlanAPI;

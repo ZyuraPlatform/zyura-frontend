@@ -6,7 +6,6 @@ import { Link, useNavigate, useParams, useLocation, useSearchParams } from "reac
 import DashboardHeading from "@/components/reusable/DashboardHeading";
 import {
   useGetSingleStudyPlanQuery,
-  useSaveStudyPlanProgressMutation,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
 } from "@/store/features/studyPlan/studyPlan.api";
@@ -21,6 +20,9 @@ interface HourlyBreakdown {
   suggest_content: { contentId: string; limit: number };
   isCompleted: boolean;
   description: string;
+  attempted_count?: number;
+  total_count?: number;
+  attempts?: { questionId: string; selectedOption: string; isCorrect: boolean }[];
 }
 
 interface DailyPlan {
@@ -69,7 +71,6 @@ export default function WeeklyPlan() {
   const { data, isLoading } = useGetSingleStudyPlanQuery(id as string, {
     skip: !id,
   });
-  const [saveProgress, { isLoading: isSaving }] = useSaveStudyPlanProgressMutation();
   const [cancelPlan] = useCancelStudyPlanMutation();
   const [deletePlan] = useDeleteStudyPlanMutation();
 
@@ -110,17 +111,6 @@ export default function WeeklyPlan() {
     if (!contentId) {
       toast.warning("Content is not yet assigned to this task.");
       return;
-    }
-
-    // ─── Save progress when user starts a task ──────────────────────────
-    try {
-      await saveProgress({
-        planId: studyPlan?._id,
-        day: dayNumber,
-        suggest_content: contentId,
-      }).unwrap();
-    } catch {
-      // Non-blocking — navigate anyway
     }
 
     const type = taskType.toLowerCase();
@@ -354,13 +344,25 @@ export default function WeeklyPlan() {
                                     session.task_type,
                                     session.duration_hours && `${session.duration_hours}h`,
                                     session.duration_minutes && `${session.duration_minutes}m`,
+                                    (() => {
+                                      const t = session.task_type?.toLowerCase() ?? "";
+                                      const isMcq = t === "mcq" || t === "mcqs";
+                                      if (
+                                        isMcq &&
+                                        session.total_count != null &&
+                                        session.total_count > 0
+                                      ) {
+                                        return `${session.attempted_count ?? 0}/${session.total_count} attempted`;
+                                      }
+                                      return null;
+                                    })(),
                                   ].filter(Boolean).join(" • ")}
                                 </p>
                               </div>
 
                               <Button
                                 size="sm"
-                                disabled={isFuture || isSaving}
+                                disabled={isFuture}
                                 onClick={() =>
                                   handleStart(
                                     session.task_type,

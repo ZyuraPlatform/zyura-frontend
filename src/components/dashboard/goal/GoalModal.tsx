@@ -287,7 +287,11 @@ export const Step3: React.FC<Step3Props> = ({
             : "bg-blue-500 text-white hover:bg-blue-600"
         }`}
       >
-        {isLoading ? "Saving..." : isEditMode ? "Update Preference" : "Create Preference"}
+        {isLoading
+          ? "Saving..."
+          : isEditMode
+            ? "Update Smart Study Planner"
+            : "Create Preference"}
       </button>
     </div>
   </div>

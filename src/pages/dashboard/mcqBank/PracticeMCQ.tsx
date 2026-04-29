@@ -7,10 +7,13 @@ import { useGetSingleMCQQuery } from "@/store/features/MCQBank/MCQBank.api";
 import { useUpdateProgressMcqFlashcardClinicalCaseMutation } from "@/store/features/goal/goal.api";
 import { McqQuestion } from "@/types";
 import { ArrowLeft, CircleAlert, Copy, Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useParams, useNavigate, useBlocker, useSearchParams, useLocation } from "react-router-dom";
 import QuizReportModal from "../quizGenerator/QuizReportModal";
-import { useSaveStudyPlanProgressMutation } from "@/store/features/studyPlan/studyPlan.api";
+import {
+  useGetSingleStudyPlanQuery,
+  useSaveMcqAttemptsMutation,
+} from "@/store/features/studyPlan/studyPlan.api";
 import { toast } from "sonner";
 import PrimaryButton from "@/components/reusable/PrimaryButton";
 import { PracticeQuizModal } from "./PracticeQuizModal";
@@ -25,6 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+type McqNavState = {
+  planId?: string;
+  day?: number;
+  suggest_content?: string;
+  from?: string;
+} | null | undefined;
 
 export default function PracticeMCQ() {
   const [openQuizModal, setOpenQuizModal] = useState(false);
@@ -81,19 +91,21 @@ export default function PracticeMCQ() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const planNav = navigationState as McqNavState | undefined;
+  const planIdForQuery = planNav?.planId;
+  const { data: planApiData } = useGetSingleStudyPlanQuery(planIdForQuery as string, {
+    skip: !planIdForQuery,
+  });
 
-
-  // Block navigation if user has started answering but hasn't submitted
-  const hasStarted = Object.keys(results).length > 0;
-
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasStarted &&
-      !isSubmitting &&
-      currentLocation.pathname !== nextLocation.pathname
-  );
-
-
+  const planTask = useMemo(() => {
+    const plan = (planApiData as { data?: any } | undefined)?.data;
+    if (!plan?.daily_plan || planNav?.day == null || planNav?.suggest_content == null)
+      return undefined;
+    const dayEntry = plan.daily_plan.find((d: any) => d.day_number === planNav.day);
+    return dayEntry?.hourly_breakdown?.find(
+      (t: any) => t.suggest_content?.contentId === planNav.suggest_content,
+    );
+  }, [planApiData, planNav?.day, planNav?.suggest_content]);
 
   const { data, isLoading } = useGetSingleMCQQuery({
     id: id as string,
@@ -117,11 +129,25 @@ export default function PracticeMCQ() {
   }, [id]);
 
   const [updateProgress] = useUpdateProgressMcqFlashcardClinicalCaseMutation();
-  const [saveStudyPlanProgress] = useSaveStudyPlanProgressMutation();
+  const [saveMcqAttempts] = useSaveMcqAttemptsMutation();
 
   const meta = data?.meta || displayData?.meta;
   const mcqData = data?.data || displayData?.data;
   const questions = mcqData?.mcqs || [];
+
+  const questionsByIdRef = useRef<Record<string, any>>({});
+  useEffect(() => {
+    (mcqData?.mcqs || []).forEach((q: any) => {
+      if (q?.mcqId) questionsByIdRef.current[q.mcqId] = q;
+    });
+  }, [mcqData]);
+
+  const isReviewMode = useMemo(() => {
+    const tot = (planTask?.total_count ?? meta?.total ?? 0) as number;
+    const atts = planTask?.attempts as { questionId: string }[] | undefined;
+    if (!tot || !atts?.length) return false;
+    return atts.length === tot;
+  }, [planTask?.total_count, planTask?.attempts, meta?.total]);
 
   const isInitialLoading = isLoading && !displayData;
 
@@ -159,9 +185,96 @@ export default function PracticeMCQ() {
   const [openReportModal, setOpenReportModal] = useState(false);
   const [mcqId, setMcqId] = useState("");
 
+  const didHydrateFromPlan = useRef(false);
+  useEffect(() => {
+    didHydrateFromPlan.current = false;
+  }, [planNav?.planId, planNav?.day, planNav?.suggest_content]);
 
+  useEffect(() => {
+    if (didHydrateFromPlan.current) return;
+    const atts = planTask?.attempts as
+      | { questionId: string; selectedOption: string }[]
+      | undefined;
+    if (!atts?.length) return;
+    const next: Record<string, number | null> = {};
+    atts.forEach((a) => {
+      const code = a.selectedOption?.trim().toUpperCase().charCodeAt(0);
+      if (!code) return;
+      const idx = code - 65;
+      if (idx >= 0 && idx < 26) next[a.questionId] = idx;
+    });
+    if (Object.keys(next).length > 0) {
+      setSelected(next);
+      didHydrateFromPlan.current = true;
+    }
+  }, [planTask?.attempts]);
+
+  useEffect(() => {
+    if (isReviewMode) setShowResult(false);
+  }, [isReviewMode]);
+
+  const hasStarted =
+    Object.keys(selected).length > 0 && !isReviewMode && !isSubmitting;
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasStarted &&
+      !isSubmitting &&
+      currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  const buildAttemptsPayload = useCallback(() => {
+    const map = questionsByIdRef.current;
+    const attempts: {
+      questionId: string;
+      selectedOption: string;
+      isCorrect: boolean;
+    }[] = [];
+    for (const qId of Object.keys(selected)) {
+      const idx = selected[qId];
+      if (idx === null || idx === undefined) continue;
+      const q = map[qId];
+      if (!q) continue;
+      const selectedOptionChar = String.fromCharCode(65 + idx);
+      attempts.push({
+        questionId: qId,
+        selectedOption: selectedOptionChar,
+        isCorrect: selectedOptionChar === q.correctOption,
+      });
+    }
+    return attempts;
+  }, [selected]);
+
+  const saveMcqToPlanIfNeeded = useCallback(async () => {
+    if (
+      (planNav?.from !== "weekly-plan" && planNav?.from !== "home") ||
+      !planNav?.planId ||
+      planNav.day == null ||
+      planNav.suggest_content == null
+    ) {
+      return;
+    }
+    const total =
+      meta?.total ?? planTask?.total_count ?? 0;
+    if (!total) return;
+    const attempts = buildAttemptsPayload();
+    await saveMcqAttempts({
+      planId: planNav.planId,
+      day: planNav.day,
+      suggest_content: planNav.suggest_content,
+      total_count: total,
+      attempts,
+    }).unwrap();
+  }, [
+    planNav,
+    meta?.total,
+    planTask?.total_count,
+    buildAttemptsPayload,
+    saveMcqAttempts,
+  ]);
 
   const handleSelect = (qId: string, index: number) => {
+    if (isReviewMode) return;
     setSelected((prev) => ({ ...prev, [qId]: index }));
   };
 
@@ -202,7 +315,30 @@ export default function PracticeMCQ() {
     }
   };
 
+  const navigateAwayFromMcq = () => {
+    if (
+      navigationState?.from === "weekly-plan" ||
+      navigationState?.from === "home"
+    ) {
+      navigate(-1);
+    } else {
+      navigate("/dashboard/mcq-bank");
+    }
+  };
+
+  const handleSaveExitWithPlan = async () => {
+    try {
+      await saveMcqToPlanIfNeeded();
+    } catch (error) {
+      console.error("Failed to save study plan MCQ attempts:", error);
+      toast.error("Failed to save progress to your study plan");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async () => {
+    if (isReviewMode) return;
     if (!mcqData?._id) return;
 
     const totalAttempted = Object.keys(selected).length;
@@ -237,21 +373,10 @@ export default function PracticeMCQ() {
         bankId: mcqData?._id,
       }).unwrap();
 
-      // Check if we came from WeeklyPlan or Home and update study plan progress
-      if (
-        (navigationState?.from === "weekly-plan" ||
-          navigationState?.from === "home") &&
-        navigationState?.planId
-      ) {
-        try {
-          await saveStudyPlanProgress({
-            planId: navigationState.planId,
-            day: navigationState.day,
-            suggest_content: navigationState.suggest_content,
-          }).unwrap();
-        } catch (error) {
-          console.error("Failed to save study plan progress:", error);
-        }
+      const savedPlan = await handleSaveExitWithPlan();
+      if (!savedPlan) {
+        setIsSubmitting(false);
+        return;
       }
 
       // localStorage.removeItem(storageKey);
@@ -270,6 +395,7 @@ export default function PracticeMCQ() {
   };
 
   const handleSubmitAnyway = async () => {
+    if (isReviewMode) return;
     setOpenUnansweredModal(false);
     setIsSubmitting(true);
 
@@ -296,20 +422,10 @@ export default function PracticeMCQ() {
         bankId: mcqData?._id,
       }).unwrap();
 
-      if (
-        (navigationState?.from === "weekly-plan" ||
-          navigationState?.from === "home") &&
-        navigationState?.planId
-      ) {
-        try {
-          await saveStudyPlanProgress({
-            planId: navigationState.planId,
-            day: navigationState.day,
-            suggest_content: navigationState.suggest_content,
-          }).unwrap();
-        } catch (error) {
-          console.error("Failed to save study plan progress:", error);
-        }
+      const savedPlan = await handleSaveExitWithPlan();
+      if (!savedPlan) {
+        setIsSubmitting(false);
+        return;
       }
 
       setShowResult(true);
@@ -341,6 +457,8 @@ export default function PracticeMCQ() {
   const isCurrentQuestionAnswered = currentQId
     ? selected[currentQId] !== undefined && selected[currentQId] !== null
     : false;
+
+  const revealAnswers = showResult || isReviewMode;
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -375,9 +493,10 @@ export default function PracticeMCQ() {
             </AlertDialogAction>
             <AlertDialogAction
               className="bg-blue-main hover:bg-blue-main/90"
-              onClick={() => {
+              onClick={async () => {
                 if (blocker.state === "blocked") {
-                  // Simply proceed with leaving; progress is already saved to storage via useEffect
+                  const ok = await handleSaveExitWithPlan();
+                  if (!ok) return;
                   blocker.proceed();
                 }
               }}
@@ -531,15 +650,10 @@ export default function PracticeMCQ() {
               {/* Left Section */}
               <div className="flex items-center gap-3">
                 <div
-                  onClick={() => {
-                    if (
-                      navigationState?.from === "weekly-plan" ||
-                      navigationState?.from === "home"
-                    ) {
-                      navigate(-1);
-                    } else {
-                      navigate("/dashboard/mcq-bank");
-                    }
+                  onClick={async () => {
+                    const ok = await handleSaveExitWithPlan();
+                    if (!ok) return;
+                    navigateAwayFromMcq();
                   }}
                   className="cursor-pointer sm:mb-0"
                 >
@@ -558,18 +672,17 @@ export default function PracticeMCQ() {
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <PrimaryButton
                   className="h-10 w-full sm:w-auto cursor-pointer bg-slate-600 hover:bg-slate-700"
-                  onClick={() => {
-                    if (
-                      navigationState?.from === "weekly-plan" ||
-                      navigationState?.from === "home"
-                    ) {
-                      navigate(-1);
-                    } else {
-                      navigate("/dashboard/mcq-bank");
-                    }
+                  onClick={async () => {
+                    const ok = await handleSaveExitWithPlan();
+                    if (!ok) return;
+                    navigateAwayFromMcq();
                   }}
                 >
-                  Save & Exit
+                  {isReviewMode &&
+                  (navigationState?.from === "weekly-plan" ||
+                    navigationState?.from === "home")
+                    ? "Back to plan"
+                    : "Save & Exit"}
                 </PrimaryButton>
                 <PrimaryButton
                   style={{
@@ -652,13 +765,12 @@ export default function PracticeMCQ() {
                     {q.options.map((opt: any, optionIdx: number) => {
                       const isSelected = selectedIndex === optionIdx;
                       const isCorrect = opt.option === q.correctOption;
-                      const showResult = false;
 
                       let borderClass = "border-slate-200 hover:border-blue-300";
                       let bgClass = "bg-white";
                       let textClass = "text-slate-800";
 
-                      if (showResult) {
+                      if (revealAnswers) {
                         if (isCorrect) {
                           borderClass = "border-green-500";
                           bgClass = "bg-green-50";
@@ -678,14 +790,19 @@ export default function PracticeMCQ() {
                       return (
                         <button
                           key={optionIdx}
+                          type="button"
                           onClick={() => handleSelect(qId, optionIdx)}
-                          disabled={false}
-                          className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 cursor-pointer ${borderClass} ${bgClass}`}
+                          disabled={isReviewMode}
+                          className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 ${
+                            isReviewMode
+                              ? "cursor-default"
+                              : "cursor-pointer"
+                          } ${borderClass} ${bgClass}`}
                         >
                           <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border 
-                            ${isSelected && !showResult ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-500 border-gray-200'}
-                            ${showResult && isCorrect ? 'bg-green-500 text-white border-green-500' : ''}
-                            ${showResult && isSelected && !isCorrect ? 'bg-red-500 text-white border-red-500' : ''}
+                            ${isSelected && !revealAnswers ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-500 border-gray-200'}
+                            ${revealAnswers && isCorrect ? 'bg-green-500 text-white border-green-500' : ''}
+                            ${revealAnswers && isSelected && !isCorrect ? 'bg-red-500 text-white border-red-500' : ''}
                           `}>
                             {opt.option}
                           </span>
@@ -695,11 +812,22 @@ export default function PracticeMCQ() {
                     })}
                   </div>
 
-                  <div className="flex gap-4">
-                    {/* Strict mode: no per-question answer reveal during attempt */}
-                  </div>
-
-                  {/* Strict mode: no explanation until after submission */}
+                  {revealAnswers && (
+                    <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm leading-relaxed">
+                      <p className="font-semibold text-slate-700 mb-1">
+                        Explanation
+                      </p>
+                      <p>
+                        {(() => {
+                          const correctOpt = q.options?.find(
+                            (o: any) => o.option === q.correctOption,
+                          );
+                          const ex = String(correctOpt?.explanation ?? "").trim();
+                          return ex || "No explanation provided.";
+                        })()}
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -724,24 +852,42 @@ export default function PracticeMCQ() {
             </button>
 
             {currentPage === totalPages ? (
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !isCurrentQuestionAnswered}
-                className={`px-6 py-2 rounded border font-medium cursor-pointer ${isSubmitting || !isCurrentQuestionAnswered
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-blue-main text-white hover:bg-blue-main/90"
-                  }`}
-              >
-                {isSubmitting ? "Submitting..." : "Submit Final Result"}
-              </button>
+              isReviewMode ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await handleSaveExitWithPlan();
+                    if (!ok) return;
+                    navigateAwayFromMcq();
+                  }}
+                  className="px-6 py-2 rounded border font-medium cursor-pointer bg-slate-600 text-white hover:bg-slate-700"
+                >
+                  {navigationState?.from === "weekly-plan" ||
+                  navigationState?.from === "home"
+                    ? "Back to plan"
+                    : "Close review"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !isCurrentQuestionAnswered}
+                  className={`px-6 py-2 rounded border font-medium cursor-pointer ${isSubmitting || !isCurrentQuestionAnswered
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-main text-white hover:bg-blue-main/90"
+                    }`}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Final Result"}
+                </button>
+              )
             ) : (
               <div className="flex gap-4">
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={
-                    currentPage === totalPages || !isCurrentQuestionAnswered
+                    currentPage === totalPages ||
+                    (!isReviewMode && !isCurrentQuestionAnswered)
                   }
-                  className={`px-6 py-2 rounded border font-medium cursor-pointer ${currentPage === totalPages || !isCurrentQuestionAnswered
+                  className={`px-6 py-2 rounded border font-medium cursor-pointer ${currentPage === totalPages || (!isReviewMode && !isCurrentQuestionAnswered)
                     ? "cursor-not-allowed bg-gray-200 text-gray-400"
                     : "bg-blue-main text-white hover:bg-blue-main/90"
                     }`}
@@ -749,19 +895,19 @@ export default function PracticeMCQ() {
                   Next
                 </button>
                 <button
-                  onClick={() => {
-                    if (
-                      navigationState?.from === "weekly-plan" ||
-                      navigationState?.from === "home"
-                    ) {
-                      navigate(-1);
-                    } else {
-                      navigate("/dashboard/mcq-bank");
-                    }
+                  type="button"
+                  onClick={async () => {
+                    const ok = await handleSaveExitWithPlan();
+                    if (!ok) return;
+                    navigateAwayFromMcq();
                   }}
                   className="px-6 py-2 rounded border font-medium cursor-pointer bg-white text-gray-700 hover:bg-gray-50"
                 >
-                  Save & Exit
+                  {isReviewMode &&
+                  (navigationState?.from === "weekly-plan" ||
+                    navigationState?.from === "home")
+                    ? "Back to plan"
+                    : "Save & Exit"}
                 </button>
               </div>
             )}
