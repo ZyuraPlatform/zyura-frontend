@@ -51,6 +51,7 @@ const studyPlanAPI = baseAPI.injectEndpoints({
           selectedOption: string;
           isCorrect: boolean;
         }[];
+        finalize?: boolean;
       }) => ({
         url: "/study_planner/save-mcq-attempts",
         method: "PUT",
