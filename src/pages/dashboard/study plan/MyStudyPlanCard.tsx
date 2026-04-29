@@ -1,9 +1,12 @@
 import PrimaryButton from "@/components/reusable/PrimaryButton";
-import { BookOpen, Clock, Trash2, Loader2 } from "lucide-react";
+import { BookOpen, Clock, Trash2, Loader2, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface StudyPlanData {
     _id: string;
+    title?: string;
+    thread_id?: string;
+    created_from?: "smart_study" | "smart_study_planner";
     plan_summary: string;
     total_days: number;
     daily_plan: {
@@ -35,11 +38,19 @@ export default function MyStudyPlanCard({ plan, onDelete, isDeleting = false }: 
         navigate(`/dashboard/weekly-plan/${plan._id}`, { state: { plan } });
     };
 
+    const handleChat = () => {
+        navigate(`/dashboard/weekly-plan/${plan._id}?chat=1`, { state: { plan } });
+    };
+
+    const heading = plan.title?.trim() || plan.plan_summary;
+    const showPlannerChat =
+        plan.created_from === "smart_study_planner" && Boolean(plan.thread_id);
+
     return (
         <div className="flex flex-col justify-between p-5 bg-indigo-50 border border-indigo-300 rounded-[8px]">
             <div>
                 <div className="flex justify-between items-start gap-4">
-                    <h3 className="text-lg font-semibold text-slate-800 line-clamp-2">{plan.plan_summary}</h3>
+                    <h3 className="text-lg font-semibold text-slate-800 line-clamp-2">{heading}</h3>
                     {onDelete && (
                         <button
                             onClick={(e) => {
@@ -70,7 +81,19 @@ export default function MyStudyPlanCard({ plan, onDelete, isDeleting = false }: 
                 </div>
             </div>
 
-            <PrimaryButton className="w-full mt-7 bg-indigo-500 hover:bg-indigo-600" onClick={handleViewPlan}>View Plan</PrimaryButton>
+            <div className="flex flex-col gap-2 mt-7">
+                <PrimaryButton className="w-full bg-indigo-500 hover:bg-indigo-600" onClick={handleViewPlan}>View Plan</PrimaryButton>
+                {showPlannerChat && (
+                    <button
+                        type="button"
+                        onClick={handleChat}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-indigo-400 bg-white text-indigo-700 font-medium hover:bg-indigo-50 transition-colors cursor-pointer"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        Chat
+                    </button>
+                )}
+            </div>
         </div>
     )
 }

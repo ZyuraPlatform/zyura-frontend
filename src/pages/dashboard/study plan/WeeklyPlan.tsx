@@ -1,8 +1,8 @@
-
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, XCircle, Clock, MinusCircle } from "lucide-react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { ArrowLeft, CheckCircle, XCircle, Clock, MinusCircle, MessageSquare } from "lucide-react";
+import { Link, useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 import DashboardHeading from "@/components/reusable/DashboardHeading";
 import {
   useGetSingleStudyPlanQuery,
@@ -12,6 +12,7 @@ import {
 } from "@/store/features/studyPlan/studyPlan.api";
 import GlobalLoader2 from "@/common/GlobalLoader2";
 import { toast } from "sonner";
+import StudyPlanChatPanel from "./StudyPlanChatPanel";
 
 interface HourlyBreakdown {
   task_type: string;
@@ -33,6 +34,8 @@ interface DailyPlan {
 
 interface StudyPlanData {
   _id: string;
+  title?: string;
+  thread_id?: string;
   created_from?: "smart_study" | "smart_study_planner";
   plan_summary: string;
   total_days: number;
@@ -61,6 +64,7 @@ export default function WeeklyPlan() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data, isLoading } = useGetSingleStudyPlanQuery(id as string, {
     skip: !id,
@@ -75,6 +79,26 @@ export default function WeeklyPlan() {
     studyPlan?.created_from === "smart_study_planner"
       ? "/dashboard/smart-study-plan"
       : "/dashboard/smart-study";
+
+  const showChat = searchParams.get("chat") === "1";
+  const hasPlanChat =
+    studyPlan?.created_from === "smart_study_planner" &&
+    Boolean(studyPlan?.thread_id);
+
+  const planHeading = useMemo(
+    () => studyPlan?.title?.trim() || studyPlan?.plan_summary || "Study plan",
+    [studyPlan?.title, studyPlan?.plan_summary],
+  );
+
+  const toggleChat = () => {
+    const next = new URLSearchParams(searchParams);
+    if (showChat) {
+      next.delete("chat");
+    } else {
+      next.set("chat", "1");
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const today = getTodayLocal();
 
@@ -177,14 +201,25 @@ export default function WeeklyPlan() {
             <ArrowLeft />
           </Link>
           <DashboardHeading
-            title={studyPlan.plan_summary}
+            title={planHeading}
             titleSize="text-xl"
             description={`${studyPlan.total_days} days · ${completedTasks}/${totalTasks} tasks done`}
             className="mt-12 mb-12 space-y-1"
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          {hasPlanChat && (
+            <Button
+              variant={showChat ? "default" : "outline"}
+              size="sm"
+              onClick={toggleChat}
+              className="gap-1"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {showChat ? "Hide chat" : "Plan chat"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -204,6 +239,14 @@ export default function WeeklyPlan() {
         </div>
       </div>
 
+      <div
+        className={
+          showChat && hasPlanChat
+            ? "grid grid-cols-1 lg:grid-cols-[1fr_min(360px,100%)] gap-6 items-start"
+            : ""
+        }
+      >
+      <div className="min-w-0">
       {/* Overall progress bar */}
       <div className="mb-6 bg-white border border-slate-200 rounded-xl p-4">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -348,6 +391,19 @@ export default function WeeklyPlan() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      </div>
+
+      {showChat && hasPlanChat && studyPlan.thread_id && (
+        <StudyPlanChatPanel
+          threadId={studyPlan.thread_id}
+          onClose={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("chat");
+            setSearchParams(next, { replace: true });
+          }}
+        />
+      )}
       </div>
     </div>
   );
