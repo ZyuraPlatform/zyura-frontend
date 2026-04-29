@@ -62,6 +62,24 @@ const getTodayLocal = (): Date => {
   return t;
 };
 
+/** Matches backend TASK_RATES_SECONDS for progress display */
+const RATE_SEC_BY_TASK: Record<string, number> = {
+  mcq: 40,
+  mcqs: 40,
+  flashcard: 180,
+  flashcards: 180,
+  "clinical case": 300,
+  clinical_case: 300,
+  note: 900,
+  notes: 900,
+};
+
+function formatDurationSeconds(totalSec: number): string {
+  const m = Math.floor(totalSec / 60);
+  const s = Math.max(0, Math.round(totalSec % 60));
+  return `${m}m ${s}s`;
+}
+
 export default function WeeklyPlan() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -346,18 +364,37 @@ export default function WeeklyPlan() {
                                     session.duration_minutes && `${session.duration_minutes}m`,
                                     (() => {
                                       const t = session.task_type?.toLowerCase() ?? "";
-                                      const isMcq = t === "mcq" || t === "mcqs";
+                                      const rate = RATE_SEC_BY_TASK[t];
                                       if (
-                                        isMcq &&
                                         session.total_count != null &&
                                         session.total_count > 0
                                       ) {
-                                        return `${session.attempted_count ?? 0}/${session.total_count} attempted`;
+                                        const attempted = session.attempted_count ?? 0;
+                                        if (rate != null) {
+                                          return `${attempted}/${session.total_count} attempted · ${formatDurationSeconds(attempted * rate)} / ${formatDurationSeconds(session.total_count * rate)}`;
+                                        }
+                                        return `${attempted}/${session.total_count} attempted`;
                                       }
                                       return null;
                                     })(),
                                   ].filter(Boolean).join(" • ")}
                                 </p>
+                                {session.total_count != null &&
+                                  session.total_count > 0 && (
+                                    <div className="mt-2 h-1.5 w-full max-w-xs bg-slate-200 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-blue-500 rounded-full transition-all"
+                                        style={{
+                                          width: `${Math.min(
+                                            100,
+                                            ((session.attempted_count ?? 0) /
+                                              session.total_count) *
+                                              100,
+                                          )}%`,
+                                        }}
+                                      />
+                                    </div>
+                                  )}
                               </div>
 
                               <Button

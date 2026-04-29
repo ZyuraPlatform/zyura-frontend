@@ -162,6 +162,11 @@ export default function PracticeMCQ() {
     [planNav?.planId, planNav?.from],
   );
 
+  const isPerQuestionFeedback = useMemo(
+    () => isBankMode || isPlanFlow,
+    [isBankMode, isPlanFlow],
+  );
+
   const isInitialLoading = isLoading && !displayData;
 
   const [selected, setSelected] = useState<{ [key: string]: number | null }>(
@@ -210,14 +215,19 @@ export default function PracticeMCQ() {
       | undefined;
     if (!atts?.length) return;
     const next: Record<string, number | null> = {};
+    const locks: Record<string, boolean> = {};
     atts.forEach((a) => {
       const code = a.selectedOption?.trim().toUpperCase().charCodeAt(0);
       if (!code) return;
       const idx = code - 65;
-      if (idx >= 0 && idx < 26) next[a.questionId] = idx;
+      if (idx >= 0 && idx < 26) {
+        next[a.questionId] = idx;
+        locks[a.questionId] = true;
+      }
     });
     if (Object.keys(next).length > 0) {
       setSelected(next);
+      setLockedQuestions((prev) => ({ ...prev, ...locks }));
       didHydrateFromPlan.current = true;
     }
   }, [planTask?.attempts]);
@@ -254,42 +264,38 @@ export default function PracticeMCQ() {
     return attempts;
   }, [selected]);
 
-  const saveMcqToPlanIfNeeded = useCallback(
-    async (finalize = false) => {
-      if (
-        (planNav?.from !== "weekly-plan" && planNav?.from !== "home") ||
-        !planNav?.planId ||
-        planNav.day == null ||
-        planNav.suggest_content == null
-      ) {
-        return;
-      }
-      const total = meta?.total ?? planTask?.total_count ?? 0;
-      if (!total) return;
-      const attempts = buildAttemptsPayload();
-      await saveMcqAttempts({
-        planId: planNav.planId,
-        day: planNav.day,
-        suggest_content: planNav.suggest_content,
-        total_count: total,
-        attempts,
-        finalize,
-      }).unwrap();
-    },
-    [
-      planNav,
-      meta?.total,
-      planTask?.total_count,
-      buildAttemptsPayload,
-      saveMcqAttempts,
-    ],
-  );
+  const saveMcqToPlanIfNeeded = useCallback(async () => {
+    if (
+      (planNav?.from !== "weekly-plan" && planNav?.from !== "home") ||
+      !planNav?.planId ||
+      planNav.day == null ||
+      planNav.suggest_content == null
+    ) {
+      return;
+    }
+    const total = meta?.total ?? planTask?.total_count ?? 0;
+    if (!total) return;
+    const attempts = buildAttemptsPayload();
+    await saveMcqAttempts({
+      planId: planNav.planId,
+      day: planNav.day,
+      suggest_content: planNav.suggest_content,
+      total_count: total,
+      attempts,
+    }).unwrap();
+  }, [
+    planNav,
+    meta?.total,
+    planTask?.total_count,
+    buildAttemptsPayload,
+    saveMcqAttempts,
+  ]);
 
   const handleSelect = (qId: string, index: number) => {
     if (isReviewMode) return;
-    if (isBankMode && lockedQuestions[qId]) return;
+    if (isPerQuestionFeedback && lockedQuestions[qId]) return;
     setSelected((prev) => ({ ...prev, [qId]: index }));
-    if (isBankMode) {
+    if (isPerQuestionFeedback) {
       setLockedQuestions((prev) => ({ ...prev, [qId]: true }));
     }
   };
@@ -344,7 +350,7 @@ export default function PracticeMCQ() {
 
   const handleSaveExitWithPlan = async () => {
     try {
-      await saveMcqToPlanIfNeeded(false);
+      await saveMcqToPlanIfNeeded();
     } catch (error) {
       console.error("Failed to save study plan MCQ attempts:", error);
       toast.error("Failed to save progress to your study plan");
@@ -352,44 +358,6 @@ export default function PracticeMCQ() {
     }
     return true;
   };
-
-  const handleFinalizeAndShowResult = useCallback(async () => {
-    if (!mcqData?._id) return false;
-    setIsSubmitting(true);
-    const map = questionsByIdRef.current;
-    let totalCorrect = 0;
-    let totalIncorrect = 0;
-    for (const qId of Object.keys(selected)) {
-      const idx = selected[qId];
-      if (idx === null || idx === undefined) continue;
-      const q = map[qId];
-      if (!q) continue;
-      const selectedOptionChar = String.fromCharCode(65 + idx);
-      if (selectedOptionChar === q.correctOption) totalCorrect++;
-      else totalIncorrect++;
-    }
-    const totalAttempted = Object.keys(selected).filter(
-      (k) => selected[k] !== null && selected[k] !== undefined,
-    ).length;
-    try {
-      await updateProgress({
-        totalCorrect,
-        totalIncorrect,
-        totalAttempted,
-        key: "mcq",
-        bankId: mcqData._id,
-      }).unwrap();
-      await saveMcqToPlanIfNeeded(true);
-      setShowResult(true);
-      setIsSubmitting(false);
-      return true;
-    } catch (error) {
-      console.error("Failed to finalize session:", error);
-      toast.error("Failed to save progress");
-      setIsSubmitting(false);
-      return false;
-    }
-  }, [mcqData?._id, selected, updateProgress, saveMcqToPlanIfNeeded]);
 
   const handleSubmit = async () => {
     if (isReviewMode) return;
@@ -428,11 +396,12 @@ export default function PracticeMCQ() {
         bankId: mcqData?._id,
       }).unwrap();
 
-      await saveMcqToPlanIfNeeded(true);
+      await saveMcqToPlanIfNeeded();
 
       // localStorage.removeItem(storageKey);
       // localStorage.removeItem(`lastPage_${id}`);
       setShowResult(true);
+      setIsSubmitting(false);
       // if (navigationState?.from === "weekly-plan" || navigationState?.from === "home") {
       //   navigate(-1);
       // } else {
@@ -474,9 +443,10 @@ export default function PracticeMCQ() {
         bankId: mcqData?._id,
       }).unwrap();
 
-      await saveMcqToPlanIfNeeded(true);
+      await saveMcqToPlanIfNeeded();
 
       setShowResult(true);
+      setIsSubmitting(false);
     } catch (error) {
       console.error("Failed to save progress:", error);
       toast.error("Failed to save progress");
@@ -554,12 +524,6 @@ export default function PracticeMCQ() {
               className="bg-blue-main hover:bg-blue-main/90"
               onClick={async () => {
                 if (blocker.state === "blocked") {
-                  if (isPlanFlow) {
-                    const ok = await handleFinalizeAndShowResult();
-                    if (!ok) return;
-                    blocker.reset();
-                    return;
-                  }
                   const ok = await handleSaveExitWithPlan();
                   if (!ok) return;
                   blocker.proceed();
@@ -724,10 +688,6 @@ export default function PracticeMCQ() {
                       navigateAwayFromMcq();
                       return;
                     }
-                    if (isPlanFlow) {
-                      await handleFinalizeAndShowResult();
-                      return;
-                    }
                     const ok = await handleSaveExitWithPlan();
                     if (!ok) return;
                     navigateAwayFromMcq();
@@ -740,7 +700,7 @@ export default function PracticeMCQ() {
                   title={mcqData?.title}
                   titleSize="text-xl"
                   // description={`${meta?.total || 0} Questions `}
-                  description={`${Math.ceil(((meta?.total ?? 0) * 50) / 60)} Min`}
+                  description={`${Math.ceil(((meta?.total ?? 0) * 40) / 60)} Min est.`}
                   className="space-y-1"
                 />
               </div>
@@ -752,10 +712,6 @@ export default function PracticeMCQ() {
                   onClick={async () => {
                     if (isReviewMode) {
                       navigateAwayFromMcq();
-                      return;
-                    }
-                    if (isPlanFlow) {
-                      await handleFinalizeAndShowResult();
                       return;
                     }
                     const ok = await handleSaveExitWithPlan();
@@ -799,7 +755,9 @@ export default function PracticeMCQ() {
                 isReviewMode &&
                 (selectedIndex === undefined || selectedIndex === null);
               const revealForThisQ =
-                showResult || isReviewMode || (isBankMode && isLocked);
+                showResult ||
+                isReviewMode ||
+                (isPerQuestionFeedback && isLocked);
 
               return (
                 <div
@@ -888,9 +846,9 @@ export default function PracticeMCQ() {
                           key={optionIdx}
                           type="button"
                           onClick={() => handleSelect(qId, optionIdx)}
-                          disabled={isReviewMode || (isBankMode && isLocked)}
+                          disabled={isReviewMode || (isPerQuestionFeedback && isLocked)}
                           className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 ${
-                            isReviewMode || (isBankMode && isLocked)
+                            isReviewMode || (isPerQuestionFeedback && isLocked)
                               ? "cursor-default"
                               : "cursor-pointer"
                           } ${borderClass} ${bgClass}`}
@@ -991,10 +949,6 @@ export default function PracticeMCQ() {
                   onClick={async () => {
                     if (isReviewMode) {
                       navigateAwayFromMcq();
-                      return;
-                    }
-                    if (isPlanFlow) {
-                      await handleFinalizeAndShowResult();
                       return;
                     }
                     const ok = await handleSaveExitWithPlan();
