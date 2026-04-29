@@ -395,6 +395,20 @@ export default function WeeklyPlan() {
                                       />
                                     </div>
                                   )}
+                                {(() => {
+                                  const tt = String(
+                                    session.task_type ?? "",
+                                  ).toLowerCase();
+                                  const isMcq = tt === "mcq" || tt === "mcqs";
+                                  if (!isMcq || session.suggest_content?.contentId) {
+                                    return null;
+                                  }
+                                  return (
+                                    <p className="text-xs text-amber-700 mt-1.5">
+                                      No MCQ bank linked for this task yet.
+                                    </p>
+                                  );
+                                })()}
                               </div>
 
                               <Button

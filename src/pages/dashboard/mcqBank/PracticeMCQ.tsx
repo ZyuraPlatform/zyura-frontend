@@ -58,20 +58,18 @@ export default function PracticeMCQ() {
 
   const planNav = navigationState as McqNavState | undefined;
   const planIdForQuery = planNav?.planId;
-  const isPlanFlow = useMemo(
-    () =>
+  /** Plan session: any study-plan MCQ entry that passes planId + day + bank id (no reliance on `from`). */
+  const isPlanFlow = useMemo(() => {
+    const sid = planNav?.suggest_content;
+    const hasBankId = sid != null && String(sid).trim() !== "";
+    return (
       !!planNav?.planId &&
-      (planNav?.from === "weekly-plan" || planNav?.from === "home"),
-    [planNav?.planId, planNav?.from],
-  );
+      planNav.day != null &&
+      hasBankId
+    );
+  }, [planNav?.planId, planNav?.day, planNav?.suggest_content]);
 
-  const isBankMode = useMemo(
-    () =>
-      !planNav?.planId &&
-      planNav?.from !== "weekly-plan" &&
-      planNav?.from !== "home",
-    [planNav?.planId, planNav?.from],
-  );
+  const isBankMode = useMemo(() => !isPlanFlow, [isPlanFlow]);
 
   const lastPageKey = useMemo(() => {
     if (
@@ -311,7 +309,7 @@ export default function PracticeMCQ() {
 
   const saveMcqToPlanIfNeeded = useCallback(async () => {
     if (
-      (planNav?.from !== "weekly-plan" && planNav?.from !== "home") ||
+      !isPlanFlow ||
       !planNav?.planId ||
       planNav.day == null ||
       planNav.suggest_content == null
@@ -338,6 +336,7 @@ export default function PracticeMCQ() {
     planTask?.total_count,
     buildAttemptsPayload,
     saveMcqAttempts,
+    isPlanFlow,
   ]);
 
   const handleSelect = (qId: string, index: number) => {
@@ -389,10 +388,7 @@ export default function PracticeMCQ() {
   };
 
   const navigateAwayFromMcq = () => {
-    if (
-      navigationState?.from === "weekly-plan" ||
-      navigationState?.from === "home"
-    ) {
+    if (isPlanFlow) {
       navigate(-1);
     } else {
       navigate("/dashboard/mcq-bank");
@@ -610,10 +606,7 @@ export default function PracticeMCQ() {
           <div className="flex items-start gap-1">
             <div
               onClick={() => {
-                if (
-                  navigationState?.from === "weekly-plan" ||
-                  navigationState?.from === "home"
-                ) {
+                if (isPlanFlow) {
                   navigate(-1);
                 } else {
                   navigate("/dashboard/mcq-bank");
@@ -691,10 +684,7 @@ export default function PracticeMCQ() {
               <div className="flex justify-center mt-8">
                 <PrimaryButton
                   onClick={() => {
-                    if (
-                      navigationState?.from === "weekly-plan" ||
-                      navigationState?.from === "home"
-                    ) {
+                    if (isPlanFlow) {
                       navigate(-1);
                     } else {
                       navigate("/dashboard/mcq-bank");
@@ -770,11 +760,7 @@ export default function PracticeMCQ() {
                     navigateAwayFromMcq();
                   }}
                 >
-                  {isReviewMode &&
-                  (navigationState?.from === "weekly-plan" ||
-                    navigationState?.from === "home")
-                    ? "Back to plan"
-                    : "Save & Exit"}
+                  {isReviewMode && isPlanFlow ? "Back to plan" : "Save & Exit"}
                 </PrimaryButton>
                 <PrimaryButton
                   style={{
@@ -963,10 +949,7 @@ export default function PracticeMCQ() {
                   onClick={() => navigateAwayFromMcq()}
                   className="px-6 py-2 rounded border font-medium cursor-pointer bg-slate-600 text-white hover:bg-slate-700"
                 >
-                  {navigationState?.from === "weekly-plan" ||
-                  navigationState?.from === "home"
-                    ? "Back to plan"
-                    : "Close review"}
+                  {isPlanFlow ? "Back to plan" : "Close review"}
                 </button>
               ) : (
                 <button
@@ -1008,16 +991,12 @@ export default function PracticeMCQ() {
                   }}
                   className="px-6 py-2 rounded border font-medium cursor-pointer bg-white text-gray-700 hover:bg-gray-50"
                 >
-                  {isReviewMode &&
-                  (navigationState?.from === "weekly-plan" ||
-                    navigationState?.from === "home")
-                    ? "Back to plan"
-                    : "Save & Exit"}
+                  {isReviewMode && isPlanFlow ? "Back to plan" : "Save & Exit"}
                 </button>
               </div>
             )}
 
-            {navigationState?.from !== "weekly-plan" && (
+            {!isPlanFlow && (
               <div className="flex items-center gap-2 ml-4">
                 <input
                   type="number"
