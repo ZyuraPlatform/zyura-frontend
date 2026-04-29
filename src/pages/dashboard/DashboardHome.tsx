@@ -58,16 +58,18 @@ const Dashboard: React.FC = () => {
         <OverviewSection />
       </motion.div>
 
-      {/* Smart Study Plan */}
-      <motion.div
-        variants={itemVariants}
-        viewport={{ once: true, margin: "-100px" }}
-        whileInView="visible"
-        initial="hidden"
-        className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-6"
-      >
-        <SmartStudyPlan />
-      </motion.div>
+      {/* Smart Study Plan (commented out temporarily) */}
+      {/*
+        <motion.div
+          variants={itemVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
+          initial="hidden"
+          className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-6"
+        >
+          <SmartStudyPlan />
+        </motion.div>
+      */}
 
       {/* Daily Challenge + Weekly Leaderboard */}
       <motion.div
@@ -82,16 +84,18 @@ const Dashboard: React.FC = () => {
         <WeeklyLeaderboard />
       </motion.div>
 
-      {/* Highlights of the Week */}
-      <motion.div
-        variants={itemVariants}
-        viewport={{ once: true, margin: "-100px" }}
-        whileInView="visible"
-        initial="hidden"
-        className="mb-6"
-      >
-        <WeeklyHighlights />
-      </motion.div>
+      {/* Highlights of the Week (commented out temporarily) */}
+      {/*
+        <motion.div
+          variants={itemVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
+          initial="hidden"
+          className="mb-6"
+        >
+          <WeeklyHighlights />
+        </motion.div>
+      */}
     </motion.div>
   );
 };
