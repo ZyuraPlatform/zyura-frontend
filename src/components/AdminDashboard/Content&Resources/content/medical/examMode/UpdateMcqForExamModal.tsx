@@ -204,9 +204,9 @@ const UpdateMcqForExamModal: FC<UpdateMCQModalProps> = ({
             {errors.question && (
               <p className={inputClass.error}>{errors.question.message}</p>
             )}
-            {duplicates.length > 0 && (
+{duplicates.length > 0 && (
               <p className={inputClass.error}>
-                {duplicates.length} similar question(s) present already
+                Duplicate(s) found: {duplicates.length} match(es)
               </p>
             )}
           </div>

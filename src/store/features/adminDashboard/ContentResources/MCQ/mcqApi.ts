@@ -203,6 +203,40 @@ export const mcqApi = baseAPI.injectEndpoints({
       }),
     }),
 
+    // 🚀 NEW: Bulk duplicate check for CSV preview (PHASE 1 Backend)
+    checkBulkDuplicatesMCQ: build.mutation<
+      {
+        success: boolean;
+        data: {
+          duplicates: Record<number, Array<{
+            similarity: number;
+            mcqId: string;
+            bankName?: string;
+            examName?: string;
+            question: string;
+            bankId?: string;
+            examId?: string;
+          }>>;
+          hasDuplicates: boolean;
+          totalChecked: number;
+          totalDuplicates: number;
+          skipped: number;
+        };
+      },
+      {
+        questions: string[];
+        excludeBankId?: string;
+        contentFor?: string;
+        profileType?: string;
+      }
+    >({
+      query: (data) => ({
+        url: "/mcq-bank/check-bulk-duplicates",
+        method: "POST",
+        body: data,
+      }),
+    }),
+
     // student type
     getStudentTypeApi: build.query<ProfileTypeResponse, ProfileParams>({
       query: (params) => ({
@@ -374,4 +408,5 @@ export const {
   useAddMoreMcqToMcqBankMutation,
   useGetSingleMcqApiForSupportQuery,
   useCheckDuplicateMCQMutation,
+  useCheckBulkDuplicatesMCQMutation,
 } = mcqApi;

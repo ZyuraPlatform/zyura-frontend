@@ -50,34 +50,16 @@ const mapBackendToTOC = (data: Subject[]): TOCItem[] => {
       title: subject.subjectName.trim(),
       count: countLeafNodes(subject),
 
-      // count: subject.systems.reduce(
-      //   (acc, sys) =>
-      //     acc +
-      //     sys.topics.reduce(
-      //       (tAcc, topic) =>
-      //         tAcc + (topic.subTopics ? topic.subTopics.length : 0),
-      //       0
-      //     ),
-      //   0
-      // ),
-
       children: sortByTitleAZ(
-        subject.systems.map((sys) => ({
+        (subject.systems || []).map((sys) => ({
           _id: sys._id,
           title: sys.name.trim(),
-
-          // count: sys.topics.reduce(
-          //   (tAcc, topic) =>
-          //     tAcc + (topic.subTopics ? topic.subTopics.length : 0),
-          //   0
-          // ),
           count: countLeafNodes(sys),
 
           children: sortByTitleAZ(
-            sys.topics.map((topic) => ({
+            (sys.topics || []).map((topic) => ({
               _id: topic._id,
               title: topic.topicName.trim(),
-
               count: countLeafNodes(topic),
 
               children: topic.subTopics
@@ -129,7 +111,7 @@ const TableContentForStudy: React.FC<TableContentProps> = ({
     { refetchOnMountOrArgChange: true },
   );
 
-  const tocDataFromBackend: TOCItem[] = allStudyModeData
+  const tocDataFromBackend: TOCItem[] = allStudyModeData?.data
     ? mapBackendToTOC(allStudyModeData.data as Subject[])
     : [];
 

@@ -284,7 +284,7 @@ const AddMCQForm: React.FC<AddMCQFormProps> = ({ handleCancel }) => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className={inputClass.label}>Question</label>
-{duplicates[qIndex] && duplicates[qIndex].length === 1 && (
+{duplicates[qIndex]?.length > 0 && (
                   <DuplicateWarningTooltip duplicates={duplicates[qIndex]} />
                 )}
               </div>
@@ -299,9 +299,9 @@ const AddMCQForm: React.FC<AddMCQFormProps> = ({ handleCancel }) => {
                   {errors.mcqs[qIndex]?.question?.message}
                 </p>
               )}
-{duplicates[qIndex] && duplicates[qIndex].length === 1 && (
+{duplicates[qIndex]?.length > 0 && (
                 <p className={inputClass.error}>
-                  Similar question is present already
+                  Duplicate(s) found: {duplicates[qIndex].length} match(es)
                 </p>
               )}
             </div>

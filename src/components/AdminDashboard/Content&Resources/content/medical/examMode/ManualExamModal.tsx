@@ -386,8 +386,14 @@ const ManualExamModal: React.FC<CreateExamModalProps> = ({ onClose }) => {
               </div>
 
               <div className="space-y-6">
+
                 <div>
-                  <label className={inputClass.label}>Question</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={inputClass.label}>Question</label>
+                    {duplicates[qIndex]?.length > 0 && (
+                      <DuplicateWarningTooltip duplicates={duplicates[qIndex]} />
+                    )}
+                  </div>
                   <textarea
                     {...register(`mcqs.${qIndex}.question`)}
                     rows={4}
@@ -399,8 +405,10 @@ const ManualExamModal: React.FC<CreateExamModalProps> = ({ onClose }) => {
                       {errors.mcqs[qIndex]?.question?.message}
                     </p>
                   )}
-                  {duplicates[qIndex] && duplicates[qIndex].length > 0 && (
-                    <DuplicateWarningTooltip duplicates={duplicates[qIndex]} />
+                  {duplicates[qIndex]?.length > 0 && (
+                    <p className={inputClass.error}>
+                      Duplicate(s) found: {duplicates[qIndex].length} match(es)
+                    </p>
                   )}
                 </div>
 

@@ -2,11 +2,23 @@ import React, { useState } from "react";
 import { Upload } from "lucide-react";
 import * as XLSX from "xlsx";
 
+interface ParsedRow {
+  Question: string;
+  'Image Description'?: string;
+  'Option A': string;
+  'Option B': string;
+  'Option C': string;
+  'Option D': string;
+  'Correct Option': string;
+  Difficulty: string;
+  [key: string]: any; // other columns
+}
+
 interface UploadDropzoneProps {
   label: string;
   acceptedFormats: string;
   maxSize: string;
-  onFileSelect: (file: File, detectedCount: number) => void;
+  onFileSelect: (file: File, detectedCount: number, parsedRows: ParsedRow[]) => void;
 }
 
 const UploadDropzone: React.FC<UploadDropzoneProps> = ({
@@ -29,12 +41,14 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      const rows = XLSX.utils.sheet_to_json(sheet) as ParsedRow[];
       const detectedCount = rows.length;
-      onFileSelect(file, detectedCount);
+      // Filter valid rows (has question)
+      const validRows = rows.filter(row => row.Question && row.Question.trim().length > 0);
+      onFileSelect(file, detectedCount, validRows);
     } catch (error) {
       console.error("Error reading file:", error);
-      onFileSelect(file, 0);
+      onFileSelect(file, 0, []);
     }
   };
 
