@@ -1,10 +1,9 @@
-import MedicalStudyGoalTracker from "@/components/dashboard/goal/MedicalStudyGoalTracker";
 import StudyPlanListSection from "./StudyPlanListSection";
 
 export default function SmartStudyPlanPage() {
   return (
     <div className="my-6 md:my-10">
-      <MedicalStudyGoalTracker />
+      {/* <MedicalStudyGoalTracker /> */}
       <div className="mt-8">
         <StudyPlanListSection
           title="Your Study Plans"

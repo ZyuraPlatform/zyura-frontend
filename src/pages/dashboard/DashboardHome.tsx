@@ -6,7 +6,6 @@ import SmartStudyPlan from "@/components/dashboard_new/SmartStudyPlan";
 // import PerformanceBySubject from "@/components/dashboard_new/PerformanceBySubject";
 import WeeklyLeaderboard from "@/components/dashboard_new/WeeklyLeaderboard";
 import WeeklyHighlights from "@/components/dashboard_new/WeeklyHighlights";
-import MedicalStudyGoalTracker from "@/components/dashboard/goal/MedicalStudyGoalTracker";
 import DailyChallenge from "@/components/dashboard_new/DailyChallenge";
 // import MedicalStudyGoalTracker from "./MedicalStudyGoalTracker";
 // import ChatInterface from "@/components/dashboard_new/message";
@@ -45,7 +44,7 @@ const Dashboard: React.FC = () => {
     >
       {/* Goal Tracker */}
       <motion.div variants={itemVariants} className="mb-8">
-        <MedicalStudyGoalTracker />
+        {/* <MedicalStudyGoalTracker /> */}
       </motion.div>
 
       {/* Overview Section */}
