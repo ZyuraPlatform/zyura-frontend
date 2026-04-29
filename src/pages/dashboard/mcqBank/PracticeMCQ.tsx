@@ -56,11 +56,64 @@ export default function PracticeMCQ() {
   const [searchParams, setSearchParams] = useSearchParams();
   const limit = 1;
 
+  const planNav = navigationState as McqNavState | undefined;
+  const planIdForQuery = planNav?.planId;
+  const isPlanFlow = useMemo(
+    () =>
+      !!planNav?.planId &&
+      (planNav?.from === "weekly-plan" || planNav?.from === "home"),
+    [planNav?.planId, planNav?.from],
+  );
+
+  const isBankMode = useMemo(
+    () =>
+      !planNav?.planId &&
+      planNav?.from !== "weekly-plan" &&
+      planNav?.from !== "home",
+    [planNav?.planId, planNav?.from],
+  );
+
+  const lastPageKey = useMemo(() => {
+    if (
+      isPlanFlow &&
+      planNav?.planId &&
+      planNav.day != null &&
+      planNav.suggest_content
+    ) {
+      return `lastPage_${id}_${planNav.planId}_${planNav.day}_${planNav.suggest_content}`;
+    }
+    return `lastPage_${id}`;
+  }, [
+    id,
+    isPlanFlow,
+    planNav?.planId,
+    planNav?.day,
+    planNav?.suggest_content,
+  ]);
+
+  const storageKey = useMemo(() => {
+    if (
+      isPlanFlow &&
+      planNav?.planId &&
+      planNav.day != null &&
+      planNav.suggest_content
+    ) {
+      return `mcq_practice_data_${id}_${planNav.planId}_${planNav.day}_${planNav.suggest_content}`;
+    }
+    return `mcq_practice_data_${id}`;
+  }, [
+    id,
+    isPlanFlow,
+    planNav?.planId,
+    planNav?.day,
+    planNav?.suggest_content,
+  ]);
+
   // Deriving currentPage directly from URL search params or localStorage
   const currentPage = (() => {
     const page = searchParams.get("page");
     if (page) return parseInt(page);
-    const saved = localStorage.getItem(`lastPage_${id}`);
+    const saved = localStorage.getItem(lastPageKey);
     return saved ? parseInt(saved) : 1;
   })();
 
@@ -75,14 +128,12 @@ export default function PracticeMCQ() {
   useEffect(() => {
     const page = searchParams.get("page");
     if (page) {
-      localStorage.setItem(`lastPage_${id}`, page);
+      localStorage.setItem(lastPageKey, page);
     }
-  }, [searchParams, id]);
+  }, [searchParams, lastPageKey]);
 
   const [skip, setSkip] = useState<number | undefined>(undefined);
   const [jumpQuestion, setJumpQuestion] = useState("");
-
-  const storageKey = `mcq_practice_data_${id}`;
 
   // Track correctness of each question: { [qId]: boolean } (true=correct, false=incorrect)
   const [results] = useState<{ [key: string]: boolean }>(() => {
@@ -90,9 +141,6 @@ export default function PracticeMCQ() {
     return saved ? JSON.parse(saved).results : {};
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const planNav = navigationState as McqNavState | undefined;
-  const planIdForQuery = planNav?.planId;
   const { data: planApiData } = useGetSingleStudyPlanQuery(planIdForQuery as string, {
     skip: !planIdForQuery,
   });
@@ -145,21 +193,6 @@ export default function PracticeMCQ() {
   const isReviewMode = useMemo(
     () => planTask?.isCompleted === true,
     [planTask?.isCompleted],
-  );
-
-  const isPlanFlow = useMemo(
-    () =>
-      !!planNav?.planId &&
-      (planNav?.from === "weekly-plan" || planNav?.from === "home"),
-    [planNav?.planId, planNav?.from],
-  );
-
-  const isBankMode = useMemo(
-    () =>
-      !planNav?.planId &&
-      planNav?.from !== "weekly-plan" &&
-      planNav?.from !== "home",
-    [planNav?.planId, planNav?.from],
   );
 
   const isPerQuestionFeedback = useMemo(
@@ -531,7 +564,7 @@ export default function PracticeMCQ() {
               onClick={() => {
                 if (blocker.state === "blocked") {
                   localStorage.removeItem(storageKey);
-                  localStorage.removeItem(`lastPage_${id}`);
+                  localStorage.removeItem(lastPageKey);
                   blocker.proceed();
                 }
               }}
