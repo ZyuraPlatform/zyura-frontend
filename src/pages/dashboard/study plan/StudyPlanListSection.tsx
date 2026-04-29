@@ -103,7 +103,7 @@ export default function StudyPlanListSection({
       ) : (
         <div className="mb-16">
           {paginatedPlans.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 mb-3 transition-all duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 mb-3 transition-all duration-300">
               {paginatedPlans.map((plan: any) => (
                 <MyStudyPlanCard
                   key={plan._id}
