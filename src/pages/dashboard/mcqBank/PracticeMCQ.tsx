@@ -149,6 +149,14 @@ export default function PracticeMCQ() {
     return atts.length === tot;
   }, [planTask?.total_count, planTask?.attempts, meta?.total]);
 
+  const isBankMode = useMemo(
+    () =>
+      !planNav?.planId &&
+      planNav?.from !== "weekly-plan" &&
+      planNav?.from !== "home",
+    [planNav?.planId, planNav?.from],
+  );
+
   const isInitialLoading = isLoading && !displayData;
 
   const [selected, setSelected] = useState<{ [key: string]: number | null }>(
@@ -163,7 +171,7 @@ export default function PracticeMCQ() {
       return saved ? JSON.parse(saved).showAnswer : {};
     }
   );
-  const [lockedQuestions] = useState<{
+  const [lockedQuestions, setLockedQuestions] = useState<{
     [key: string]: boolean;
   }>(() => {
     const saved = localStorage.getItem(storageKey);
@@ -275,7 +283,11 @@ export default function PracticeMCQ() {
 
   const handleSelect = (qId: string, index: number) => {
     if (isReviewMode) return;
+    if (isBankMode && lockedQuestions[qId]) return;
     setSelected((prev) => ({ ...prev, [qId]: index }));
+    if (isBankMode) {
+      setLockedQuestions((prev) => ({ ...prev, [qId]: true }));
+    }
   };
 
   // Strict mode: no per-question answer reveal during attempt.
@@ -457,8 +469,6 @@ export default function PracticeMCQ() {
   const isCurrentQuestionAnswered = currentQId
     ? selected[currentQId] !== undefined && selected[currentQId] !== null
     : false;
-
-  const revealAnswers = showResult || isReviewMode;
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -709,6 +719,9 @@ export default function PracticeMCQ() {
               const globalQuestionNumber = (currentPage - 1) * limit + idx + 1;
 
               const selectedIndex = selected[qId];
+              const isLocked = !!lockedQuestions[qId];
+              const revealForThisQ =
+                showResult || isReviewMode || (isBankMode && isLocked);
 
               return (
                 <div
@@ -770,7 +783,7 @@ export default function PracticeMCQ() {
                       let bgClass = "bg-white";
                       let textClass = "text-slate-800";
 
-                      if (revealAnswers) {
+                      if (revealForThisQ) {
                         if (isCorrect) {
                           borderClass = "border-green-500";
                           bgClass = "bg-green-50";
@@ -792,17 +805,17 @@ export default function PracticeMCQ() {
                           key={optionIdx}
                           type="button"
                           onClick={() => handleSelect(qId, optionIdx)}
-                          disabled={isReviewMode}
+                          disabled={isReviewMode || (isBankMode && isLocked)}
                           className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 ${
-                            isReviewMode
+                            isReviewMode || (isBankMode && isLocked)
                               ? "cursor-default"
                               : "cursor-pointer"
                           } ${borderClass} ${bgClass}`}
                         >
                           <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border 
-                            ${isSelected && !revealAnswers ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-500 border-gray-200'}
-                            ${revealAnswers && isCorrect ? 'bg-green-500 text-white border-green-500' : ''}
-                            ${revealAnswers && isSelected && !isCorrect ? 'bg-red-500 text-white border-red-500' : ''}
+                            ${isSelected && !revealForThisQ ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-500 border-gray-200'}
+                            ${revealForThisQ && isCorrect ? 'bg-green-500 text-white border-green-500' : ''}
+                            ${revealForThisQ && isSelected && !isCorrect ? 'bg-red-500 text-white border-red-500' : ''}
                           `}>
                             {opt.option}
                           </span>
@@ -812,7 +825,7 @@ export default function PracticeMCQ() {
                     })}
                   </div>
 
-                  {revealAnswers && (
+                  {revealForThisQ && (
                     <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm leading-relaxed">
                       <p className="font-semibold text-slate-700 mb-1">
                         Explanation
