@@ -167,6 +167,18 @@ export default function PracticeMCQ() {
     [isBankMode, isPlanFlow],
   );
 
+  /** Plan flow: min(plan limit, bank size). Bank flow: meta.total. */
+  const sessionTotal = useMemo(() => {
+    if (!isPlanFlow) {
+      return Number(meta?.total ?? 0) || 0;
+    }
+    const planLimit = Number(planTask?.suggest_content?.limit ?? 0) || 0;
+    const bank = Number(meta?.total ?? 0) || 0;
+    if (planLimit > 0 && bank > 0) return Math.min(planLimit, bank);
+    if (planLimit > 0) return planLimit;
+    return bank;
+  }, [isPlanFlow, meta?.total, planTask?.suggest_content?.limit]);
+
   const isInitialLoading = isLoading && !displayData;
 
   const [selected, setSelected] = useState<{ [key: string]: number | null }>(
@@ -273,7 +285,9 @@ export default function PracticeMCQ() {
     ) {
       return;
     }
-    const total = meta?.total ?? planTask?.total_count ?? 0;
+    const total = isPlanFlow
+      ? sessionTotal
+      : meta?.total ?? planTask?.total_count ?? 0;
     if (!total) return;
     const attempts = buildAttemptsPayload();
     await saveMcqAttempts({
@@ -285,6 +299,8 @@ export default function PracticeMCQ() {
     }).unwrap();
   }, [
     planNav,
+    isPlanFlow,
+    sessionTotal,
     meta?.total,
     planTask?.total_count,
     buildAttemptsPayload,
@@ -302,7 +318,9 @@ export default function PracticeMCQ() {
 
   // Strict mode: no per-question answer reveal during attempt.
 
-  const totalPages = meta?.total ? Math.ceil(meta.total / meta.limit) : 1;
+  const pageSize = Number(meta?.limit) || 1;
+  const totalPages =
+    sessionTotal > 0 ? Math.ceil(sessionTotal / pageSize) : 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -317,7 +335,7 @@ export default function PracticeMCQ() {
       return;
     }
     const questionNum = parseInt(jumpQuestion);
-    const total = meta?.total || 0;
+    const total = sessionTotal || 0;
     if (isNaN(questionNum) || questionNum < 1) {
       toast.warning("Please enter a valid question number");
     } else if (questionNum > total) {
@@ -364,7 +382,7 @@ export default function PracticeMCQ() {
     if (!mcqData?._id) return;
 
     const totalAttempted = Object.keys(selected).length;
-    const totalQuestions = meta?.total || 0;
+    const totalQuestions = sessionTotal || 0;
 
     if (totalAttempted < totalQuestions) {
       setUnansweredCount(Math.max(totalQuestions - totalAttempted, 0));
@@ -469,10 +487,10 @@ export default function PracticeMCQ() {
       if (selectedOptionChar === q.correctOption) totalCorrect++;
       else totalIncorrect++;
     }
-    const bankTotal = meta?.total ?? 0;
+    const bankTotal = sessionTotal;
     const totalNoResponse = Math.max(0, bankTotal - totalAttempted);
     return { totalAttempted, totalCorrect, totalIncorrect, totalNoResponse };
-  }, [selected, meta?.total, mcqData]);
+  }, [selected, sessionTotal, mcqData]);
 
   const { totalAttempted, totalCorrect, totalIncorrect, totalNoResponse } =
     progressStats;
@@ -618,7 +636,7 @@ export default function PracticeMCQ() {
 
             <div className="text-center mt-4">
               <p className="text-lg">
-                You completed {totalAttempted}/{meta?.total || 0} questions. You
+                You completed {totalAttempted}/{sessionTotal || 0} questions. You
                 answered:
               </p>
               <div className="mt-4 flex flex-col items-center space-y-2">
@@ -700,7 +718,7 @@ export default function PracticeMCQ() {
                   title={mcqData?.title}
                   titleSize="text-xl"
                   // description={`${meta?.total || 0} Questions `}
-                  description={`${Math.ceil(((meta?.total ?? 0) * 40) / 60)} Min est.`}
+                  description={`${Math.ceil(((sessionTotal || 0) * 40) / 60)} Min est.`}
                   className="space-y-1"
                 />
               </div>
@@ -774,7 +792,7 @@ export default function PracticeMCQ() {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="text-slate-500 text-sm">
-                        Question {globalQuestionNumber} of {meta?.total || 0}
+                        Question {globalQuestionNumber} of {sessionTotal || 0}
                       </span>
                       {mcqData?.subtopic && (
                         <span className="bg-[#D97706] text-[10px] font-bold px-3 py-1 text-white rounded-full uppercase tracking-wider">
@@ -971,7 +989,7 @@ export default function PracticeMCQ() {
                 <input
                   type="number"
                   min="1"
-                  max={meta?.total || 1}
+                  max={sessionTotal || 1}
                   value={jumpQuestion}
                   onChange={(e) => setJumpQuestion(e.target.value)}
                   onKeyDown={(e) => {
