@@ -1,21 +1,77 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DashboardHeading from "@/components/reusable/DashboardHeading";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Atom } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { useCreateStudyPlanMutation } from "@/store/features/studyPlan/studyPlan.api";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  useCreateStudyPlanMutation,
+  useUpdateStudyPlanMutation,
+} from "@/store/features/studyPlan/studyPlan.api";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
 import { toast } from "sonner";
-import type { Subject } from "@/components/dashboard/goal/type";
+import type { SelectedSubject, Subject } from "@/components/dashboard/goal/type";
 import { SubjectTreeSelector } from "@/components/dashboard/goal/SubjectTreeSelector";
 import { useSubjectTreeSelection } from "@/components/dashboard/goal/useSubjectTreeSelection";
 import { goalToStudyPlanTopics } from "@/utils/goalToStudyPlanTopics";
 
+/** Best-effort restore coverage when selection_snapshot is missing */
+function topicsRowsToSelectedSubjects(
+  rows: Array<{ subject?: string; system?: string; topic?: string; subtopic?: string }>,
+): SelectedSubject[] {
+  const bySubject = new Map<string, SelectedSubject>();
+  for (const row of rows ?? []) {
+    const s = String(row?.subject ?? "").trim();
+    const sysName = String(row?.system ?? "").trim();
+    if (!s || !sysName) continue;
+    let subj = bySubject.get(s);
+    if (!subj) {
+      subj = {
+        subjectName: s,
+        systemNames: [],
+        systems: [],
+        fullSubject: false,
+      };
+      bySubject.set(s, subj);
+    }
+    if (!subj.systemNames.includes(sysName)) {
+      subj.systemNames.push(sysName);
+    }
+    let sys = subj.systems?.find((x) => x.systemName === sysName);
+    if (!sys) {
+      sys = { systemName: sysName, topics: [], fullSystem: false };
+      subj.systems = [...(subj.systems ?? []), sys];
+    }
+    const tName = String(row?.topic ?? "").trim();
+    const st = String(row?.subtopic ?? "").trim();
+    let topic = sys.topics.find((t) => t.topicName === tName);
+    if (!topic) {
+      topic = {
+        topicName: tName,
+        subTopicNames: st ? [st] : [],
+        fullTopic: false,
+      };
+      sys.topics.push(topic);
+    } else if (st && !topic.subTopicNames.includes(st)) {
+      topic.subTopicNames.push(st);
+    }
+  }
+  return Array.from(bySubject.values());
+}
+
 export default function CreateSmartStudyPlan() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editState = location.state as
+    | { mode?: "edit"; plan?: any }
+    | undefined;
+  const editPlan = editState?.plan;
+  const isEdit = editState?.mode === "edit" && Boolean(editPlan?._id);
+
   const [createStudyPlan, { isLoading }] = useCreateStudyPlanMutation();
+  const [updateStudyPlan, { isLoading: isUpdating }] =
+    useUpdateStudyPlanMutation();
   const { data: treeData, isLoading: isTreeLoading } = useGetMCQBankTreeQuery(
     {},
   );
@@ -34,6 +90,7 @@ export default function CreateSmartStudyPlan() {
 
   const {
     selectedSubjects,
+    setSelectedSubjects,
     handleSubjectToggle,
     handleFullSubjectToggle,
     handleSystemToggle,
@@ -42,6 +99,8 @@ export default function CreateSmartStudyPlan() {
     handleFullTopicToggle,
     handleSubTopicToggle,
   } = useSubjectTreeSelection(availableSubjects);
+
+  const seededPlanIdRef = useRef<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [dailyTime, setDailyTime] = useState("");
@@ -57,6 +116,49 @@ export default function CreateSmartStudyPlan() {
     (t, s) => t + (s.systems?.length ?? 0),
     0,
   );
+
+  useEffect(() => {
+    if (!isEdit) {
+      seededPlanIdRef.current = null;
+      return;
+    }
+    if (!editPlan?._id || availableSubjects.length === 0) return;
+    if (seededPlanIdRef.current === editPlan._id) return;
+    seededPlanIdRef.current = editPlan._id;
+
+    setTitle(String(editPlan.title ?? editPlan.exam_name ?? "").trim());
+    setDailyTime(String(editPlan.daily_study_time ?? ""));
+    setStartDate(
+      typeof editPlan.start_date === "string"
+        ? editPlan.start_date.split("T")[0]
+        : "",
+    );
+    setExamDate(
+      typeof editPlan.exam_date === "string"
+        ? editPlan.exam_date.split("T")[0]
+        : "",
+    );
+
+    const snap = editPlan.selection_snapshot;
+    if (Array.isArray(snap) && snap.length > 0) {
+      setSelectedSubjects(snap as SelectedSubject[]);
+    } else {
+      const fromTopics = topicsRowsToSelectedSubjects(editPlan.topics ?? []);
+      if (fromTopics.length > 0) {
+        setSelectedSubjects(fromTopics);
+        toast.warning(
+          "Coverage couldn't be fully restored from this plan. Please review your selections.",
+        );
+      }
+    }
+  }, [
+    isEdit,
+    editPlan,
+    availableSubjects.length,
+    setSelectedSubjects,
+  ]);
+
+  const isBusy = isLoading || isUpdating;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +208,23 @@ export default function CreateSmartStudyPlan() {
     const examName = title.trim();
 
     try {
+      if (isEdit && editPlan?._id) {
+        await updateStudyPlan({
+          planId: editPlan._id,
+          title: examName,
+          exam_name: examName,
+          start_date: startDate,
+          exam_date: examDate,
+          daily_study_time: parsedTime,
+          exam_type: "",
+          topics,
+          selection_snapshot: selectionSnapshot,
+          created_from: "smart_study_planner",
+        }).unwrap();
+        navigate("/dashboard/smart-study-plan", { replace: true });
+        return;
+      }
+
       const response: any = await createStudyPlan({
         title: examName,
         exam_name: examName,
@@ -126,7 +245,9 @@ export default function CreateSmartStudyPlan() {
       }
     } catch (error) {
       console.error("Create plan error:", error);
-      toast.error("Failed to create study plan");
+      toast.error(
+        isEdit ? "Failed to update study plan" : "Failed to create study plan",
+      );
     }
   };
 
@@ -143,9 +264,13 @@ export default function CreateSmartStudyPlan() {
           <ArrowLeft />
         </Link>
         <DashboardHeading
-          title="Create Smart Study Plan"
+          title={isEdit ? "Edit Smart Study Plan" : "Create Smart Study Plan"}
           titleSize="text-xl"
-          description="Choose coverage and generate a dedicated plan with its own chat thread"
+          description={
+            isEdit
+              ? "Update your coverage, schedule, or daily hours. Progress is preserved where tasks still match."
+              : "Choose coverage and generate a dedicated plan with its own chat thread"
+          }
           className="mt-12 mb-12 space-y-1"
         />
       </div>
@@ -269,12 +394,18 @@ export default function CreateSmartStudyPlan() {
           )}
 
           <button
-            disabled={isLoading}
+            disabled={isBusy}
             type="submit"
-            className="w-full flex justify-center gap-4 bg-blue-main text-white py-2 rounded-lg"
+            className="w-full flex justify-center gap-4 bg-blue-main text-white py-2 rounded-lg disabled:opacity-60"
           >
-            <Atom className={isLoading ? "animate-spin" : ""} />
-            {isLoading ? "Generating…" : "Generate plan"}
+            <Atom className={isBusy ? "animate-spin" : ""} />
+            {isBusy
+              ? isEdit
+                ? "Updating…"
+                : "Generating…"
+              : isEdit
+                ? "Update plan"
+                : "Generate plan"}
           </button>
         </div>
       </form>

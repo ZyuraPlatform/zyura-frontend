@@ -74,6 +74,29 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       }),
       invalidatesTags: ["StudyPlan"],
     }),
+
+    updateStudyPlan: build.mutation({
+      query: ({
+        planId,
+        ...body
+      }: {
+        planId: string;
+        title?: string;
+        exam_name: string;
+        exam_date: string;
+        exam_type: string;
+        daily_study_time: number;
+        start_date?: string;
+        topics: unknown[];
+        selection_snapshot?: unknown;
+        created_from?: "smart_study" | "smart_study_planner";
+      }) => ({
+        url: `/study_planner/update/${planId}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["StudyPlan"],
+    }),
   }),
 });
 
@@ -85,4 +108,5 @@ export const {
   useSaveMcqAttemptsMutation,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
+  useUpdateStudyPlanMutation,
 } = studyPlanAPI;

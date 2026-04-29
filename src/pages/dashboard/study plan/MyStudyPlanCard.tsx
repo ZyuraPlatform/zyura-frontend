@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import PrimaryButton from "@/components/reusable/PrimaryButton";
-import { CalendarRange, MessageSquare, Target, Trash2, Loader2 } from "lucide-react";
+import { CalendarRange, MessageSquare, Pencil, Target, Trash2, Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -149,9 +149,14 @@ export default function MyStudyPlanCard({
     navigate(`/dashboard/weekly-plan/${plan._id}?chat=1`, { state: { plan } });
   };
 
+  const handleEditPlan = () => {
+    navigate("/dashboard/smart-study/create", { state: { mode: "edit" as const, plan } });
+  };
+
   const heading = plan.title?.trim() || plan.plan_summary;
   const showPlannerChat =
     plan.created_from === "smart_study_planner" && Boolean(plan.thread_id);
+  const showEditPlan = plan.created_from === "smart_study_planner";
 
   const acc = stats.accuracyPct;
   const comp = stats.completedPct;
@@ -161,23 +166,39 @@ export default function MyStudyPlanCard({
       <div>
         <div className="flex justify-between items-start gap-4">
           <h3 className="text-lg font-semibold text-slate-800 line-clamp-2">{heading}</h3>
-          {onDelete && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              disabled={isDeleting}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer disabled:opacity-50 shrink-0"
-            >
-              {isDeleting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Trash2 className="w-5 h-5" />
-              )}
-            </button>
-          )}
+          <div className="flex items-start gap-0.5 shrink-0">
+            {showEditPlan && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditPlan();
+                }}
+                className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors cursor-pointer"
+                title="Edit plan"
+                aria-label="Edit plan"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                disabled={isDeleting}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-5 h-5" />
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 mb-4">
