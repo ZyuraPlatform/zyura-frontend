@@ -4,7 +4,9 @@ import { useDebounce } from "@/common/custom/useDebounce";
 import CommonSpace from "@/common/space/CommonSpace";
 import { useGetAllReportForAdminQuery } from "@/store/features/adminDashboard/support/support";
 import { ReportItem } from "@/store/features/adminDashboard/support/types/support";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { selectNotifications } from "@/store/features/notifications/notification.slice";
 import DashboardSearch from "@/Layout/dashboard/DashboardSearch";
 import DashboardTopSection from "../reuseable/DashboardTopSection";
 import Tabs from "../reuseable/Tabs";
@@ -13,10 +15,21 @@ import TicketList from "./TicketList";
 
 const SupportCenter = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading } = useGetAllReportForAdminQuery({
+  const { data, isLoading, refetch } = useGetAllReportForAdminQuery({
     page: currentPage,
     limit: 20,
   });
+  
+  // Subscribe to notifications to auto-refetch when new reports arrive
+  const notifications = useSelector(selectNotifications);
+  
+  // Refetch reports when new notifications are added
+  useEffect(() => {
+    if (notifications.length > 0) {
+      console.log("📥 New notification detected, refetching reports...");
+      refetch();
+    }
+  }, [notifications, refetch]);
 
   const totalPages = data?.meta.totalPages ?? 1;
   const [selectedTicket, setSelectedTicket] = useState<ReportItem | null>(null);

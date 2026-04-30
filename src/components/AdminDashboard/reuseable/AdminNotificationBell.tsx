@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaRegBell } from "react-icons/fa6";
 import {
   DropdownMenu,
@@ -8,21 +8,75 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   selectNotifications,
   clearNotifications,
+  removeNotification,
 } from "@/store/features/notifications/notification.slice";
 
 const AdminNotificationBell: React.FC = () => {
   const notifications = useSelector(selectNotifications);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const unreadCount = notifications.length;
 
-  const handleMarkAllRead = () => {
+  console.log("🔔 Notification bell mounted, unread:", unreadCount);
+
+  // Force re-log on count change (useEffect would need deps)
+  useEffect(() => {
+    console.log("🔔 Notification count changed:", unreadCount);
+  }, [unreadCount]);
+
+  // ✅ Call backend to mark as read, remove from Redux, navigate, show toast
+  const handleNotificationClick = async (notif: any) => {
+    console.log("👆 Notification clicked:", notif._id, "marking read...");
+    setOpen(false);
+
+    try {
+      await fetch(`/api/report/mark-read/${notif._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to mark report as read:", err);
+    }
+
+    // ✅ Remove from Redux immediately (don't wait for socket echo)
+    dispatch(removeNotification(notif._id));
+
+    // ✅ Show toaster with context
+    toast.info("New report received", {
+      description: `${notif.name || "A user"} reported: ${notif.report?.text || ""}`,
+      duration: 5000,
+    });
+
+    // ✅ Navigate directly to the report detail page
+    navigate("/admin/support");
+  };
+
+  const handleMarkAllRead = async () => {
+    // Fire mark-read for each notification in parallel
+    await Promise.allSettled(
+      notifications.map((notif: any) =>
+        fetch(`/api/report/mark-read/${notif._id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        })
+      )
+    );
     dispatch(clearNotifications());
     setOpen(false);
+    toast.success("All notifications marked as read");
   };
 
   return (
@@ -65,7 +119,8 @@ const AdminNotificationBell: React.FC = () => {
               <DropdownMenuItem
                 key={`${notif._id}-${idx}`}
                 className="cursor-pointer px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 focus:bg-gray-50"
-                onClick={() => setOpen(false)}
+                // ✅ Click → mark read + navigate + toast
+                onClick={() => handleNotificationClick(notif)}
               >
                 <div className="flex flex-col gap-1 w-full">
                   <div className="flex items-center justify-between">
