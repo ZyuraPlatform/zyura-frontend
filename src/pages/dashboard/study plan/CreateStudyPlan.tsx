@@ -56,10 +56,6 @@ export default function CreateStudyPlan() {
   const [startDate, setStartDate] = useState("");
   const [examDate, setExamDate] = useState("");
 
-  // SmartStudyPlan date boundaries
-  const [smartPlanStartDate, setSmartPlanStartDate] = useState<string>("");
-  const [smartPlanEndDate, setSmartPlanEndDate] = useState<string>("");
-
   const [subject, setSubject] = useState("");
   const [system, setSystem] = useState("");
   const [topic, setTopic] = useState("");
@@ -103,17 +99,9 @@ export default function CreateStudyPlan() {
     }
   }, [systemList]);
 
-  // Pre-fill start/end dates from the goal and store boundaries
+  // Pre-fill selected subject, system, topic, subtopic from goal
   useEffect(() => {
     if (goal) {
-      const start = goal.startDate.split("T")[0];
-      const end = goal.endDate.split("T")[0];
-      setSmartPlanStartDate(start);
-      setSmartPlanEndDate(end);
-      if (!startDate) setStartDate(start);
-      if (!examDate) setExamDate(end);
-
-      // Pre-fill selected subject, system, topic, subtopic from goal
       if (goal.selectedSubjects && goal.selectedSubjects.length > 0) {
         const firstSubject = goal.selectedSubjects[0];
         if (!subject) setSubject(firstSubject.subjectName);
@@ -157,26 +145,6 @@ export default function CreateStudyPlan() {
 
     const todayString = new Date().toISOString().split("T")[0];
     if (examDate && examDate < todayString) newErrors.push("examDate");
-
-    // Validate dates are within SmartStudyPlan range
-    if (smartPlanStartDate && smartPlanEndDate) {
-      if (startDate && new Date(startDate) < new Date(smartPlanStartDate)) {
-        newErrors.push("startDate");
-        toast.error(`Start date must be on or after ${smartPlanStartDate}`);
-      }
-      if (examDate && new Date(examDate) > new Date(smartPlanEndDate)) {
-        newErrors.push("examDate");
-        toast.error(`Finish date must be on or before ${smartPlanEndDate}`);
-      }
-      if (startDate && new Date(startDate) > new Date(smartPlanEndDate)) {
-        newErrors.push("startDate");
-        toast.error(`Start date must be on or before ${smartPlanEndDate}`);
-      }
-      if (examDate && new Date(examDate) < new Date(smartPlanStartDate)) {
-        newErrors.push("examDate");
-        toast.error(`Finish date must be on or after ${smartPlanStartDate}`);
-      }
-    }
 
     if (!subject) newErrors.push("subject");
     if (!system) newErrors.push("system");
@@ -297,8 +265,6 @@ export default function CreateStudyPlan() {
               </Label>
               <Input
                 type="date"
-                min={smartPlanStartDate || undefined}
-                max={smartPlanEndDate || undefined}
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
@@ -318,8 +284,7 @@ export default function CreateStudyPlan() {
               </Label>
               <Input
                 type="date"
-                min={startDate || smartPlanStartDate || undefined}
-                max={smartPlanEndDate || undefined}
+                min={startDate || undefined}
                 value={examDate}
                 onChange={(e) => {
                   setExamDate(e.target.value);
@@ -330,16 +295,6 @@ export default function CreateStudyPlan() {
                 }
               />
             </div>
-
-            {/* SmartStudyPlan date range helper */}
-            {smartPlanStartDate && smartPlanEndDate && (
-              <div className="col-span-1 lg:col-span-2">
-                <p className="text-xs text-blue-600 mt-1">
-                  Dates must be between <strong>{smartPlanStartDate}</strong>{" "}
-                  and <strong>{smartPlanEndDate}</strong>
-                </p>
-              </div>
-            )}
           </div>
         </div>
 

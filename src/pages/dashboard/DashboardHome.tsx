@@ -6,7 +6,6 @@ import SmartStudyPlan from "@/components/dashboard_new/SmartStudyPlan";
 // import PerformanceBySubject from "@/components/dashboard_new/PerformanceBySubject";
 import WeeklyLeaderboard from "@/components/dashboard_new/WeeklyLeaderboard";
 import WeeklyHighlights from "@/components/dashboard_new/WeeklyHighlights";
-import MedicalStudyGoalTracker from "@/components/dashboard/goal/MedicalStudyGoalTracker";
 import DailyChallenge from "@/components/dashboard_new/DailyChallenge";
 // import MedicalStudyGoalTracker from "./MedicalStudyGoalTracker";
 // import ChatInterface from "@/components/dashboard_new/message";
@@ -45,7 +44,7 @@ const Dashboard: React.FC = () => {
     >
       {/* Goal Tracker */}
       <motion.div variants={itemVariants} className="mb-8">
-        <MedicalStudyGoalTracker />
+        {/* <MedicalStudyGoalTracker /> */}
       </motion.div>
 
       {/* Overview Section */}
@@ -58,16 +57,18 @@ const Dashboard: React.FC = () => {
         <OverviewSection />
       </motion.div>
 
-      {/* Smart Study Plan */}
-      <motion.div
-        variants={itemVariants}
-        viewport={{ once: true, margin: "-100px" }}
-        whileInView="visible"
-        initial="hidden"
-        className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-6"
-      >
-        <SmartStudyPlan />
-      </motion.div>
+      {/* Smart Study Plan (commented out temporarily) */}
+      {/*
+        <motion.div
+          variants={itemVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
+          initial="hidden"
+          className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-6"
+        >
+          <SmartStudyPlan />
+        </motion.div>
+      */}
 
       {/* Daily Challenge + Weekly Leaderboard */}
       <motion.div
@@ -82,16 +83,18 @@ const Dashboard: React.FC = () => {
         <WeeklyLeaderboard />
       </motion.div>
 
-      {/* Highlights of the Week */}
-      <motion.div
-        variants={itemVariants}
-        viewport={{ once: true, margin: "-100px" }}
-        whileInView="visible"
-        initial="hidden"
-        className="mb-6"
-      >
-        <WeeklyHighlights />
-      </motion.div>
+      {/* Highlights of the Week (commented out temporarily) */}
+      {/*
+        <motion.div
+          variants={itemVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
+          initial="hidden"
+          className="mb-6"
+        >
+          <WeeklyHighlights />
+        </motion.div>
+      */}
     </motion.div>
   );
 };

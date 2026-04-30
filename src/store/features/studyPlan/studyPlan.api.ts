@@ -40,6 +40,25 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       invalidatesTags: ["StudyPlan"],
     }),
 
+    saveMcqAttempts: build.mutation({
+      query: (data: {
+        planId: string;
+        day: number;
+        suggest_content: string;
+        total_count: number;
+        attempts: {
+          questionId: string;
+          selectedOption: string;
+          isCorrect: boolean;
+        }[];
+      }) => ({
+        url: "/study_planner/save-mcq-attempts",
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["StudyPlan"],
+    }),
+
     cancelStudyPlan: build.mutation({
       query: (id: string) => ({
         url: `/study_planner/cancel/${id}`,
@@ -55,6 +74,29 @@ const studyPlanAPI = baseAPI.injectEndpoints({
       }),
       invalidatesTags: ["StudyPlan"],
     }),
+
+    updateStudyPlan: build.mutation({
+      query: ({
+        planId,
+        ...body
+      }: {
+        planId: string;
+        title?: string;
+        exam_name: string;
+        exam_date: string;
+        exam_type: string;
+        daily_study_time: number;
+        start_date?: string;
+        topics: unknown[];
+        selection_snapshot?: unknown;
+        created_from?: "smart_study" | "smart_study_planner";
+      }) => ({
+        url: `/study_planner/update/${planId}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["StudyPlan"],
+    }),
   }),
 });
 
@@ -63,6 +105,8 @@ export const {
   useGetStudyPlanQuery,
   useGetSingleStudyPlanQuery,
   useSaveStudyPlanProgressMutation,
+  useSaveMcqAttemptsMutation,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
+  useUpdateStudyPlanMutation,
 } = studyPlanAPI;

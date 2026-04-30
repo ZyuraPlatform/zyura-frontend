@@ -1,4 +1,5 @@
-import { ChevronDown, Mail } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 type FAQItem = {
   question: string;
@@ -242,6 +243,9 @@ const faqCategories: FAQCategory[] = [
 ];
 
 export const FAQSection = () => {
+
+  const [activeIndex, setActiveIndex] = useState<string | null>(null);
+  
   return (
     <section className="pt-25 lg:pt-36 aos-init aos-animate" data-aos="fade-up">
       <div className="mx-auto container px-5">
@@ -262,66 +266,74 @@ export const FAQSection = () => {
               </h3>
 
               <div className="mt-4 space-y-3">
-                {category.items.map((item) => (
-                  <details
-                    key={item.question}
-                    className="group rounded-xl border border-[#e1e7f0] bg-white open:bg-white"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 font-sora text-[16px] font-medium text-dark md:text-[16px]">
-                      <span className="">{item.question}</span> 
-                      <ChevronDown className="h-5 w-5 shrink-0 text-[#4b5b78] transition-transform duration-200 group-open:rotate-180" />
-                    </summary>
+                {category.items.map((item, index) => {
+                  const id = `${category.title}-${index}`;
+                  const isOpen = activeIndex === id;
 
-                    <div className="space-y-3 px-4 pb-5">
-                      {item.paragraphs?.map((paragraph) => (
-                        <p
-                          key={paragraph}
-                          className="font-sora text-[15px] leading-relaxed text-[#3a475e] md:text-[16px]"
-                        >
-                          {paragraph}
-                        </p>
-                      ))}
+                  return (
+                    <div
+                      key={id}
+                      className="rounded-xl border border-[#e1e7f0] bg-white"
+                    >
+                      {/* HEADER */}
+                      <button
+                        onClick={() =>
+                          setActiveIndex(isOpen ? null : id)
+                        }
+                        className="flex w-full items-center justify-between gap-4 px-4 py-4 font-sora text-[16px] font-medium text-dark"
+                      >
+                        <span>{item.question}</span>
 
-                      {item.splitBlocks?.map((block) => (
-                        <div
-                          key={block.title}
-                          className="rounded-lg border border-[#e2e8f2] bg-[#f7faff] p-4"
-                        >
-                          <p className="font-sora text-[16px] font-semibold text-[#1e2b45]">
-                            {block.title}
-                          </p>
-                          <ul className="mt-2 space-y-1.5">
-                            {block.bullets.map((bullet) => (
-                              <li key={bullet} className="flex items-start gap-2">
-                                <span className="mt-2 inline-block h-2 w-2 rounded-full bg-brand" />
-                                <span className="font-sora text-[14px] text-[#3a475e] md:text-[15px]">
-                                  {bullet}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
+                        <ChevronDown
+                          className={`h-5 w-5 text-[#4b5b78] transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                            }`}
+                        />
+                      </button>
 
-                      {item.bullets && (
-                        <ul className="space-y-1.5">
-                          {item.bullets.map((bullet) => (
-                            <li key={bullet} className="flex items-start gap-2">
-                              {bullet === "support@zyura-e.com" ? (
-                                <Mail className="mt-1 h-4 w-4 text-brand" />
-                              ) : (
-                                <span className="mt-2 inline-block h-2 w-2 rounded-full bg-brand" />
-                              )}
-                              <span className="font-sora text-[14px] text-[#3a475e] md:text-[15px]">
-                                {bullet}
-                              </span>
-                            </li>
+                      {/* BODY */}
+                      {isOpen && (
+                        <div className="space-y-3 px-4 pb-5">
+                          {item.paragraphs?.map((paragraph) => (
+                            <p
+                              key={paragraph}
+                              className="font-sora text-[15px] leading-relaxed text-[#3a475e]"
+                            >
+                              {paragraph}
+                            </p>
                           ))}
-                        </ul>
+
+                          {item.splitBlocks?.map((block) => (
+                            <div
+                              key={block.title}
+                              className="rounded-lg border bg-[#f7faff] p-4"
+                            >
+                              <p className="font-semibold">{block.title}</p>
+                              <ul className="mt-2 space-y-1.5">
+                                {block.bullets.map((bullet) => (
+                                  <li key={bullet} className="flex gap-2">
+                                    <span className="h-2 w-2 mt-2 rounded-full bg-brand" />
+                                    <span>{bullet}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+
+                          {item.bullets && (
+                            <ul className="space-y-1.5">
+                              {item.bullets.map((bullet) => (
+                                <li key={bullet} className="flex gap-2">
+                                  <span className="h-2 w-2 mt-2 rounded-full bg-brand" />
+                                  <span>{bullet}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </details>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

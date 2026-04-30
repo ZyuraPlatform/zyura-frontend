@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
-import { SelectedSubject, Subject, FormData as GoalFormData } from "./type";
+import { Subject, FormData as GoalFormData } from "./type";
 import { GoalModal, Step1, Step2, Step3 } from "./GoalModal";
 import { GoalEmptyState } from "./GoalEmptyState";
 import { GoalDashboard } from "./GoalDashboard";
@@ -12,20 +12,20 @@ import {
 import { toast } from "sonner";
 import GlobalLoader from "@/common/GlobalLoader";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
+import { useSubjectTreeSelection } from "./useSubjectTreeSelection";
 
 // Main Component
 const MedicalStudyGoalTracker: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  // const [goal, setGoal] = useState<Goal | null>(null);
 
   const [createGoal, { isLoading: isCreating }] = useCreateGoalMutation();
   const [updateGoal, { isLoading: isUpdating }] = useUpdateGoalMutation();
   const { data, isLoading } = useGetGoalQuery({});
 
   const { data: treeData, isLoading: isTreeLoading } = useGetMCQBankTreeQuery(
-    {}
+    {},
   );
 
   const availableSubjects: Subject[] =
@@ -40,6 +40,18 @@ const MedicalStudyGoalTracker: React.FC = () => {
       })),
     })) || [];
 
+  const {
+    selectedSubjects,
+    setSelectedSubjects,
+    handleSubjectToggle,
+    handleFullSubjectToggle,
+    handleSystemToggle,
+    handleFullSystemToggle,
+    handleTopicToggle,
+    handleFullTopicToggle,
+    handleSubTopicToggle,
+  } = useSubjectTreeSelection(availableSubjects);
+
   const apiGoal = data?.data?.[0];
 
   const [formData, setFormData] = useState<GoalFormData>({
@@ -48,238 +60,6 @@ const MedicalStudyGoalTracker: React.FC = () => {
     startDate: "",
     endDate: "",
   });
-
-  const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubject[]>(
-    []
-  );
-
-  const handleSubjectToggle = (subjectName: string): void => {
-    const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName
-    );
-
-    if (existingIndex >= 0) {
-      setSelectedSubjects(
-        selectedSubjects.filter((s) => s.subjectName !== subjectName)
-      );
-    } else {
-      setSelectedSubjects([
-        ...selectedSubjects,
-        { subjectName, systemNames: [], fullSubject: false },
-      ]);
-    }
-  };
-
-  const handleFullSubjectToggle = (subjectName: string): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    if (!subject) return;
-
-    const existingIndex = selectedSubjects.findIndex(
-      (s) => s.subjectName === subjectName
-    );
-
-    if (existingIndex >= 0) {
-      const updated = [...selectedSubjects];
-      const currentFullSubject = updated[existingIndex].fullSubject;
-
-      if (currentFullSubject) {
-        updated[existingIndex] = {
-          subjectName,
-          systemNames: [],
-          fullSubject: false,
-        };
-      } else {
-        updated[existingIndex] = {
-          subjectName,
-          systemNames: subject.systems.map((s) => s.name),
-          fullSubject: true,
-        };
-      }
-      setSelectedSubjects(updated);
-    }
-  };
-
- const handleSystemToggle = (
-  subjectName: string,
-  systemName: string,
-): void => {
-  const subject = availableSubjects.find((s) => s.name === subjectName);
-  if (!subject) return;
-
-  const existingIndex = selectedSubjects.findIndex(
-    (s) => s.subjectName === subjectName,
-  );
-
-  if (existingIndex === -1) return;
-
-  const updated = [...selectedSubjects];
-
-  const systemIndex = (updated[existingIndex].systems ?? []).findIndex(
-    (s) => s.systemName === systemName,
-  );
-
-  if (systemIndex >= 0) {
-    // REMOVE system
-    updated[existingIndex].systemNames = (
-      updated[existingIndex].systemNames ?? []
-    ).filter((s) => s !== systemName);
-
-    updated[existingIndex].systems = (
-      updated[existingIndex].systems ?? []
-    ).filter((s) => s.systemName !== systemName);
-  } else {
-    // ADD system
-    updated[existingIndex].systemNames = [
-      ...(updated[existingIndex].systemNames ?? []),
-      systemName,
-    ];
-
-    updated[existingIndex].systems = [
-      ...(updated[existingIndex].systems ?? []),
-      {
-        systemName,
-        topics: [],
-        fullSystem: false,
-      },
-    ];
-  }
-
-  setSelectedSubjects(updated);
-};
-
-  const handleFullSystemToggle = (
-    subjectName: string,
-    systemName: string,
-  ): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    const system = subject?.systems.find((s) => s.name === systemName);
-    if (!system) return;
-
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: (s.systems ?? []).map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            if (sys.fullSystem)
-              return { ...sys, fullSystem: false, topics: [] };
-            return {
-              ...sys,
-              fullSystem: true,
-              topics: system.topics.map((t) => ({
-                topicName: t.topicName,
-                fullTopic: true,
-                subTopicNames: [...t.subTopics],
-              })),
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-  ): void => {
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: (s.systems ?? []).map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            const exists = sys.topics.find((t) => t.topicName === topicName);
-            if (exists) {
-              return {
-                ...sys,
-                fullSystem: false,
-                topics: sys.topics.filter((t) => t.topicName !== topicName),
-              };
-            }
-            return {
-              ...sys,
-              topics: [
-                ...sys.topics,
-                { topicName, subTopicNames: [], fullTopic: false },
-              ],
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleFullTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-  ): void => {
-    const subject = availableSubjects.find((s) => s.name === subjectName);
-    const system = subject?.systems.find((s) => s.name === systemName);
-    const topic = system?.topics.find((t) => t.topicName === topicName);
-    if (!topic) return;
-
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: (s.systems ?? []).map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            return {
-              ...sys,
-              topics: sys.topics.map((t) => {
-                if (t.topicName !== topicName) return t;
-                if (t.fullTopic)
-                  return { ...t, fullTopic: false, subTopicNames: [] };
-                return {
-                  ...t,
-                  fullTopic: true,
-                  subTopicNames: [...topic.subTopics],
-                };
-              }),
-            };
-          }),
-        };
-      }),
-    );
-  };
-
-  const handleSubTopicToggle = (
-    subjectName: string,
-    systemName: string,
-    topicName: string,
-    subTopicName: string,
-  ): void => {
-    setSelectedSubjects(
-      selectedSubjects.map((s) => {
-        if (s.subjectName !== subjectName) return s;
-        return {
-          ...s,
-          systems: (s.systems ?? []).map((sys) => {
-            if (sys.systemName !== systemName) return sys;
-            return {
-              ...sys,
-              topics: sys.topics.map((t) => {
-                if (t.topicName !== topicName) return t;
-                const has = t.subTopicNames.includes(subTopicName);
-                return {
-                  ...t,
-                  fullTopic: has ? false : t.fullTopic,
-                  subTopicNames: has
-                    ? t.subTopicNames.filter((st) => st !== subTopicName)
-                    : [...t.subTopicNames, subTopicName],
-                };
-              }),
-            };
-          }),
-        };
-      }),
-    );
-  };
 
   const calculateDuration = (): number => {
     if (!formData.startDate || !formData.endDate) return 0;
@@ -312,28 +92,29 @@ const MedicalStudyGoalTracker: React.FC = () => {
       selectedSubjects: selectedSubjects.map((s) => ({
         subjectName: s.subjectName,
         systemNames: s.systemNames,
+        systems: s.systems ?? [],
+        fullSubject: s.fullSubject ?? false,
       })),
     };
 
     try {
       if (isEditMode) {
         await updateGoal(goalDataToSend).unwrap();
-        // toast.success("Goal updated successfully! ✅");
       } else {
         await createGoal(goalDataToSend).unwrap();
-        // toast.success("Goal created successfully! ✅");
       }
+
+      handleCloseModal();
     } catch (error: any) {
       console.error("Goal operation error:", error);
       toast.error(
         error?.data?.message ||
           `Failed to ${
             isEditMode ? "update" : "create"
-          } goal. Please try again ❌`
+          } goal. Please try again ❌`,
       );
+      return;
     }
-
-    handleCloseModal();
   };
 
   const handleCloseModal = (): void => {
@@ -351,16 +132,14 @@ const MedicalStudyGoalTracker: React.FC = () => {
 
   const handleChangeGoal = (): void => {
     if (apiGoal) {
-      // Pre-populate form with existing goal data
       setIsEditMode(true);
       setFormData({
         goalName: apiGoal.goalName,
         studyHoursPerDay: apiGoal.studyHoursPerDay,
-        startDate: apiGoal.startDate.split("T")[0], // Convert to YYYY-MM-DD format
+        startDate: apiGoal.startDate.split("T")[0],
         endDate: apiGoal.endDate.split("T")[0],
       });
 
-      // Pre-populate selected subjects
       setSelectedSubjects(
         apiGoal.selectedSubjects.map((subject: any) => {
           const availableSubject = availableSubjects.find(
@@ -370,7 +149,6 @@ const MedicalStudyGoalTracker: React.FC = () => {
           const systemNames = subject.systemNames ?? [];
           const fullSubject = subject.fullSubject || false;
 
-          // If API already has full systems data with topics, use it
           if (subject.systems && subject.systems.length > 0) {
             return {
               subjectName: subject.subjectName,
@@ -380,7 +158,6 @@ const MedicalStudyGoalTracker: React.FC = () => {
             };
           }
 
-          // Reconstruct systems from availableSubjects using systemNames
           const systems = systemNames
             .map((sysName: string) => {
               const system = availableSubject?.systems.find(

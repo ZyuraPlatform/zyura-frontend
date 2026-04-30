@@ -67,6 +67,11 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
 
   const user = useSelector(selectUser);
   const isProfessional = user?.account?.role === "PROFESSIONAL";
+  const preferredExamSubject = String(
+    isProfessional
+      ? user?.profile?.professionName || ""
+      : user?.account?.profile_type || user?.profile?.studentType || "",
+  ).trim();
 
   const { data: allExamResForStudent } = useGetAllExamForStudentQuery(
     { limit: 100 },
@@ -77,13 +82,34 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
     { skip: !isProfessional || quizMode !== "exam" }
   );
 
+  // NOTE: get-all-exam APIs return { data: { data: Exam[], meta: ... } }
+  // so the exams array lives at response.data.data.data
   const allExams = isProfessional
-    ? allExamResForProfessional?.data?.data || []
-    : allExamResForStudent?.data?.data || [];
+    ? allExamResForProfessional?.data?.data?.data || []
+    : allExamResForStudent?.data?.data?.data || [];
 
   const subjectsFromExams = Array.from(
     new Set(allExams.map((e: any) => (isProfessional ? e.professionName : e.subject)))
   ).filter(Boolean);
+
+  // Safe default: auto-select Subject only when there's an exact match.
+  // If no match exists, keep current behavior (user selects manually).
+  useEffect(() => {
+    if (quizMode !== "exam") return;
+    if (examSubject) return;
+    if (!preferredExamSubject) return;
+    if (!subjectsFromExams.length) return;
+
+    if (subjectsFromExams.includes(preferredExamSubject)) {
+      setExamSubject(preferredExamSubject);
+      setExamName("");
+      clearError("examSubject");
+    }
+  }, [quizMode, examSubject, preferredExamSubject, subjectsFromExams]);
+
+  const isExamListLoading =
+    quizMode === "exam" &&
+    (isProfessional ? !allExamResForProfessional : !allExamResForStudent);
 
   const examListForSelectedSubject = allExams.filter((e: any) => {
     const subjectValue = isProfessional ? e.professionName : e.subject;
@@ -304,11 +330,21 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
                     <SelectValue placeholder="Select Subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    {subjectsFromExams.map((sub: any) => (
-                      <SelectItem key={sub} value={sub}>
-                        {sub}
+                    {isExamListLoading ? (
+                      <SelectItem value="loading" disabled>
+                        Loading...
                       </SelectItem>
-                    ))}
+                    ) : subjectsFromExams.length > 0 ? (
+                      subjectsFromExams.map((sub: any) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        No subjects found
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 {errors.includes("examSubject") && (
@@ -340,7 +376,11 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
                     <SelectValue placeholder="Select Exam" />
                   </SelectTrigger>
                   <SelectContent>
-                    {examListForSelectedSubject.length > 0 ? (
+                    {isExamListLoading ? (
+                      <SelectItem value="loading" disabled>
+                        Loading...
+                      </SelectItem>
+                    ) : examListForSelectedSubject.length > 0 ? (
                       examListForSelectedSubject.map((exam: any) => (
                         <SelectItem key={exam._id} value={exam._id}>
                           {exam.examName}

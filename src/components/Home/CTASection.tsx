@@ -1,5 +1,6 @@
 
 import ctaBgImage from "../../assets/home/cta-bg.png";
+import { Link } from "react-router-dom";
 
 export const CTASection = () => {
   return (
@@ -20,14 +21,14 @@ export const CTASection = () => {
               </h2>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Link
+                to="/signup"
                 className=" rounded-xl border border-white/85 px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-white/10"
                 data-aos="fade-left"
                 data-aos-delay="120"
               >
                 Get Started Free
-              </button>
+              </Link>
               <button
                 type="button"
                 className="flex lg:px-8 py-3 lg:py-4 text-[14px] items-center justify-center gap-2 rounded-lg bg-brand px-5 font-sora font-light text-sm text-white transition bg-brand-gradient hover:bg-brand-gradient-hover"

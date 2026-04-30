@@ -1,17 +1,17 @@
-
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ArrowLeft, CheckCircle, XCircle, Clock, MinusCircle } from "lucide-react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { ArrowLeft, CheckCircle, XCircle, Clock, MinusCircle, MessageSquare } from "lucide-react";
+import { Link, useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 import DashboardHeading from "@/components/reusable/DashboardHeading";
 import {
-  useGetStudyPlanQuery,
-  useSaveStudyPlanProgressMutation,
+  useGetSingleStudyPlanQuery,
   useCancelStudyPlanMutation,
   useDeleteStudyPlanMutation,
 } from "@/store/features/studyPlan/studyPlan.api";
 import GlobalLoader2 from "@/common/GlobalLoader2";
 import { toast } from "sonner";
+import StudyPlanChatPanel from "./StudyPlanChatPanel";
 
 interface HourlyBreakdown {
   task_type: string;
@@ -20,6 +20,9 @@ interface HourlyBreakdown {
   suggest_content: { contentId: string; limit: number };
   isCompleted: boolean;
   description: string;
+  attempted_count?: number;
+  total_count?: number;
+  attempts?: { questionId: string; selectedOption: string; isCorrect: boolean }[];
 }
 
 interface DailyPlan {
@@ -33,6 +36,9 @@ interface DailyPlan {
 
 interface StudyPlanData {
   _id: string;
+  title?: string;
+  thread_id?: string;
+  created_from?: "smart_study" | "smart_study_planner";
   plan_summary: string;
   total_days: number;
   daily_plan: DailyPlan[];
@@ -56,19 +62,62 @@ const getTodayLocal = (): Date => {
   return t;
 };
 
+/** Matches backend TASK_RATES_SECONDS for progress display */
+const RATE_SEC_BY_TASK: Record<string, number> = {
+  mcq: 40,
+  mcqs: 40,
+  flashcard: 180,
+  flashcards: 180,
+  "clinical case": 300,
+  clinical_case: 300,
+  note: 900,
+  notes: 900,
+};
+
+function formatDurationSeconds(totalSec: number): string {
+  const m = Math.floor(totalSec / 60);
+  const s = Math.max(0, Math.round(totalSec % 60));
+  return `${m}m ${s}s`;
+}
+
 export default function WeeklyPlan() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data, isLoading } = useGetStudyPlanQuery({});
-  const [saveProgress, { isLoading: isSaving }] = useSaveStudyPlanProgressMutation();
+  const { data, isLoading } = useGetSingleStudyPlanQuery(id as string, {
+    skip: !id,
+  });
   const [cancelPlan] = useCancelStudyPlanMutation();
   const [deletePlan] = useDeleteStudyPlanMutation();
 
   const planFromState = location.state?.plan as StudyPlanData | undefined;
-  const studyPlan: StudyPlanData | undefined =
-    data?.data?.find((p: StudyPlanData) => p._id === id) || planFromState;
+  const studyPlan: StudyPlanData | undefined = data?.data || planFromState;
+  const backPath =
+    studyPlan?.created_from === "smart_study_planner"
+      ? "/dashboard/smart-study-plan"
+      : "/dashboard/smart-study";
+
+  const showChat = searchParams.get("chat") === "1";
+  const hasPlanChat =
+    studyPlan?.created_from === "smart_study_planner" &&
+    Boolean(studyPlan?.thread_id);
+
+  const planHeading = useMemo(
+    () => studyPlan?.title?.trim() || studyPlan?.plan_summary || "Study plan",
+    [studyPlan?.title, studyPlan?.plan_summary],
+  );
+
+  const toggleChat = () => {
+    const next = new URLSearchParams(searchParams);
+    if (showChat) {
+      next.delete("chat");
+    } else {
+      next.set("chat", "1");
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const today = getTodayLocal();
 
@@ -80,17 +129,6 @@ export default function WeeklyPlan() {
     if (!contentId) {
       toast.warning("Content is not yet assigned to this task.");
       return;
-    }
-
-    // ─── Save progress when user starts a task ──────────────────────────
-    try {
-      await saveProgress({
-        planId: studyPlan?._id,
-        day: dayNumber,
-        suggest_content: contentId,
-      }).unwrap();
-    } catch {
-      // Non-blocking — navigate anyway
     }
 
     const type = taskType.toLowerCase();
@@ -116,7 +154,7 @@ export default function WeeklyPlan() {
     try {
       await cancelPlan(studyPlan._id).unwrap();
       toast.success("Plan cancelled.");
-      navigate("/dashboard/smart-study");
+      navigate(backPath);
     } catch {
       toast.error("Failed to cancel plan.");
     }
@@ -127,19 +165,19 @@ export default function WeeklyPlan() {
     try {
       await deletePlan(studyPlan._id).unwrap();
       toast.success("Plan deleted.");
-      navigate("/dashboard/smart-study");
+      navigate(backPath);
     } catch {
       toast.error("Failed to delete plan.");
     }
   };
 
-  if (isLoading && !planFromState) return <GlobalLoader2 />;
+  if ((isLoading || !id) && !planFromState) return <GlobalLoader2 />;
 
   if (!studyPlan) {
     return (
       <div className="mb-10 bg-slate-50">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard/smart-study" className="mb-7">
+          <Link to={backPath} className="mb-7">
             <ArrowLeft />
           </Link>
           <DashboardHeading
@@ -167,18 +205,29 @@ export default function WeeklyPlan() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard/smart-study" className="mb-7">
+          <Link to={backPath} className="mb-7">
             <ArrowLeft />
           </Link>
           <DashboardHeading
-            title={studyPlan.plan_summary}
+            title={planHeading}
             titleSize="text-xl"
             description={`${studyPlan.total_days} days · ${completedTasks}/${totalTasks} tasks done`}
             className="mt-12 mb-12 space-y-1"
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          {hasPlanChat && (
+            <Button
+              variant={showChat ? "default" : "outline"}
+              size="sm"
+              onClick={toggleChat}
+              className="gap-1"
+            >
+              <MessageSquare className="w-4 h-4" />
+              {showChat ? "Hide chat" : "Plan chat"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -198,6 +247,14 @@ export default function WeeklyPlan() {
         </div>
       </div>
 
+      <div
+        className={
+          showChat && hasPlanChat
+            ? "grid grid-cols-1 lg:grid-cols-[1fr_min(360px,100%)] gap-6 items-start"
+            : ""
+        }
+      >
+      <div className="min-w-0">
       {/* Overall progress bar */}
       <div className="mb-6 bg-white border border-slate-200 rounded-xl p-4">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -305,13 +362,58 @@ export default function WeeklyPlan() {
                                     session.task_type,
                                     session.duration_hours && `${session.duration_hours}h`,
                                     session.duration_minutes && `${session.duration_minutes}m`,
+                                    (() => {
+                                      const t = session.task_type?.toLowerCase() ?? "";
+                                      const rate = RATE_SEC_BY_TASK[t];
+                                      if (
+                                        session.total_count != null &&
+                                        session.total_count > 0
+                                      ) {
+                                        const attempted = session.attempted_count ?? 0;
+                                        if (rate != null) {
+                                          return `${attempted}/${session.total_count} attempted · ${formatDurationSeconds(attempted * rate)} / ${formatDurationSeconds(session.total_count * rate)}`;
+                                        }
+                                        return `${attempted}/${session.total_count} attempted`;
+                                      }
+                                      return null;
+                                    })(),
                                   ].filter(Boolean).join(" • ")}
                                 </p>
+                                {session.total_count != null &&
+                                  session.total_count > 0 && (
+                                    <div className="mt-2 h-1.5 w-full max-w-xs bg-slate-200 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-blue-500 rounded-full transition-all"
+                                        style={{
+                                          width: `${Math.min(
+                                            100,
+                                            ((session.attempted_count ?? 0) /
+                                              session.total_count) *
+                                              100,
+                                          )}%`,
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                {(() => {
+                                  const tt = String(
+                                    session.task_type ?? "",
+                                  ).toLowerCase();
+                                  const isMcq = tt === "mcq" || tt === "mcqs";
+                                  if (!isMcq || session.suggest_content?.contentId) {
+                                    return null;
+                                  }
+                                  return (
+                                    <p className="text-xs text-amber-700 mt-1.5">
+                                      No MCQ bank linked for this task yet.
+                                    </p>
+                                  );
+                                })()}
                               </div>
 
                               <Button
                                 size="sm"
-                                disabled={isFuture || isSaving}
+                                disabled={isFuture}
                                 onClick={() =>
                                   handleStart(
                                     session.task_type,
@@ -342,6 +444,19 @@ export default function WeeklyPlan() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      </div>
+
+      {showChat && hasPlanChat && studyPlan.thread_id && (
+        <StudyPlanChatPanel
+          threadId={studyPlan.thread_id}
+          onClose={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("chat");
+            setSearchParams(next, { replace: true });
+          }}
+        />
+      )}
       </div>
     </div>
   );

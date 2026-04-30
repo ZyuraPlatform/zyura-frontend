@@ -4,9 +4,26 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import { logout } from "../features/auth/auth.slice";
 
+const resolveBaseUrl = () => {
+  const envUrl = String(import.meta.env.VITE_API_URL || "").trim();
+  if (envUrl) return envUrl;
+
+  // Production-safe fallback: if build-time env is missing,
+  // point to the public API host so auth doesn't hit the static site (nginx 405).
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "zyura-e.com" || host === "www.zyura-e.com") {
+      return "https://api.zyura-e.com/api";
+    }
+  }
+
+  // Last resort: relative. (This may 405 on nginx if API isn't proxied.)
+  return "/api";
+};
+
 // Original baseQueryAPI
 const baseQueryAPI = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL,
+  baseUrl: resolveBaseUrl(),
   credentials: "include",
   prepareHeaders(headers) {
     const accessToken = Cookies.get("accessToken");

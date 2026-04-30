@@ -17,7 +17,7 @@ import { useAppDispatch } from "@/store/hook";
 import { setUser } from "@/store/features/auth/auth.slice";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { auth, googleProvider } from "@/config/firebase.config";
+import { auth, firebaseEnabled, googleProvider } from "@/config/firebase.config";
 import { signInWithPopup } from "firebase/auth";
 
 const loginSchema = z.object({
@@ -90,6 +90,10 @@ const Login = () => {
   };
   const handleGoogleLogin = async () => {
     try {
+      if (!firebaseEnabled || !auth || !googleProvider) {
+        toast.error("Google login is temporarily unavailable");
+        return;
+      }
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
@@ -208,11 +212,15 @@ const Login = () => {
           </form>
           <button
             onClick={handleGoogleLogin}
-            disabled={isSubmitting || isLoading || isSocialLoading}
+            disabled={isSubmitting || isLoading || isSocialLoading || !firebaseEnabled}
             className="w-full flex items-center justify-center text-sm text-[#3F3F46] font-medium border border-[#D2D6DB] p-[8px] rounded-lg hover:bg-gray-100 mt-2 cursor-pointer disabled:opacity-50"
           >
             <FcGoogle className="mr-2 text-xl" />
-            {isSocialLoading ? "Connecting..." : "Google"}
+            {!firebaseEnabled
+              ? "Google (temporarily unavailable)"
+              : isSocialLoading
+                ? "Connecting..."
+                : "Google"}
           </button>
 
           <p className="text-sm text-center text-[#020617] mt-4">
