@@ -9,11 +9,15 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "./store/store.ts";
 import { Toaster } from "sonner";
 
+import { MathProvider } from "@/components/MathProvider";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <RouterProvider router={routes} />
+        <MathProvider>
+          <RouterProvider router={routes} />
+        </MathProvider>
       </PersistGate>
       <Toaster richColors position="top-right" />
     </Provider>

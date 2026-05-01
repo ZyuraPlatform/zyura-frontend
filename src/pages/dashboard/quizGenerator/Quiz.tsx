@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ import {
   useGetSingleExamForProfessionalQuery,
 } from "@/store/features/MCQBank/MCQBank.api";
 import { selectUser } from "@/store/features/auth/auth.slice";
-
+import { toast } from "sonner";
 // import { setQuizResults } from "@/store/features/MCQBank/quizSlice";
 // import { useDispatch } from "react-redux";
 import GlobalLoader from "@/common/GlobalLoader";
@@ -134,6 +134,16 @@ const Quiz = () => {
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
   const [openUnansweredModal, setOpenUnansweredModal] = useState(false);
   const [unansweredIndices, setUnansweredIndices] = useState<number[]>([]);
+  const [showTimeUpAlert, setShowTimeUpAlert] = useState(false);
+  const [oneMinuteAlertShown, setOneMinuteAlertShown] = useState(false);
+
+  // Ref to track if auto-submit has been triggered
+  const timeoutSubmittedRef = useRef(false);
+
+  // Extract duration from URL params (in seconds)
+  const durationSeconds = queryParams.get("duration")
+    ? Number(queryParams.get("duration"))
+    : null;
 
   // Load answers from sessionStorage in review mode (supports refresh + returning from analysis)
   useEffect(() => {
@@ -199,14 +209,42 @@ const Quiz = () => {
     }
   }, [apiQuizData]);
 
-  // Timer effect
+  // Timer effect - implements countdown timer
   useEffect(() => {
-    if (isReviewMode) return;
+    if (isReviewMode || durationSeconds === null) return;
+
     const timer = setInterval(() => {
-      setTimeElapsed((prev) => prev + 1);
+      setTimeElapsed((prev) => {
+        const newTimeElapsed = prev + 1;
+        const timeRemaining = durationSeconds - newTimeElapsed;
+
+        // Show 1 minute warning (60 seconds remaining)
+        if (timeRemaining === 60 && !oneMinuteAlertShown) {
+          setOneMinuteAlertShown(true);
+          toast("1 minute left. Please finish your quiz!");
+        }
+
+        // Auto-submit when time is up
+        if (timeRemaining <= 0) {
+          setShowTimeUpAlert(true);
+          return prev; // Stop incrementing
+        }
+
+        return newTimeElapsed;
+      });
     }, 1000);
+
     return () => clearInterval(timer);
-  }, [isReviewMode]);
+  }, [isReviewMode, durationSeconds]);
+
+  // Auto-submit when time is up
+  useEffect(() => {
+    if (showTimeUpAlert && !isReviewMode && !timeoutSubmittedRef.current) {
+      timeoutSubmittedRef.current = true;
+      toast("Time is up. Your quiz has been submitted.");
+      handleSubmit();
+    }
+  }, [showTimeUpAlert, isReviewMode]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -523,10 +561,43 @@ const Quiz = () => {
         >
           {/* Timer / Header */}
           <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-4 flex justify-between items-center">
-            <div className="flex items-center px-4 py-2 bg-slate-50 rounded-lg border border-slate-100">
-              <Timer className="w-4 h-4 mr-2 text-blue-600" />
-              <span className="text-sm font-bold text-slate-700 font-mono tracking-wider">
-                {isReviewMode ? "Reviewing..." : formatTime(timeElapsed)}
+            <div className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${
+              isReviewMode
+                ? "bg-slate-50 border-slate-100"
+                : durationSeconds
+                  ? (() => {
+                      const timeRemaining = durationSeconds - timeElapsed;
+                      return timeRemaining <= 60
+                        ? "bg-red-50 border-red-300"
+                        : "bg-slate-50 border-slate-100";
+                    })()
+                  : "bg-slate-50 border-slate-100"
+            }`}>
+              <Timer className={`w-4 h-4 mr-2 ${
+                isReviewMode
+                  ? "text-blue-600"
+                  : durationSeconds
+                    ? (() => {
+                        const timeRemaining = durationSeconds - timeElapsed;
+                        return timeRemaining <= 60 ? "text-red-600" : "text-blue-600";
+                      })()
+                    : "text-blue-600"
+              }`} />
+              <span className={`text-sm font-bold font-mono tracking-wider ${
+                isReviewMode
+                  ? "text-slate-700"
+                  : durationSeconds
+                    ? (() => {
+                        const timeRemaining = durationSeconds - timeElapsed;
+                        return timeRemaining <= 60 ? "text-red-700 font-bold" : "text-slate-700";
+                      })()
+                    : "text-slate-700"
+              }`}>
+                {isReviewMode
+                  ? "Reviewing..."
+                  : durationSeconds
+                    ? formatTime(Math.max(0, durationSeconds - timeElapsed))
+                    : formatTime(timeElapsed)}
               </span>
             </div>
             <Button
