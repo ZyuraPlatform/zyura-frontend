@@ -22,7 +22,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   iconPosition = "right",
   bgType = "gradient",
   gradientColors = "from-blue-btn-1 to-blue-btn-2",
-  bgColor = "bg-blue-500",
+  bgColor = "#063C79",
   className = "",
   title,
   variant = "default",
