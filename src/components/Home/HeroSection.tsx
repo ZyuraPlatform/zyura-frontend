@@ -2,7 +2,7 @@ import { Autoplay, Pagination, A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import heroBanner from "../../assets/home/hero-banner.png";
 import AIPowered from "../../assets/home/AI-Powered.png";
-import ExpertValidatedAcrossAllSpecialties from "../../assets/home/Expert-Validated Across All Specialties.png";
+import ExpertValidatedAcrossAllSpecialties from "../../assets/home/Expert-Validated-Across-All-Specialties.png";
 import SplitText from "../ui/SplitText";
 import { Link } from "react-router-dom";
 
