@@ -1,6 +1,8 @@
 import { Autoplay, Pagination, A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import heroBanner from "../../assets/home/hero-banner.png";
+import AIPowered from "../../assets/home/AI-Powered.png";
+import ExpertValidatedAcrossAllSpecialties from "../../assets/home/Expert-Validated Across All Specialties.png";
 import SplitText from "../ui/SplitText";
 import { Link } from "react-router-dom";
 
@@ -14,9 +16,9 @@ const heroSlides = [
   {
     image:
       "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=2000&q=80",
-    title: "Learn Smarter With AI-Powered Study Support",
+    title: "Where Medical Expertise Meets AI Intelligence",
     description:
-      "Master tough concepts faster with adaptive quizzes, practical notes, and guided study plans designed for medical students.",
+      "Zyura combines *expert-created clinical content* with *advanced AI training tools* to help students and healthcare professionals master clinical thinking, excel in exams, and perform confidently in real-world practice.",
   },
   {
     image:
@@ -96,9 +98,19 @@ export default function HeroSection() {
                     onLetterAnimationComplete={handleAnimationComplete}
                   />
 
-                  <p className="mx-auto mt-1 lg:mt-6 max-w-3xl text-base font-light leading-relaxed text-white/90 md:text-xl">
+                  <p className="mx-auto mt-1 lg:mt-6 max-w-3xl md:text-xl text-md font-light leading-relaxed text-white/90">
                     {slide.description}
                   </p>
+                  <div className="flex items-center justify-center gap-3 mt-3">
+                    <div className="w-24 h-24">
+                      <img className="w-full h-full" src={AIPowered} alt="" />
+                    </div>
+                    <div className="w-24 h-24">
+                      <img className="w-full h-full" src={ExpertValidatedAcrossAllSpecialties} alt="" />
+                    </div>
+                  </div>
+
+
 
                   <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
 
@@ -106,17 +118,21 @@ export default function HeroSection() {
                       to="/login"
                       className="rounded-xl bg-brand px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-[#0a4f9f]"
                     >
-                      Start AI Training
+                      Start Training
                     </Link>
 
                     <Link
                       to="/login"
                       className="rounded-xl border border-white/85 px-4 lg:px-8 py-3 lg:py-3.5 text-[14px] lg:text-base font-light text-white transition hover:bg-white/10"
                     >
-                      Explore Clinical Simulations
+                      Explore AI Tools
                     </Link>
 
                   </div>
+
+                  <p className="mx-auto mt-4 max-w-3xl text-[14px] font-light leading-relaxed text-white/80 md:text-base">
+                    Built using real materials from doctors, nurses, pharmacists, dentists, and allied health professionals—enhanced by intelligent AI.
+                  </p>
                 </div>
               </div>
             </div>

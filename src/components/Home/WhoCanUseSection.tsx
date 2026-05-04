@@ -2,9 +2,9 @@ import whoBgImage from "../../assets/home/Who-Can-Use.jpg";
 
 const audienceList = [
   "Strong clinical reasoning skills",
-  "Faster decision-making under pressure",
-  "Higher exam performance",
-  "Real-world confidence",
+  "Improved performance in written and oral exams",
+  "Faster and more accurate decision-making",
+  "Confidence in real patient scenarios",
 ];
 
 export const WhoCanUseSection = () => {
@@ -23,11 +23,9 @@ export const WhoCanUseSection = () => {
             className="w-full rounded-[28px] bg-white/96 p-6 shadow-sm backdrop-blur-sm md:max-w-[580px] md:p-8 lg:max-w-[640px] lg:p-10"
             data-aos="fade-left"
           >
-            <p className="font-sora text-[14px] font-semibold uppercase tracking-[0.1em] text-[#2f4854]">
-              WHO IT&apos;S FOR
-            </p>
+             
             <h2 className="mx-auto text-left mt-3 font-sora text-xl md:text-2xl lg:text-[38px] font-semibold text-dark">
-              What You Gain with Zyura-E
+              What Zyura-E Helps You Achieve
             </h2>
 
             <ul className="mt-6 space-y-3">

@@ -1,32 +1,44 @@
-import { Brain, Zap, Target } from "lucide-react";
+import { Zap, Target, ShieldPlus, Book, Bot } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Pagination, Autoplay, Navigation } from "swiper/modules"; 
+import { Autoplay } from "swiper/modules";
 
 export const WhyZyuraDifferent = () => {
   const pillars = [
-    {
-      icon: Brain,
-      title: "Clinical Thinking First",
+     {
+      icon: Book,
+      title: "A New Standard in Medical Learning",
       description:
-        "Train your brain to think like a real clinician—not just memorize facts.",
+        "Most platforms offer either content or technology.",
+    },
+    {
+      icon: Bot,
+      title: "Zyura- delivers both",
+      description:
+        "Expert-Generated Materials → Real, validated medical knowledge. AI-Driven Systems → Adaptive learning and simulation",
+    },
+    {
+      icon: ShieldPlus,
+      title: "Real Clinical Expertise",
+      description:
+        "Content developed and reviewed by professionals across all medical and allied specialties, ensuring accuracy, relevance, and real-world applicability.",
     },
     {
       icon: Zap,
-      title: "AI-Powered Personalization",
+      title: "Intelligent AI Training",
       description:
-        "Your study plan, questions, and feedback adapt to your strengths and weaknesses.",
+        "Adaptive AI that personalizes your learning, challenges your thinking, and provides targeted feedback based on your performance.",
     },
     {
       icon: Target,
-      title: "Real Exam & Clinical Simulation",
+      title: "Integrated Learning Experience",
       description:
-        "Practice under pressure with viva exams, case scenarios, and timed simulations.",
+        "A seamless combination of expert knowledge + AI simulation, designed to train both understanding and clinical decision-making.",
     },
   ];
 
   return (
     <section
-      className="bg-brand-gradient  px-5 lg:px-5  py-10 flex items-center justify-center"
+      className="bg-brand-gradient px-5 lg:px-5  py-10 flex items-center justify-center"
       data-aos="fade-up"
     >
       <div className="container mx-auto px-5 w-full">
@@ -37,53 +49,23 @@ export const WhyZyuraDifferent = () => {
           </h2>
         </div>
 
-        {/* Mobile Slider */}
-        <div className="md:hidden">
-          <Swiper
-            modules={[Pagination,Navigation, Autoplay]}
-            slidesPerView={1}
-            pagination={false}
-            navigation = {false}
-            autoplay={{ delay: 3000, disableOnInteraction: false }}
-            className="w-full pb-12"
-          >
-            {pillars.map((pillar, index) => {
-              const Icon = pillar.icon;
-              return (
-                <SwiperSlide key={index} className="flex justify-center">
-                  <div className="flex flex-col items-center text-center group px-2">
-                    {/* Icon Container */}
-                    <div className="mb-6 p-4 rounded-full bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 group-hover:from-brand-primary/20 group-hover:to-brand-secondary/20 transition-all duration-300">
-                      <Icon
-                        size={40}
-                        className="text-white group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="font-sora text-xl md:text-2xl font-bold text-white mb-3">
-                      {pillar.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-white leading-relaxed text-base">
-                      {pillar.description}
-                    </p>
-                  </div>
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </div>
-
-        {/* Desktop Grid */}
-        <div className="hidden md:grid grid-cols-3 gap-8 lg:gap-12">
+        <Swiper
+          modules={[Autoplay]}
+          slidesPerView={1}
+          spaceBetween={16}
+          breakpoints={{
+            768: { slidesPerView: 2, spaceBetween: 20 },
+            1200: { slidesPerView: 3, spaceBetween: 24 },
+          }}
+          autoplay={{ delay: 3000, disableOnInteraction: false }}
+          className="w-full pb-6"
+        >
           {pillars.map((pillar, index) => {
             const Icon = pillar.icon;
             return (
-              <div
-                key={index}
-                className="flex flex-col items-center text-center group border border-white/20 rounded-lg p-6 transition-transform duration-300 hover:scale-105"
+              <SwiperSlide key={index} className="h-auto">
+                <div
+                className="flex h-full flex-col items-center text-center group border border-white/20 rounded-lg p-6 transition-transform duration-300"
                 data-aos="fade-up"
                 data-aos-delay={index * 100}
               >
@@ -104,10 +86,11 @@ export const WhyZyuraDifferent = () => {
                 <p className="text-white leading-relaxed text-base">
                   {pillar.description}
                 </p>
-              </div>
+                </div>
+              </SwiperSlide>
             );
           })}
-        </div>
+        </Swiper>
       </div>
     </section>
   );

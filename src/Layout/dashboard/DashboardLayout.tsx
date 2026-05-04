@@ -11,7 +11,7 @@ const DashboardLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="w-full min-h-screen bg-slate-50">
+    <div className="w-full min-h-screen bg-slate-50 font-poppins">
       <SocketTracker />
       <ScrollToTop />
       {/* Top Header with Hamburger */}

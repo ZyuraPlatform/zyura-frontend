@@ -11,6 +11,7 @@ export default {
           secondary: 'rounded-lg border border-white/70 px-5 py-2.5 font-sora text-sm font-semibold text-white transition hover:bg-white/10',
         },
       fontFamily: {
+        poppins: ['Poppins', 'sans-serif'],
         sora: ['Sora', 'sans-serif'],
         pattaya: ['Pattaya', 'sans-serif'],
       },

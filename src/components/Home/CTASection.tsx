@@ -16,9 +16,11 @@ export const CTASection = () => {
           <div className="relative flex min-h-[300px] md:min-h-[340px] flex-col lg:flex-row justify-center gap-8 px-8 py-10 md:items-center md:justify-between md:px-12 text-center lg:text-left">
             <div className="max-w-2xl" data-aos="fade-right">
               <h2 className="font-sora text-[38px] font-asemibold leading-tight text-white md:text-[54px]">
-                Start Training Smarter
-                <span className="font-pattaya font-normal"> Today</span>
+                Start Training Like a Future
+                <span className="font-pattaya font-normal">Clinician Today</span>
               </h2>
+              <p className="font-sora text-[18px] leading-relaxed text-white">Join a platform built to bridge the gap between <b>learning and real clinical performance</b>.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Link
@@ -35,7 +37,7 @@ export const CTASection = () => {
                 data-aos="fade-left"
                 data-aos-delay="120"
               >
-                View AI Tools
+                Explore Features
               </button>
             </div>
           </div>

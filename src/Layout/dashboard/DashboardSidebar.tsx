@@ -61,7 +61,7 @@ const DashboardSidebar: FC<SidebarProps> = ({
           item.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
           !item.disabled &&
             (isActive
-              ? "bg-blue-50 text-blue-700 font-medium"
+              ? " text-white font-medium bg-brand-gradient"
               : "text-gray-700 hover:bg-gray-50"),
         )
       }
@@ -72,7 +72,7 @@ const DashboardSidebar: FC<SidebarProps> = ({
             className={cn(
               "flex items-center justify-center rounded-lg transition-colors",
               collapsed ? "w-9 h-9" : "w-8 h-8",
-              isActive ? "bg-blue-100" : item.iconBgColor,
+              isActive ? "bg-transparent" : item.iconBgColor,
             )}
           >
             {item.isImageIcon ? (
@@ -89,7 +89,7 @@ const DashboardSidebar: FC<SidebarProps> = ({
                 className={cn(
                   "shrink-0",
                   collapsed ? "h-6 w-6" : "h-6 w-6",
-                  isActive ? "text-blue-700" : item.iconColor,
+                  isActive ? "text-white" : item.iconColor,
                 )}
               />
             )}

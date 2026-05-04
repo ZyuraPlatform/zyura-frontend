@@ -18,7 +18,7 @@ const cards = [
     title: "Clinical Case Simulator",
     image: allInOneImage,
     description:
-      "Diagnose, investigate, and manage virtual patients in real-time scenarios.",
+      "Work through real-world cases built from expert materials, guiding you from symptoms to diagnosis and management.",
     bg: "#E9F8EF",
   },
   {
@@ -32,8 +32,7 @@ const cards = [
   {
     tag: "AI Tracking",
     title: "Smart Study Engine",
-    description:
-      "AI tracks your progress and builds a personalized learning path.",
+    description: "AI analyzes your strengths and weaknesses to create a personalized study path aligned with expert-curated content. AI engine – Generates Mcqs, Generator, Flashcard, Notes",
     image: access247Image,
     bg: "#F8E9F3",
   },

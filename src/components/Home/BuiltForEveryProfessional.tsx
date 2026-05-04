@@ -1,23 +1,40 @@
 import {
   GraduationCap,
-  HeartPulse,
   Stethoscope,
-  UserRoundCog,
-  Users,
-  ShieldPlus,
-  BriefcaseMedical,
+  UserRoundCheck,
+  Pill,
+  SmilePlus,
+  // UsersRound,
 } from "lucide-react";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 const professionals = [
-  { icon: Stethoscope, title: "Doctors & Physicians" },
-  { icon: HeartPulse, title: "Nurses" },
-  { icon: UserRoundCog, title: "Physiotherapists" },
-  { icon: BriefcaseMedical, title: "Allied Health Professionals" },
-  { icon: GraduationCap, title: "Medical & Healthcare Students" },
-  { icon: ShieldPlus, title: "Clinical Educators & Institutions" },
-  { icon: Users, title: "All Health Care Professionals" },
+  {
+    icon: GraduationCap,
+    title: "Medical Students",
+    description: "Build strong foundations and excel in exams",
+  },
+  {
+    icon: Stethoscope,
+    title: "Doctors & Residents",
+    description: "Refine clinical reasoning and decision-making",
+  },
+  {
+    icon: UserRoundCheck,
+    title: "Nurses",
+    description: "Enhance patient care and clinical understanding",
+  },
+  {
+    icon: Pill,
+    title: "Pharmacists",
+    description: "Strengthen drug knowledge and safe prescribing",
+  },
+  {
+    icon: SmilePlus,
+    title: "Dentists & Allied Health Professionals",
+    description: "Integrate systemic and specialty-specific knowledge",
+  },
 ];
 
 export const BuiltForEveryProfessional = () => {
@@ -28,15 +45,18 @@ export const BuiltForEveryProfessional = () => {
           <div className="pointer-events-none absolute -top-24 -left-24 h-56 w-56 rounded-full bg-[#2BAFA533] blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -right-16 h-56 w-56 rounded-full bg-[#6AC4E333] blur-3xl" />
           <div className="container px-5 mx-auto">
-            <h2 className="mx-auto max-w-[920px] text-center font-sora text-2xl font-semibold text-dark md:text-3xl lg:text-[48px]">
-              Built for the Entire{" "}
-              <span className="font-pattaya text-[1.02em] font-normal leading-[1.08] inline">
-                Healthcare Community
-              </span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-[760px] text-center font-sora text-[15px] leading-relaxed text-[#4A5A66] lg:text-[18px]">
-              Zyura is designed for every stage of healthcare learning, practice, and teaching.
-            </p>
+          <p className="text-center font-sora text-xs font-semibold tracking-[0.18em] text-[#456171] md:text-sm">
+            WHO IT&apos;S FOR
+          </p>
+          <h2 className="mx-auto mt-2 max-w-[920px] text-center font-sora text-2xl font-semibold text-dark md:text-3xl lg:text-[48px]">
+            Designed for Every Stage of{" "}
+            <span className="font-pattaya text-[1.02em] font-normal leading-[1.08] inline">
+              Healthcare Training
+            </span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-[760px] text-center font-sora text-[15px] leading-relaxed text-[#4A5A66] lg:text-[18px]">
+            Zyura supports learners and professionals across disciplines with practical, focused clinical learning.
+          </p>
 
             <div className="mt-10 overflow-hidden">
               <Swiper
@@ -49,11 +69,11 @@ export const BuiltForEveryProfessional = () => {
                 slidesPerView={1}
                 breakpoints={{
                   640: { slidesPerView: 2 },
-                  1024: { slidesPerView: 3 },
-                  1280: { slidesPerView: 4 },
-                }}
-                className="h-full"
-              >
+                768: { slidesPerView: 2 },
+                1200: { slidesPerView: 3 },
+              }}
+              className="h-full"
+            >
                 {professionals.map((professional, index) => {
                   const Icon = professional.icon;
                   return (
@@ -66,12 +86,15 @@ export const BuiltForEveryProfessional = () => {
                         <div className="inline-flex rounded-full bg-brand-gradient p-3 text-white transition-transform duration-300 group-hover:scale-105 ">
                           <Icon size={22} />
                         </div>
-                        <h3 className="mt-4 font-sora text-[17px] font-semibold leading-snug text-[#1D2A34] lg:text-[18px]">
-                          {professional.title}
-                        </h3>
-                      </article>
-                    </SwiperSlide>
-                  );
+                      <h3 className="mt-4 font-sora text-[17px] font-semibold leading-snug text-[#1D2A34] lg:text-[18px]">
+                        {professional.title}
+                      </h3>
+                      <p className="mt-2 font-sora text-[14px] leading-relaxed text-[#4C5C68] lg:text-[16px]">
+                        {professional.description}
+                      </p>
+                    </article>
+                  </SwiperSlide>
+                );
                 })}
               </Swiper>
             </div>
