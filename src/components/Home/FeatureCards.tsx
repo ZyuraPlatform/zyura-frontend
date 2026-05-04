@@ -5,14 +5,7 @@ import SmartLearningTools from "../../assets/home/Smart-Learning-Tools.jpg";
 import AdaptiveStudyExperience from "../../assets/home/Adaptive-Study-Experience.jpg";
 
 const cards = [
-  {
-    tag: "AI Examiner",
-    title: "AI Viva Examiner",
-    image: SmartLearningTools,
-    description:
-      "Practice oral exams with a realistic AI examiner that challenges your thinking and communication skills.",
-    bg: "#F6F8E9",
-  },
+  
   {
     tag: "Case-Based Learning",
     title: "Clinical Case Simulator",
@@ -21,14 +14,7 @@ const cards = [
       "Work through real-world cases built from expert materials, guiding you from symptoms to diagnosis and management.",
     bg: "#E9F8EF",
   },
-  {
-    tag: "Timed Practice",
-    title: "Board Exam Stress Simulator",
-    image: AdaptiveStudyExperience,
-    description:
-      "Train under real exam pressure with timed, adaptive questioning.",
-    bg: "#E0EAF9",
-  },
+ 
   {
     tag: "AI Tracking",
     title: "Smart Study Engine",
@@ -52,7 +38,7 @@ export const FeatureCards = () => {
         </h2>
       </div>
       <div className="mx-auto container px-5">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-1 xl:grid-cols-2">
           {cards.map((card, index) => (
             <article
               key={card.title}
@@ -66,7 +52,7 @@ export const FeatureCards = () => {
               </span>
 
               {card.image ? (
-                <div className="relative mt-4 rounded-2xl overflow-hidden h-[220px]">
+                <div className="relative mt-4 rounded-2xl overflow-hidden h-[320px]">
                   <img
                     src={card.image}
                     alt={card.title}
@@ -75,7 +61,7 @@ export const FeatureCards = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 group-hover:opacity-0 transition-opacity duration-300" />
                 </div>
               ) : (
-                <div className="mt-4 h-[220px]" />
+                <div className="mt-4 h-[320px]" />
               )}
 
               <h3 className="mt-6 font-sora text-xl lg:text-2xl leading-tight text-[#141923]">
