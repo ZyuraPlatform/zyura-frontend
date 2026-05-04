@@ -5,7 +5,7 @@ const trustPoints = ["Clinical accuracy", "Concept clarity", "Exam relevance"];
 export const ContentCredibilitySection = () => {
   return (
     <section className="pt-25 lg:pt-36 aos-init aos-animate" data-aos="fade-up">
-      <div className="relative mx-auto max-w-[1920px] overflow-hidden border border-[#3d4f7a]/70">
+      <div className="relative overflow-hidden border border-[#3d4f7a]/70">
         <div className="absolute inset-0 bg-[#0a1230]" />
         <div className="absolute inset-0 opacity-70">
           <LightRays

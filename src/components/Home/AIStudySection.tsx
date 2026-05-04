@@ -3,42 +3,58 @@
 import { Mouse } from "lucide-react";
 import innovativeStudyImage from "../../assets/home/Innovative-AI-Study.png";
 
-const studyCards = [
+const studyGroups = [
   {
-    tag: "Smart AI Tutor",
-    title: "AI Tutor",
-    description:
-      "Learn with an AI tutor that explains concepts clearly. Improve accuracy with guided step-by-step assistance.",
+    tag: "Comprehensive Learning Tools",
+    cards: [
+      {
+        title: "Manual MCQs",
+        description:
+          "Carefully curated questions for concept clarity and exam preparation.",
+      },
+      {
+        title: "Flashcards",
+        description: "Quick revision tools designed for high-retention learning.",
+      },
+      {
+        title: "Downloadable Notes",
+        description: "Well-structured, easy-to-understand study materials.",
+      },
+    ],
   },
   {
-    tag: "Pharma AI Support",
-    title: "Pharmaceutical Aid",
-    description:
-      "Understand pharmaceutical concepts with AI insights. Learn drug uses, mechanisms, and effects clearly.",
+    tag: "Clinical Experience & Practice",
+    cards: [
+      {
+        title: "Realistic Clinical (Digital Twin)",
+        description:
+          "Scenario-based learning that builds decision-making and critical thinking.",
+      },
+      {
+        title: "Multi-Disciplinary Case Approach",
+        description:
+          "Understand how different healthcare roles work together in patient care.",
+      },
+    ],
   },
   {
-    tag: "Guided Problem Solving",
-    title: "Question Aid",
-    description:
-      "Solve complex medical questions with structured guidance. Improve problem-solving with clear step-by-step solutions.",
-  },
-  {
-    tag: "Detailed Explanations",
-    title: "In-Depth Explanation",
-    description:
-      "Break down difficult topics into simple explanations. Strengthen concepts with detailed focused learning.",
-  },
-  {
-    tag: "Clinical Insights",
-    title: "Clinical Context",
-    description:
-      "Apply theory to real-world clinical scenarios. Build decision-making skills with practical learning.",
-  },
-  {
-    tag: "USMLE-Style Practice",
-    title: "USMLE Question Style",
-    description:
-      "Practice with AI-generated USMLE-style questions. Prepare effectively with real exam patterns.",
+    tag: "AI-Powered Learning",
+    cards: [
+      {
+        title: "AI-Based Questions & Adaptive Learning",
+        description:
+          "Smart question generation based on performance and learning patterns.",
+      },
+      {
+        title: "Personalized Learning Paths",
+        description: "Content that evolves with your progress.",
+      },
+      {
+        title: "Performance Analytics",
+        description:
+          "Identify strengths, weaknesses, and improve with precision.",
+      },
+    ],
   },
 ];
 
@@ -60,35 +76,33 @@ export const AIStudySection = () => {
             className="rounded-2xl bg-[#d9e3f2] p-5 md:p-6 lg:p-8 w-full"
             data-aos="fade-left"
           >
-            <p className="font-sora  text-[14px] lg:text-[20px] text-[#4f5a69]">AI-Powered Learning Platform</p>
+            <p className="font-sora  text-[14px] lg:text-[20px] text-[#4f5a69]">What Zyura Offers</p>
             <h2 className="mt-2 mx-auto text-left font-sora text-2xl md:text-3xl lg:text-[48px] font-semibold text-dark">
-              Innovative AI Study for Medical -{" "}
-              <span className="font-pattaya font-normal">Students</span>
+              Structured Learning, Clinical Practice, and{" "}
+              <span className="font-pattaya font-normal">AI Intelligence</span>
             </h2>
             <p className="mt-4 max-w-2xl font-sora text-[14px] lg:text-[18px] leading-relaxed text-[#2c3442]">
-              Every year, Zyura helps thousands of students learn smarter and
-              achieve better results. Simplify complex topics with AI tools
-              designed for faster understanding and retention.
+              Zyura combines structured learning + real-world simulation + AI-driven intelligence in one powerful platform.
             </p>
 
             <div className="relative mt-6">
               <div className="study-scroll max-h-[620px] space-y-4 overflow-y-auto pr-2 md:pr-3">
-                {studyCards.map((card) => (
-                  <article
-                    key={card.title}
-                    className="rounded-xl bg-white p-5 md:p-6 last-of-type:mb-10"
-                     
-                  >
-                    <span className="inline-flex rounded-full border border-[#8d939b] px-3 py-1 font-sora text-[10px] lg:text-[11px] text-[#666d76]">
-                      {card.tag}
+                {studyGroups.map((group) => (
+                  <div key={group.tag} className="space-y-4 last-of-type:mb-10">
+                    <span className="inline-flex rounded-full border border-[#8d939b] bg-white/60 px-3 py-1 font-sora text-[10px] text-[#666d76] lg:text-[11px]">
+                      {group.tag}
                     </span>
-                    <h3 className="mt-7 lg:mt-[70px] font-sora text-2xl lg:text-[26px] font-bold leading-tight text-[#232831]">
-                      {card.title}
-                    </h3>
-                    <p className="mt-3 font-sora text-[14px] lg:text-[18px] leading-relaxed text-[#2f3643]">
-                      {card.description}
-                    </p>
-                  </article>
+                    {group.cards.map((card) => (
+                      <article key={card.title} className="rounded-xl bg-white p-5 md:p-6">
+                        <h3 className="font-sora text-2xl font-bold leading-tight text-[#232831] lg:text-[26px]">
+                          {card.title}
+                        </h3>
+                        <p className="mt-3 font-sora text-[14px] leading-relaxed text-[#2f3643] lg:text-[18px]">
+                          {card.description}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
                 ))}
               </div>
 

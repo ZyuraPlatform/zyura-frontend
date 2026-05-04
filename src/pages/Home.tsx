@@ -34,6 +34,11 @@ import { WhyZyuraDifferent } from "@/components/Home/WhyZyuraDifferent";
 import { BuiltForEveryProfessional } from "@/components/Home/BuiltForEveryProfessional";
 import { LearnByDoingSection } from "@/components/Home/LearnByDoingSection";
 import { TestimonialSection } from "@/components/Home/TestimonialSection";
+import AboutZyura from "@/components/Home/AboutZyura";
+// import { WhatZyuraOffersSection } from "@/components/Home/WhatZyuraOffersSection";
+import { WhatMakesZyuraDifferentSection } from "@/components/Home/WhatMakesZyuraDifferentSection";
+import { ZyuraExperienceSection } from "@/components/Home/ZyuraExperienceSection";
+import { LookingAheadSection } from "@/components/Home/LookingAheadSection";
 
 const Home = () => {
    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -103,11 +108,10 @@ const Home = () => {
   }
 
   return (
-    <>
+    <div className="overflow-hidden">
       <Header />
       <HeroSection />
       <WhyZyuraDifferent/>
-      <BuiltForEveryProfessional/>
       
       {/* <ValueBanner /> */}
       <FeatureCards />
@@ -119,7 +123,14 @@ const Home = () => {
       <SmartStudyPlannerSection />
       <BenefitsStripSection />
       <PricingSection />
-      <AIStudySection />
+      <AboutZyura/>
+      <BuiltForEveryProfessional/>
+      <AIStudySection /> 
+      <ZyuraExperienceSection/>
+      <WhatMakesZyuraDifferentSection/>
+      
+      <LookingAheadSection/>
+      
       <WhoCanUseSection />
       
       <MentorsSection />
@@ -127,7 +138,7 @@ const Home = () => {
       <TestimonialSection/>
       <CTASection />
       <Footer/>
-    </>
+    </div>
 
     // <div className="bg-white">
     //   <Element name="hero">

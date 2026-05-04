@@ -63,7 +63,7 @@ export const BenefitsStripSection = () => {
           className="mx-auto text-center font-sora text-2xl md:text-3xl lg:text-[48px] font-semibold text-dark"
           data-aos="fade-up"
         >
-          Prepare. Practice. Perform.
+          Learn. Practice. Decide. Excel.
         </h2>
         <p
           className="mx-auto mt-4 max-w-3xl text-center font-sora text-[18px] text-[#29434c]"
