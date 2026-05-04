@@ -164,7 +164,7 @@ const dashboardRoutes = {
     },
     {
       path: "quiz-generator",
-      element: <QuizGenerator />,
+      element: <QuizGenerator isOpen={true} onClose={() => {}} />,
     },
     {
       path: "clinical-case-generator",

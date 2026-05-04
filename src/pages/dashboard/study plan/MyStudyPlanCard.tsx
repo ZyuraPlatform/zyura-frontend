@@ -285,8 +285,7 @@ export default function MyStudyPlanCard({
 
         {allTopics.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            {allTopics.slice(0, 3).map((topic: string, index: number) => (
-              <p
+                {(allTopics as string[]).slice(0, 3).map((topic: string, index: number) => (              <p
                 key={index}
                 className="border border-slate-300 rounded-full text-xs text-slate-700 py-0.5 px-2"
               >

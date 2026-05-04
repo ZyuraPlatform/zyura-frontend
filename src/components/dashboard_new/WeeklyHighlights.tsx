@@ -19,7 +19,7 @@ interface HighlightsData {
 
 interface HighlightCard {
   id: string;
-  type: "mcq" | "flashcard" | "clinicalCase" | "osce" | "note";
+  type: "mcq" | "flashcard" | "clinicalCase" | "note";
   title: string;
   description: string;
   buttonText: string;
@@ -91,21 +91,21 @@ const WeeklyHighlights: React.FC = () => {
     }
 
     // OSCE
-    if (highlights.osce) {
-      const osce = highlights.osce;
-      cards.push({
-        id: osce._id,
-        type: "osce",
-        title: "OSCE of your daily preference",
-        description:
-          "Practice your clinical skills with an OSCE station of your daily preference",
-        buttonText: "Practice Now",
-        route: `/dashboard/practice-with-checklist/${osce._id}`,
-        img: "/image/dashboard_new/User.svg",
-        cardCss: "bg-gradient-to-br from-violet-50 to-violet-100 border-violet-200",
-        btnCss: "bg-violet-700/90 text-white py-2 px-4 rounded-lg font-medium hover:bg-violet-800 transition-colors cursor-pointer",
-      });
-    }
+    // if (highlights.osce) {
+    //   const osce = highlights.osce;
+    //   cards.push({
+    //     id: osce._id,
+    //     type: "osce",
+    //     title: "OSCE of your daily preference",
+    //     description:
+    //       "Practice your clinical skills with an OSCE station of your daily preference",
+    //     buttonText: "Practice Now",
+    //     route: `/dashboard/practice-with-checklist/${osce._id}`,
+    //     img: "/image/dashboard_new/User.svg",
+    //     cardCss: "bg-gradient-to-br from-violet-50 to-violet-100 border-violet-200",
+    //     btnCss: "bg-violet-700/90 text-white py-2 px-4 rounded-lg font-medium hover:bg-violet-800 transition-colors cursor-pointer",
+    //   });
+    // }
 
     if (highlights.note) {
       const note = highlights.note;

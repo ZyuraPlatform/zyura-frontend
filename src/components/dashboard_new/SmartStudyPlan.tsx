@@ -6,7 +6,7 @@ import {
   RotateCcw,
   FileText,
   Briefcase,
-  ClipboardCheck,
+  // ClipboardCheck,
 } from "lucide-react";
 import { useGetStudyPlanQuery } from "@/store/features/studyPlan/studyPlan.api";
 import { useNavigate } from "react-router-dom";
@@ -64,12 +64,12 @@ const taskTypeConfig: Record<
     buttonText: "View Case",
     buttonBgColor: "bg-slate-700 hover:bg-slate-700",
   },
-  osce: {
-    icon: <ClipboardCheck className="w-4 h-4" />,
-    color: "bg-teal-100 border border-teal-200",
-    buttonText: "Practice",
-    buttonBgColor: "bg-slate-700 hover:bg-slate-700",
-  },
+  // osce: {
+  //   icon: <ClipboardCheck className="w-4 h-4" />,
+  //   color: "bg-teal-100 border border-teal-200",
+  //   buttonText: "Practice",
+  //   buttonBgColor: "bg-slate-700 hover:bg-slate-700",
+  // },
 };
 
 const SmartStudyPlan: React.FC = () => {
@@ -134,10 +134,10 @@ const SmartStudyPlan: React.FC = () => {
       navigate(`/dashboard/clinical-case/${contentId}`, {
         state: navigationState,
       });
-    } else if (taskType === "osce") {
-      navigate(`/dashboard/practice-with-checklist/${contentId}`, {
-        state: navigationState,
-      });
+    // } else if (taskType === "osce") {
+    //   navigate(`/dashboard/practice-with-checklist/${contentId}`, {
+    //     state: navigationState,
+    //   });
     } else if (taskType === "notes" || taskType === "note") {
       navigate(`/dashboard/notes/${contentId}`, { state: navigationState });
     }

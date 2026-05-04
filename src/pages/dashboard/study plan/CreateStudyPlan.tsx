@@ -11,12 +11,10 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Atom } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useCreateStudyPlanMutation } from "@/store/features/studyPlan/studyPlan.api";
+import { useCreateStudyPlanMutation, useGetStudyPlanQuery } from "@/store/features/studyPlan/studyPlan.api";
 import { useGetMCQBankTreeQuery } from "@/store/features/MCQBank/MCQBank.api";
-import { useGetGoalQuery } from "@/store/features/goal/goal.api";
 import { toast } from "sonner";
 
-// Types for hierarchy
 interface Topic {
   topicName: string;
   subTopics: string[];
@@ -35,39 +33,41 @@ interface SubjectTree {
 
 export default function CreateStudyPlan() {
   const navigate = useNavigate();
+
   const [createStudyPlan, { isLoading }] = useCreateStudyPlanMutation();
   const { data: treeData } = useGetMCQBankTreeQuery({});
-  const { data: goalData } = useGetGoalQuery({});
-  const goal = goalData?.data?.[0];
+  const { data: smartPlansData } = useGetStudyPlanQuery({ created_from: "smart_study_planner" });
+
   const allSubjects: SubjectTree[] = treeData?.data || [];
-  const selectedSubjectNames =
-    goal?.selectedSubjects?.map(
-      (s: { subjectName: string }) => s.subjectName,
-    ) || [];
+  const smartPlans = smartPlansData?.data ?? [];
+
+  const selectedSubjectNames: string[] = Array.from(
+    new Set(
+      smartPlans.flatMap((plan: any) =>
+        (plan.selection_snapshot ?? []).map((s: { subjectName: string }) => s.subjectName)
+      )
+    )
+  );
+
   const subjects: SubjectTree[] =
     selectedSubjectNames.length > 0
-      ? allSubjects.filter((sub) =>
-          selectedSubjectNames.includes(sub.subjectName),
-        )
+      ? allSubjects.filter((sub) => selectedSubjectNames.includes(sub.subjectName))
       : allSubjects;
 
   const [examName, setExamName] = useState("");
   const [dailyTime, setDailyTime] = useState("");
   const [startDate, setStartDate] = useState("");
   const [examDate, setExamDate] = useState("");
-
   const [subject, setSubject] = useState("");
   const [system, setSystem] = useState("");
   const [topic, setTopic] = useState("");
   const [subTopic, setSubTopic] = useState("");
-
   const [errors, setErrors] = useState<string[]>([]);
 
   const clearError = (field: string) => {
     setErrors((prev) => prev.filter((item) => item !== field));
   };
 
-  // Derived lists
   const selectedSubjectObj = subjects.find((s) => s.subjectName === subject);
   const systemList = selectedSubjectObj?.systems || [];
   const selectedSystemObj = systemList.find((sys) => sys.name === system);
@@ -75,7 +75,6 @@ export default function CreateStudyPlan() {
   const selectedTopicObj = topicList.find((t) => t.topicName === topic);
   const subTopicList = selectedTopicObj?.subTopics || [];
 
-  // Reset dependents
   useEffect(() => {
     setSystem("");
     setTopic("");
@@ -92,45 +91,16 @@ export default function CreateStudyPlan() {
     setSubTopic("");
   }, [topic]);
 
-  // Optional safety guard
   useEffect(() => {
     if (!systemList.find((s) => s.name === system)) {
       setSystem("");
     }
   }, [systemList]);
 
-  // Pre-fill selected subject, system, topic, subtopic from goal
-  useEffect(() => {
-    if (goal) {
-      if (goal.selectedSubjects && goal.selectedSubjects.length > 0) {
-        const firstSubject = goal.selectedSubjects[0];
-        if (!subject) setSubject(firstSubject.subjectName);
-
-        if (firstSubject.systems && firstSubject.systems.length > 0) {
-          const firstSystem = firstSubject.systems[0];
-          if (!system) setSystem(firstSystem.systemName);
-
-          if (firstSystem.topics && firstSystem.topics.length > 0) {
-            const firstTopic = firstSystem.topics[0];
-            if (!topic) setTopic(firstTopic.topicName);
-
-            if (
-              firstTopic.subTopicNames &&
-              firstTopic.subTopicNames.length > 0
-            ) {
-              if (!subTopic) setSubTopic(firstTopic.subTopicNames[0]);
-            }
-          }
-        }
-      }
-    }
-  }, [goal]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: string[] = [];
-
     const parsedTime = Number(dailyTime);
 
     if (!examName) newErrors.push("examName");
@@ -149,10 +119,7 @@ export default function CreateStudyPlan() {
     if (!subject) newErrors.push("subject");
     if (!system) newErrors.push("system");
     if (!topic) newErrors.push("topic");
-
-    if (topic && subTopicList.length > 0 && !subTopic) {
-      newErrors.push("subTopic");
-    }
+    if (topic && subTopicList.length > 0 && !subTopic) newErrors.push("subTopic");
 
     if (newErrors.length > 0) {
       setErrors(newErrors);
@@ -166,20 +133,12 @@ export default function CreateStudyPlan() {
       exam_date: examDate,
       daily_study_time: parsedTime,
       exam_type: "",
-      topics: [
-        {
-          subject,
-          system,
-          topic,
-          subtopic: subTopic,
-        },
-      ],
+      topics: [{ subject, system, topic, subtopic: subTopic }],
     };
 
     try {
       const response: any = await createStudyPlan(payload).unwrap();
       const planId = response?.data?._id || response?._id;
-
       if (planId) {
         navigate(`/dashboard/weekly-plan/${planId}`);
       } else {
@@ -218,28 +177,19 @@ export default function CreateStudyPlan() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
             <div className="grid gap-2 col-span-1 lg:col-span-2">
-              <Label
-                className={errors.includes("examName") ? "text-red-500" : ""}
-              >
+              <Label className={errors.includes("examName") ? "text-red-500" : ""}>
                 Exam Name
               </Label>
               <Input
                 value={examName}
-                onChange={(e) => {
-                  setExamName(e.target.value);
-                  clearError("examName");
-                }}
+                onChange={(e) => { setExamName(e.target.value); clearError("examName"); }}
                 placeholder="e.g., Gastroenterology Exam"
-                className={
-                  errors.includes("examName") ? "border-red-500 bg-red-50" : ""
-                }
+                className={errors.includes("examName") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label
-                className={errors.includes("dailyTime") ? "text-red-500" : ""}
-              >
+              <Label className={errors.includes("dailyTime") ? "text-red-500" : ""}>
                 Daily Study Time (hours)
               </Label>
               <Input
@@ -247,52 +197,33 @@ export default function CreateStudyPlan() {
                 min="0"
                 max={12}
                 value={dailyTime}
-                onChange={(e) => {
-                  setDailyTime(e.target.value);
-                  clearError("dailyTime");
-                }}
-                className={
-                  errors.includes("dailyTime") ? "border-red-500 bg-red-50" : ""
-                }
+                onChange={(e) => { setDailyTime(e.target.value); clearError("dailyTime"); }}
+                className={errors.includes("dailyTime") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label
-                className={errors.includes("startDate") ? "text-red-500" : ""}
-              >
+              <Label className={errors.includes("startDate") ? "text-red-500" : ""}>
                 Start Date
               </Label>
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  clearError("startDate");
-                }}
-                className={
-                  errors.includes("startDate") ? "border-red-500 bg-red-50" : ""
-                }
+                onChange={(e) => { setStartDate(e.target.value); clearError("startDate"); }}
+                className={errors.includes("startDate") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label
-                className={errors.includes("examDate") ? "text-red-500" : ""}
-              >
+              <Label className={errors.includes("examDate") ? "text-red-500" : ""}>
                 Finish Date
               </Label>
               <Input
                 type="date"
                 min={startDate || undefined}
                 value={examDate}
-                onChange={(e) => {
-                  setExamDate(e.target.value);
-                  clearError("examDate");
-                }}
-                className={
-                  errors.includes("examDate") ? "border-red-500 bg-red-50" : ""
-                }
+                onChange={(e) => { setExamDate(e.target.value); clearError("examDate"); }}
+                className={errors.includes("examDate") ? "border-red-500 bg-red-50" : ""}
               />
             </div>
           </div>
@@ -304,9 +235,7 @@ export default function CreateStudyPlan() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
             <div className="grid gap-2">
-              <Label
-                className={errors.includes("subject") ? "text-red-500" : ""}
-              >
+              <Label className={errors.includes("subject") ? "text-red-500" : ""}>
                 Subject
               </Label>
               <Select value={subject} onValueChange={setSubject}>
@@ -324,12 +253,10 @@ export default function CreateStudyPlan() {
             </div>
 
             <div className="grid gap-2">
-              <Label>System</Label>
-              <Select
-                value={system}
-                onValueChange={setSystem}
-                disabled={!subject}
-              >
+              <Label className={errors.includes("system") ? "text-red-500" : ""}>
+                System
+              </Label>
+              <Select value={system} onValueChange={setSystem} disabled={!subject}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select System" />
                 </SelectTrigger>
@@ -344,7 +271,9 @@ export default function CreateStudyPlan() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Topic</Label>
+              <Label className={errors.includes("topic") ? "text-red-500" : ""}>
+                Topic
+              </Label>
               <Select value={topic} onValueChange={setTopic} disabled={!system}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Topic" />
@@ -360,12 +289,10 @@ export default function CreateStudyPlan() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Sub-Topic</Label>
-              <Select
-                value={subTopic}
-                onValueChange={setSubTopic}
-                disabled={!topic}
-              >
+              <Label className={errors.includes("subTopic") ? "text-red-500" : ""}>
+                Sub-Topic
+              </Label>
+              <Select value={subTopic} onValueChange={setSubTopic} disabled={!topic}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Sub-Topic" />
                 </SelectTrigger>
