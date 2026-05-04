@@ -63,9 +63,12 @@ export default function SolveFlashCard() {
       currentLocation.pathname !== nextLocation.pathname
   );
 
-  const stateFlashcardData = location.state?.flashCardData;
-  const source = location.state?.source || "all";
-  const totalFlashCards = location.state?.totalFlashCards;
+const stateFlashcardData = location.state?.flashCardData;
+const source = location.state?.source || "all";
+
+// Read limit from study plan state (suggest_content.limit) OR fallback to totalFlashCards
+const planLimit = location.state?.planLimit as number | undefined;
+const totalFlashCards = planLimit ?? location.state?.totalFlashCards;
 
   const { data: standardData, isLoading: isStandardLoading } =
     useGetSingleFlashCardQuery(

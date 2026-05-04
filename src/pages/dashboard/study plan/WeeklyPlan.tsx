@@ -140,6 +140,7 @@ export default function WeeklyPlan() {
     taskType: string,
     contentId: string,
     dayNumber: number,
+    limit?: number,
   ) => {
     if (!contentId) {
       toast.warning("Content is not yet assigned to this task.");
@@ -157,7 +158,12 @@ export default function WeeklyPlan() {
     if (type === "mcqs" || type === "mcq") {
       navigate(`/dashboard/practice-mcq/${contentId}`, { state });
     } else if (type === "flashcards" || type === "flashcard") {
-      navigate(`/dashboard/solve-flash-card/${contentId}`, { state });
+      navigate(`/dashboard/solve-flash-card/${contentId}`, { 
+        state: { 
+          ...state, 
+          planLimit: limit  
+        } 
+      });
     } else if (type === "clinical case" || type === "clinical_case") {
       navigate(`/dashboard/clinical-case/${contentId}`, { state });
     // } else if (type === "osce") {
@@ -498,6 +504,7 @@ export default function WeeklyPlan() {
                                           session.task_type,
                                           session.suggest_content?.contentId,
                                           dayPlan.day_number,
+                                          session.suggest_content?.limit, 
                                         )
                                       }
                                       className={`cursor-pointer min-w-[80px] font-medium shadow-none transition-colors ${
