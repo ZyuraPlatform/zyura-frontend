@@ -86,7 +86,7 @@ export function QuizGeneratorDialog({ open, setOpen }: any) {
   // so the exams array lives at response.data.data.data
   const allExams = isProfessional
     ? allExamResForProfessional?.data?.data?.data || []
-    : allExamResForStudent?.data?.data?.data || [];
+    : allExamResForStudent?.data?.data || [];
 
   const subjectsFromExams = Array.from(
     new Set(allExams.map((e: any) => (isProfessional ? e.professionName : e.subject)))

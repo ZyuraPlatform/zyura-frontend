@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import FlashCardFilterModal from "../flashcard/FlashCardFilterModal";
 import AllNotesTab from "./AllNotesTab";
 import GeneratedNotes from "./GeneratedNotes";
@@ -31,7 +32,7 @@ export default function DownloadNotes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ── Create Note State ──
-  const [generateNote, { isLoading: isGenerating }] = useGenerateNoteMutation();
+  const [generateNote, { isLoading }] = useGenerateNoteMutation();
   const [files, setFiles] = useState<File[]>([]);
   const [note, setNote] = useState("");
   const [noteName, setNoteName] = useState("");
@@ -50,13 +51,14 @@ export default function DownloadNotes() {
   const [page, setPage] = useState(1);
   const limit = 6;
 
+  // ── Effects ──
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
 
-  // Debounce search
+  // Debounce search term (500ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchTerm(tempSearchTerm);
@@ -65,11 +67,13 @@ export default function DownloadNotes() {
     return () => clearTimeout(timer);
   }, [tempSearchTerm]);
 
+  // ── Tab Configuration ──
   const tabs = [
     { id: "allNotes", label: "All Notes" },
     { id: "generatedNotes", label: "Generated Notes" },
   ];
 
+  // ── API Query for Notes List ──
   const { data: noteResponse, isLoading: noteLoading } =
     useGetSingleUserNotesQuery({
       searchTerm,
@@ -84,6 +88,7 @@ export default function DownloadNotes() {
   const totalPages = noteResponse?.meta?.totalPages || 1;
   const currentPage = noteResponse?.meta?.page || 1;
 
+  // ── Handler: Search ──
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       setSearchTerm(tempSearchTerm);
@@ -91,17 +96,20 @@ export default function DownloadNotes() {
     }
   };
 
+  // ── Handler: Pagination ──
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // ── Handler: Apply Filters ──
   const handleApplyFilters = (newFilters: typeof filters) => {
     setFilters(newFilters);
     setPage(1);
     setIsFilterOpen(false);
   };
 
+  // ── Handler: Tab Change ──
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setSearchTerm("");
@@ -110,13 +118,14 @@ export default function DownloadNotes() {
     setPage(1);
   };
 
+  // ── Computed: Active Filters Count ──
   const activeFiltersCount = [
     filters.subject,
     filters.system,
     filters.topic,
   ].filter(Boolean).length;
 
-  // ── Modal Helpers ──
+  // ── Handler: Close Modal & Reset Form ──
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setFiles([]);
@@ -127,20 +136,28 @@ export default function DownloadNotes() {
     setPromptError("");
   };
 
+  // ── Handler: Create Note (Form Submission) ──
   const handleCreateNote = async () => {
-    // Validate
+    // Validation: At least one of file OR prompt required
     if (!files.length && !note.trim()) {
       setFileError("Please upload a file or enter a prompt");
       setPromptError("Please upload a file or enter a prompt");
       return;
     }
+
+    // Clear previous errors
     setFileError("");
     setPromptError("");
 
+    // Build FormData
     const formData = new FormData();
+
+    // Only append file if it exists
     if (files.length > 0) {
       formData.append("file", files[0]);
     }
+
+    // Append data as JSON string
     formData.append(
       "data",
       JSON.stringify({
@@ -153,12 +170,39 @@ export default function DownloadNotes() {
     try {
       const res = await generateNote(formData).unwrap();
       if (res.success) {
+        toast.success("Note generated successfully!");
         handleCloseModal();
         navigate(`/dashboard/generated-notes/${res.data._id}`);
       }
     } catch (error: any) {
-      // error toast is already handled by baseQueryWithToasts
       console.error("Generate note error:", error);
+      toast.error(error?.data?.message || "Failed to generate note");
+    }
+  };
+
+  // ── Handler: Remove File ──
+  const handleRemoveFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  // ── Handler: File Upload ──
+  const handleFilesChange = (newFiles: File[]) => {
+    setFiles((prev) => [...prev, ...newFiles]);
+    // Clear errors when files are added
+    if (newFiles.length > 0) {
+      setFileError("");
+      setPromptError("");
+    }
+  };
+
+  // ── Handler: Note Textarea Change ──
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setNote(value);
+    // Clear errors when user types
+    if (value.trim()) {
+      setFileError("");
+      setPromptError("");
     }
   };
 
@@ -353,23 +397,15 @@ export default function DownloadNotes() {
               </button>
             </div>
 
-            {/* Body — no <form> tag, direct onClick */}
+            {/* Body – Two Column Layout */}
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left – File Upload */}
+              {/* Left – File Upload Section */}
               <div
                 className={`p-4 border rounded-xl bg-slate-50 ${
                   fileError ? "border-red-500" : "border-black/10"
                 }`}
               >
-                <FileUploader
-                  onFilesChange={(newFiles) => {
-                    setFiles((prev) => [...prev, ...newFiles]);
-                    if (newFiles.length > 0) {
-                      setFileError("");
-                      setPromptError("");
-                    }
-                  }}
-                />
+                <FileUploader onFilesChange={handleFilesChange} />
                 {fileError && (
                   <p className="text-red-500 text-sm mt-2">{fileError}</p>
                 )}
@@ -383,9 +419,7 @@ export default function DownloadNotes() {
                     </p>
                     <FilePreviewList
                       files={files}
-                      onRemove={(i) =>
-                        setFiles((prev) => prev.filter((_, idx) => idx !== i))
-                      }
+                      onRemove={handleRemoveFile}
                     />
                   </div>
                 )}
@@ -393,6 +427,7 @@ export default function DownloadNotes() {
 
               {/* Right – Prompt & Options */}
               <div className="space-y-4">
+                {/* Prompt Textarea */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                     Prompt
@@ -401,13 +436,7 @@ export default function DownloadNotes() {
                     placeholder="Enter prompt (optional if file uploaded)"
                     value={note}
                     rows={4}
-                    onChange={(e) => {
-                      setNote(e.target.value);
-                      if (e.target.value.trim()) {
-                        setFileError("");
-                        setPromptError("");
-                      }
-                    }}
+                    onChange={handleNoteChange}
                     className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#063C79]/20 focus:border-[#063C79] transition-all resize-none ${
                       promptError ? "border-red-500" : "border-gray-200"
                     }`}
@@ -417,6 +446,7 @@ export default function DownloadNotes() {
                   )}
                 </div>
 
+                {/* Note Name / Topic Input */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                     Note Name / Topic
@@ -429,6 +459,7 @@ export default function DownloadNotes() {
                   />
                 </div>
 
+                {/* Note Format Dropdown */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                     Note Format
@@ -444,13 +475,14 @@ export default function DownloadNotes() {
                   </select>
                 </div>
 
+                {/* Generate Button */}
                 <button
                   type="button"
                   onClick={handleCreateNote}
-                  disabled={isGenerating}
+                  disabled={isLoading}
                   className="w-full flex justify-center items-center gap-2 bg-[#063C79] text-white py-3 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
-                  {isGenerating ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="animate-spin w-4 h-4" />
                       Generating...

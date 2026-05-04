@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import QuizCollection from "./QuizCollection";
 import { Button } from "@/components/ui/button";
-import { BsPlus } from "react-icons/bs";
-import QuizGeneratorModal from "./QuizGenerator";
+import { Plus } from "lucide-react";
+import QuizGenerator from "./QuizGenerator";
 
 const QuizPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,10 +33,11 @@ const QuizPage = () => {
           className="mt-5 mb-3"
         />
         <Button
-          className="bg-[#063C79]"
+          className="bg-[#063C79] h-12 mb-4 hover:bg-[#063C79] hover:opacity-80 cursor-pointer"
           onClick={() => setIsModalOpen(true)}
         >
-          <BsPlus /> Generate Quiz
+          <Plus className="w-4 h-4 mr-2" />
+          Generate Quiz
         </Button>
       </div>
 
@@ -50,7 +51,7 @@ const QuizPage = () => {
         </div>
       </div>
 
-      <QuizGeneratorModal
+      <QuizGenerator
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

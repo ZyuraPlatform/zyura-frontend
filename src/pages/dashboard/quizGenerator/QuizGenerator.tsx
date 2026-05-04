@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState, useRef, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,16 @@ import { Controller, useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+// =======================
+// Zod Schema (RESTORED from old code with duration)
+// =======================
 const quizSchema = z.object({
   difficulty: z.enum(["Basic", "Intermediate", "Advance"]),
-  questionCount: z.number().min(1, "At least 1 question").max(50, "Max 50 questions"),
+  questionCount: z
+    .number()
+    .min(1, "At least 1 question is required")
+    .max(50, "Max 50 questions"),
+  duration: z.number().min(1, "Duration must be at least 1 minute"),
 });
 
 type QuizFormValues = z.infer<typeof quizSchema>;
@@ -27,8 +34,8 @@ interface QuizGeneratorProps {
 
 export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
   const [activeTab, setActiveTab] = useState("upload");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [note, setNote] = useState("");
+  const [files, setFiles] = useState<File[]>([]); // Using 'files' to match old code
+  const [note, setNote] = useState(""); // Using 'note' to match old code
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
@@ -36,10 +43,31 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
   const [generateMCQWithFile, { isLoading }] = useGenerateMCQWithFileMutation();
   const navigate = useNavigate();
 
-  const { control, register, handleSubmit, reset, formState: { errors } } = useForm<QuizFormValues>({
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<QuizFormValues>({
     resolver: zodResolver(quizSchema) as Resolver<QuizFormValues>,
-    defaultValues: { questionCount: 5, difficulty: "Basic" },
+    defaultValues: {
+      questionCount: 10, // RESTORED: Old default was 10
+      duration: 40, // RESTORED: Old default was 40
+      difficulty: "Basic",
+    },
   });
+
+  // Reset when modal opens (RESTORED from old code)
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        questionCount: 5, // RESTORED: Reset to 5 as per old code
+        duration: 10, // RESTORED: Reset to 10 as per old code
+        difficulty: "Basic",
+      });
+    }
+  }, [isOpen, reset]);
 
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -65,50 +93,57 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
     e.stopPropagation();
     dragCounter.current = 0;
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files).filter(
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(
       (f) => f.type.startsWith("image/") || f.type === "application/pdf"
     );
-    setUploadedFiles((prev) => [...prev, ...files]);
+    setFiles((prev) => [...prev, ...droppedFiles]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).filter(
+    const selectedFiles = Array.from(e.target.files || []).filter(
       (f) => f.type.startsWith("image/") || f.type === "application/pdf"
     );
-    setUploadedFiles((prev) => [...prev, ...files]);
+    setFiles((prev) => [...prev, ...selectedFiles]);
   };
 
   const handleRemoveFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleClose = () => {
     if (isLoading) return; // prevent closing while generating
-    setUploadedFiles([]);
+    setFiles([]);
     setNote("");
-    reset({ questionCount: 5, difficulty: "Basic" });
+    reset({
+      questionCount: 5,
+      duration: 10,
+      difficulty: "Basic",
+    });
     onClose();
   };
 
+  // =======================
+  // API CALL INSIDE MODAL (RESTORED from old code)
+  // =======================
   const onFormSubmit = async (data: QuizFormValues) => {
-    if (activeTab === "upload" && uploadedFiles.length === 0) {
-      toast.error("Please upload at least one file.");
-      return;
-    }
-    if (activeTab === "prompt" && !note.trim()) {
-      toast.error("Please enter a prompt.");
-      return;
-    }
-
     try {
-      const formData = new FormData();
+      // RESTORED: Old validation logic - allows file OR note OR both
+      if ((!files || files.length === 0) && !note.trim()) {
+        console.error("No file or note provided");
+        toast.error("Please upload a file or enter a prompt.");
+        return;
+      }
 
-      if (activeTab === "upload" && uploadedFiles.length > 0) {
-        formData.append("file", uploadedFiles[0]);
+      const formData = new FormData();
+      
+      // RESTORED: Append file if available (works with prompt too)
+      if (files && files.length > 0) {
+        // Appending the first file as per API requirement
+        formData.append("file", files[0]);
       }
 
       const jsonData = {
-        prompt: note || "Generate MCQ",
+        prompt: note || "Generate MCQ", // Use note as prompt
         d_level: data.difficulty,
         q_count: data.questionCount,
       };
@@ -116,12 +151,25 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
       formData.append("data", JSON.stringify(jsonData));
 
       const res = await generateMCQWithFile(formData).unwrap();
+      console.log("Response from AI:", res);
 
+      // Assume res.data contains the questions array or is the array itself
+      // If the backend returns something like { data: [...] }
+      // const questionsArray = res.data || res;
+
+      // if (Array.isArray(questionsArray)) {
       if (res.success) {
         const quizId = res.data?._id || res._id;
+        console.log(
+          "Quiz Generated and stored in Redux. Redirecting to ID:",
+          quizId
+        );
         handleClose();
-        navigate(`/dashboard/quiz/${quizId}`);
+        navigate(`/dashboard/quiz/${quizId}`); // Redirect dynamically
       } else {
+        console.error(
+          "Invalid response format: expected an array of questions"
+        );
         toast.error("Failed to generate quiz. Please try again.");
       }
     } catch (error) {
@@ -132,7 +180,7 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Generate Quiz</DialogTitle>
           <DialogDescription>
@@ -195,10 +243,10 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
                 />
               </div>
 
-              {uploadedFiles.length > 0 && (
+              {files.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Uploaded Files:</p>
-                  {uploadedFiles.map((file, index) => (
+                  {files.map((file, index) => (
                     <div
                       key={`${file.name}-${index}`}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
@@ -237,14 +285,15 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
                   placeholder="Ask me anything! make your quiz"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg p-3 min-h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border border-gray-200 rounded-lg p-3 min-h-[150px] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
               </div>
             </TabsContent>
           </Tabs>
 
-          {/* Difficulty & Question Count */}
+          {/* Difficulty, Question Count & Duration (RESTORED 3 fields from old code) */}
           <div className="grid grid-cols-2 gap-4 mt-6">
+            {/* Difficulty */}
             <div className="grid gap-2">
               <Label className="text-[#5A7183]">Difficulty</Label>
               <Controller
@@ -255,7 +304,7 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
                     <SelectTrigger className={errors.difficulty ? "border-red-500" : ""}>
                       <SelectValue placeholder="Select Difficulty" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border border-slate-300">
                       <SelectItem value="Basic">Basic</SelectItem>
                       <SelectItem value="Intermediate">Intermediate</SelectItem>
                       <SelectItem value="Advance">Advance</SelectItem>
@@ -268,8 +317,9 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
               )}
             </div>
 
+            {/* Question Count */}
             <div className="grid gap-2">
-              <Label className="text-[#5A7183]">Question count (Upto 50)</Label>
+              <Label className="text-[#5A7183]">Question count(Upto 50)</Label>
               <Input
                 type="number"
                 min={1}
@@ -283,14 +333,23 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
             </div>
           </div>
 
+          {/* RESTORED: Duration field (was missing in new design) */}
+          <div className="grid gap-2 mt-4">
+            <Label className="text-[#5A7183]">Duration (minutes)</Label>
+            <Input
+              type="number"
+              min={1}
+              {...register("duration", { valueAsNumber: true })}
+              className={errors.duration ? "border-red-500" : ""}
+            />
+            {errors.duration && (
+              <p className="text-xs text-red-500">{errors.duration.message}</p>
+            )}
+          </div>
+
           {/* Action Buttons */}
-          <div className="flex justify-between mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
             <Button
@@ -301,7 +360,7 @@ export default function QuizGenerator({ isOpen, onClose }: QuizGeneratorProps) {
               <Zap className={`mr-2 h-4 w-4 fill-white ${isLoading ? "animate-spin" : ""}`} />
               {isLoading ? "Generating..." : "Generate Quiz"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

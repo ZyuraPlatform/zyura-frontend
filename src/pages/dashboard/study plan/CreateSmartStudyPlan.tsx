@@ -63,9 +63,7 @@ function topicsRowsToSelectedSubjects(
 export default function CreateSmartStudyPlan() {
   const navigate = useNavigate();
   const location = useLocation();
-  const editState = location.state as
-    | { mode?: "edit"; plan?: any }
-    | undefined;
+  const editState = location.state as { mode?: "edit"; plan?: any } | undefined;
   const editPlan = editState?.plan;
   const isEdit = editState?.mode === "edit" && Boolean(editPlan?._id);
 
@@ -79,9 +77,9 @@ export default function CreateSmartStudyPlan() {
   const availableSubjects: Subject[] =
     treeData?.data?.map((subject: any) => ({
       name: subject.subjectName,
-      systems: subject.systems.map((system: any) => ({
-        name: system.name,
-        topics: system.topics.map((topic: any) => ({
+      systems: (subject.systems || []).map((system: any) => ({
+        name: system.name || system.systemName, // Backend data key check karjo
+        topics: (system.topics || []).map((topic: any) => ({
           topicName: topic.topicName,
           subTopics: topic.subTopics || [],
         })),
