@@ -347,7 +347,8 @@ export function PracticeQuizModal({
       if (quizId) {
         toast.success("Quiz generated successfully!");
         setOpen(false);
-        navigate(`/dashboard/quiz/${quizId}`);
+        // Pass duration and question count in URL params
+        navigate(`/dashboard/quiz/${quizId}?duration=${data.duration * 60}&limit=${data.questionCount}`);
       } else {
         toast.error("Failed to extract Quiz ID from response");
       }

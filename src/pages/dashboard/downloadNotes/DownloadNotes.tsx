@@ -1,25 +1,45 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Pagination from "@/common/custom/Pagination";
 import DashboardHeading from "@/components/reusable/DashboardHeading";
-import { useGetSingleUserNotesQuery } from "@/store/features/note/NoteAPI";
-import { Filter, Plus, Search } from "lucide-react";
+import FilePreviewList from "@/components/reusable/FilePreview";
+import FileUploader from "@/components/reusable/FileUploader";
+import {
+  useGetSingleUserNotesQuery,
+  useGenerateNoteMutation,
+} from "@/store/features/note/NoteAPI";
+import {
+  Plus,
+  Search,
+  SlidersHorizontal,
+  X,
+  Atom,
+  Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import FlashCardFilterModal from "../flashcard/FlashCardFilterModal";
 import AllNotesTab from "./AllNotesTab";
 import GeneratedNotes from "./GeneratedNotes";
-import { Link, useLocation } from "react-router-dom";
-import PrimaryButton from "@/components/reusable/PrimaryButton";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function DownloadNotes() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // ── Tabs & Modals ──
   const [activeTab, setActiveTab] = useState("allNotes");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
-    }
-  }, [location.state]);
+  // ── Create Note State ──
+  const [generateNote, { isLoading: isGenerating }] = useGenerateNoteMutation();
+  const [files, setFiles] = useState<File[]>([]);
+  const [note, setNote] = useState("");
+  const [noteName, setNoteName] = useState("");
+  const [noteFormat, setNoteFormat] = useState("Bullet point");
+  const [fileError, setFileError] = useState("");
+  const [promptError, setPromptError] = useState("");
 
+  // ── Search & Filter State ──
   const [searchTerm, setSearchTerm] = useState("");
   const [tempSearchTerm, setTempSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -30,13 +50,18 @@ export default function DownloadNotes() {
   const [page, setPage] = useState(1);
   const limit = 6;
 
-  // Debounce search term
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearchTerm(tempSearchTerm);
-      setPage(1); // Reset to first page on search change
-    }, 500); // 500ms delay
-
+      setPage(1);
+    }, 500);
     return () => clearTimeout(timer);
   }, [tempSearchTerm]);
 
@@ -85,16 +110,71 @@ export default function DownloadNotes() {
     setPage(1);
   };
 
+  const activeFiltersCount = [
+    filters.subject,
+    filters.system,
+    filters.topic,
+  ].filter(Boolean).length;
+
+  // ── Modal Helpers ──
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFiles([]);
+    setNote("");
+    setNoteName("");
+    setNoteFormat("Bullet point");
+    setFileError("");
+    setPromptError("");
+  };
+
+  const handleCreateNote = async () => {
+    // Validate
+    if (!files.length && !note.trim()) {
+      setFileError("Please upload a file or enter a prompt");
+      setPromptError("Please upload a file or enter a prompt");
+      return;
+    }
+    setFileError("");
+    setPromptError("");
+
+    const formData = new FormData();
+    if (files.length > 0) {
+      formData.append("file", files[0]);
+    }
+    formData.append(
+      "data",
+      JSON.stringify({
+        make_your_note: note,
+        topic_name: noteName,
+        note_format: noteFormat,
+      })
+    );
+
+    try {
+      const res = await generateNote(formData).unwrap();
+      if (res.success) {
+        handleCloseModal();
+        navigate(`/dashboard/generated-notes/${res.data._id}`);
+      }
+    } catch (error: any) {
+      // error toast is already handled by baseQueryWithToasts
+      console.error("Generate note error:", error);
+    }
+  };
+
   return (
     <div className="mb-5 px-2">
+      {/* ── Page Heading ── */}
       <DashboardHeading
         title="High-Yield Medical Study Notes"
         description="Download concise, topic-focused PDF notes for anatomy, pathology, pharmacology, and more."
         className="mt-4 mb-8 space-y-2"
       />
 
+      {/* ── Top Action Bar ── */}
       <div className="md:flex gap-5 space-y-3 justify-between items-center">
-        <div className="flex items-center gap-6">
+        {/* Search + Filter */}
+        <div className="flex items-center gap-3">
           <div className="relative">
             <input
               type="text"
@@ -102,42 +182,40 @@ export default function DownloadNotes() {
               value={tempSearchTerm}
               onChange={(e) => setTempSearchTerm(e.target.value)}
               onKeyPress={handleSearchKeyPress}
-              className="w-full md:w-[450px] h-12 pl-10 pr-4 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full md:w-[420px] h-11 pl-10 pr-4 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#063C79]/20 focus:border-[#063C79] transition-all text-gray-700 text-sm"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           </div>
 
           <button
             onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-2 bg-blue-btn-1 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-btn-1 hover:opacity-80 transition-colors"
+            className="relative flex items-center gap-2 bg-white border border-slate-200 text-gray-600 px-4 py-2.5 rounded-xl cursor-pointer hover:border-[#063C79] hover:text-[#063C79] transition-colors text-sm font-medium"
           >
-            <Filter className="w-4 h-4" />
+            <SlidersHorizontal className="w-4 h-4" />
             Filter
-            {(filters.subject || filters.system || filters.topic) && (
-              <span className="ml-1 bg-blue-btn-1 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                •
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-[#063C79] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                {activeFiltersCount}
               </span>
             )}
           </button>
         </div>
 
-        <Link to="/dashboard/create-note">
-          <PrimaryButton
-            bgType="solid"
-            iconPosition="left"
-            bgColor="bg-blue-btn-1"
-            icon={<Plus className="w-4 h-4" />}
-            className="h-12 mb-4 hover:bg-blue-btn-1 hover:opacity-80 cursor-pointer"
-          >
-            Create Notes
-          </PrimaryButton>
-        </Link>
+        {/* Create Note Button */}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-[#063C79] text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity font-medium text-sm"
+        >
+          <Plus size={18} />
+          <span>Create Notes</span>
+        </button>
       </div>
 
+      {/* ── Active Filter Tags ── */}
       {(filters.subject || filters.system || filters.topic || searchTerm) && (
         <div className="flex flex-wrap gap-2 mt-4">
           {searchTerm && (
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-2">
+            <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-sm flex items-center gap-1.5">
               Search: {searchTerm}
               <button
                 onClick={() => {
@@ -147,12 +225,12 @@ export default function DownloadNotes() {
                 }}
                 className="hover:text-blue-900"
               >
-                ×
+                <X size={13} />
               </button>
             </span>
           )}
           {filters.subject && (
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-2">
+            <span className="px-3 py-1 bg-green-50 text-green-700 border border-green-100 rounded-full text-sm flex items-center gap-1.5">
               Subject: {filters.subject}
               <button
                 onClick={() => {
@@ -161,12 +239,12 @@ export default function DownloadNotes() {
                 }}
                 className="hover:text-green-900"
               >
-                ×
+                <X size={13} />
               </button>
             </span>
           )}
           {filters.system && (
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm flex items-center gap-2">
+            <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-100 rounded-full text-sm flex items-center gap-1.5">
               System: {filters.system}
               <button
                 onClick={() => {
@@ -175,12 +253,12 @@ export default function DownloadNotes() {
                 }}
                 className="hover:text-purple-900"
               >
-                ×
+                <X size={13} />
               </button>
             </span>
           )}
           {filters.topic && (
-            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm flex items-center gap-2">
+            <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-100 rounded-full text-sm flex items-center gap-1.5">
               Topic: {filters.topic}
               <button
                 onClick={() => {
@@ -189,7 +267,7 @@ export default function DownloadNotes() {
                 }}
                 className="hover:text-orange-900"
               >
-                ×
+                <X size={13} />
               </button>
             </span>
           )}
@@ -200,61 +278,194 @@ export default function DownloadNotes() {
               setFilters({ subject: "", system: "", topic: "" });
               setPage(1);
             }}
-            className="px-3 py-1 text-red-600 hover:text-red-800 text-sm font-medium"
+            className="px-3 py-1 text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
           >
+            <X size={13} />
             Clear All
           </button>
         </div>
       )}
 
-      <div>
-        <div className="flex gap-4 my-6 md:my-8 text-lg font-semibold leading-7">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`py-1 text-start transition-colors duration-200 hover:cursor-pointer
-              ${activeTab === tab.id
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-500 hover:text-blue-500"
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="">
-          {activeTab === "allNotes" && (
-            <>
-              <AllNotesTab notes={noteData} loading={noteLoading} />
-              {!noteLoading && totalPages > 1 && (
-                <div className="mt-6">
-                  <Pagination
-                    totalPages={totalPages}
-                    currentPage={currentPage}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
-            </>
-          )}
-          {activeTab === "generatedNotes" && (
-            <GeneratedNotes
-              searchTerm={searchTerm}
-              subject={filters.subject}
-              system={filters.system}
-              topic={filters.topic}
-            />
-          )}
-        </div>
+      {/* ── Tabs ── */}
+      <div className="flex gap-6 mt-8 mb-6 border-b border-gray-100">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => handleTabChange(tab.id)}
+            className={`pb-3 text-sm font-semibold transition-colors duration-200 cursor-pointer border-b-2 -mb-px
+              ${
+                activeTab === tab.id
+                  ? "border-[#063C79] text-[#063C79]"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
+      {/* ── Tab Content ── */}
+      <div>
+        {activeTab === "allNotes" && (
+          <>
+            <AllNotesTab notes={noteData} loading={noteLoading} />
+            {!noteLoading && totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </>
+        )}
+        {activeTab === "generatedNotes" && (
+          <GeneratedNotes
+            searchTerm={searchTerm}
+            subject={filters.subject}
+            system={filters.system}
+            topic={filters.topic}
+          />
+        )}
+      </div>
+
+      {/* ── Filter Modal ── */}
       {isFilterOpen && (
         <FlashCardFilterModal
           close={() => setIsFilterOpen(false)}
           onApply={handleApplyFilters}
         />
+      )}
+
+      {/* ── Create Note Modal ── */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">Create Note</h2>
+              <button
+                onClick={handleCloseModal}
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+
+            {/* Body — no <form> tag, direct onClick */}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left – File Upload */}
+              <div
+                className={`p-4 border rounded-xl bg-slate-50 ${
+                  fileError ? "border-red-500" : "border-black/10"
+                }`}
+              >
+                <FileUploader
+                  onFilesChange={(newFiles) => {
+                    setFiles((prev) => [...prev, ...newFiles]);
+                    if (newFiles.length > 0) {
+                      setFileError("");
+                      setPromptError("");
+                    }
+                  }}
+                />
+                {fileError && (
+                  <p className="text-red-500 text-sm mt-2">{fileError}</p>
+                )}
+                {files.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-semibold mb-1">
+                      Recent Uploads
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Your uploaded files ready for note generation
+                    </p>
+                    <FilePreviewList
+                      files={files}
+                      onRemove={(i) =>
+                        setFiles((prev) => prev.filter((_, idx) => idx !== i))
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Right – Prompt & Options */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                    Prompt
+                  </label>
+                  <textarea
+                    placeholder="Enter prompt (optional if file uploaded)"
+                    value={note}
+                    rows={4}
+                    onChange={(e) => {
+                      setNote(e.target.value);
+                      if (e.target.value.trim()) {
+                        setFileError("");
+                        setPromptError("");
+                      }
+                    }}
+                    className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#063C79]/20 focus:border-[#063C79] transition-all resize-none ${
+                      promptError ? "border-red-500" : "border-gray-200"
+                    }`}
+                  />
+                  {promptError && (
+                    <p className="text-red-500 text-sm mt-1">{promptError}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                    Note Name / Topic
+                  </label>
+                  <input
+                    value={noteName}
+                    onChange={(e) => setNoteName(e.target.value)}
+                    placeholder="e.g. Cardiology Basics"
+                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#063C79]/20 focus:border-[#063C79] transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                    Note Format
+                  </label>
+                  <select
+                    value={noteFormat}
+                    onChange={(e) => setNoteFormat(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#063C79]/20 focus:border-[#063C79] transition-all"
+                  >
+                    <option value="Bullet point">Bullet point</option>
+                    <option value="Summary">Summary</option>
+                    <option value="Paragraph">Paragraph</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCreateNote}
+                  disabled={isGenerating}
+                  className="w-full flex justify-center items-center gap-2 bg-[#063C79] text-white py-3 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="animate-spin w-4 h-4" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Atom className="w-4 h-4" />
+                      Generate Notes
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
